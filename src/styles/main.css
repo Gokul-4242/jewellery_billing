@@ -1,0 +1,75 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: "Inter", "Outfit", "Manrope", system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #221c10;
+  color: #ffffff;
+}
+body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+body::-webkit-scrollbar-track {
+  background: #181611;
+}
+body::-webkit-scrollbar-thumb {
+  background: #544b3b;
+  border-radius: 9999px;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: rgb(113.958041958, 101.7482517483, 80.041958042);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+a {
+  color: #e29d12;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  color: #c78a0f;
+}
+
+button {
+  font-family: inherit;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  vertical-align: middle;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rotate {
+  animation: rotate 2s linear infinite;
+}
+
+/*# sourceMappingURL=main.css.map */

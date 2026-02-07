@@ -1,0 +1,308 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5rem;
+}
+
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    
+    a {
+        color: $text-muted;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        
+        &:hover {
+            color: $primary;
+        }
+    }
+    
+    span {
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+    
+    .current {
+        color: $primary;
+    }
+}
+
+.pageHeader {
+    margin-bottom: 3rem;
+    
+    h1 {
+        font-size: 2.25rem;
+        font-weight: 900;
+        color: $text-white;
+        line-height: 1.25;
+        margin-bottom: 0.5rem;
+    }
+    
+    p {
+        color: $text-muted;
+        font-size: 1rem;
+    }
+}
+
+.formSection {
+    background-color: rgba($surface-dark, 0.4);
+    border: 1px solid rgba($primary, 0.1);
+    border-radius: $radius-xl;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: $text-white;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        .icon {
+            color: $primary;
+        }
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    
+    @include md {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    &.cols3 {
+        @include md {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: $text-muted;
+    }
+    
+    input {
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid $border-dark;
+        border-radius: $radius-lg;
+        padding: 0.625rem;
+        color: $text-white;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.2s;
+        
+        &:focus {
+            outline: none;
+            border-color: $primary;
+            box-shadow: 0 0 0 1px $primary;
+        }
+        
+        &::placeholder {
+            color: rgba($text-muted, 0.5);
+        }
+    }
+}
+
+.radioGroup {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    height: 46px; /* Match input height */
+    
+    label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        color: $text-muted;
+        transition: color 0.2s;
+        
+        &:hover {
+            color: $primary;
+        }
+        
+        input[type="radio"] {
+            width: 1rem;
+            height: 1rem;
+            accent-color: $primary;
+        }
+    }
+}
+
+.uploadArea {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    
+    label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 12rem;
+        border: 2px dashed rgba($primary, 0.3);
+        border-radius: $radius-xl;
+        cursor: pointer;
+        background-color: rgba($primary, 0.05);
+        transition: background-color 0.2s;
+        
+        &:hover {
+            background-color: rgba($primary, 0.1);
+        }
+        
+        .uploadIcon {
+            font-size: 2.25rem;
+            color: $primary;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            color: $text-muted;
+            text-align: center;
+        }
+        
+        .hint {
+            font-size: 0.75rem;
+            color: rgba($text-muted, 0.7);
+        }
+    }
+}
+
+.previewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    width: 100%;
+
+    .imagePreview {
+        position: relative;
+        height: 150px;
+        border-radius: $radius-lg;
+        overflow: hidden;
+        border: 1px solid rgba($primary, 0.2);
+        
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .removeBtn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background-color: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: $text-white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            
+            span {
+                font-size: 16px;
+            }
+
+            &:hover {
+                background-color: $danger;
+            }
+        }
+    }
+
+    .addMore {
+        height: 150px;
+        border: 2px dashed rgba($primary, 0.3);
+        border-radius: $radius-lg;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background-color: rgba($primary, 0.05);
+        color: $primary;
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: rgba($primary, 0.1);
+            border-color: $primary;
+        }
+
+        .addIcon {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    }
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-bottom: 3rem;
+    
+    button {
+        padding: 0.75rem 2rem;
+        border-radius: $radius-lg;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &.cancel {
+            background: transparent;
+            border: 1px solid $border-dark;
+            color: $text-muted;
+            
+            &:hover {
+                background-color: rgba($text-white, 0.05);
+                color: $text-white;
+            }
+        }
+        
+        &.save {
+            background-color: $primary;
+            border: none;
+            color: $text-white;
+            box-shadow: 0 4px 6px -1px rgba($primary, 0.2);
+            
+            &:hover {
+                background-color: lighten($primary, 5%);
+                transform: translateY(-1px);
+            }
+            
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+}

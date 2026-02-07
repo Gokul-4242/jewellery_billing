@@ -1,0 +1,657 @@
+// Variables
+@import '../../styles/mixins';
+$primary: #e29d12;
+$primary-hover: #c78a0f;
+$bg-dark: #1f1d16; // Card bg from HTML
+$bg-darker: #181611; // Main bg from HTML
+$border-color: #393328;
+$text-light: #ffffff;
+$text-muted: #b9b09d;
+$input-bg: #393328;
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem 10rem; // matching lg:px-40 from HTML
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: $text-light;
+
+    @media (max-width: 1024px) {
+        padding: 2rem 2.5rem;
+    }
+
+    @media (max-width: 640px) {
+        padding: 2rem 1rem;
+    }
+}
+
+// Header Section
+.headerSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid $border-color;
+
+    @media (min-width: 1280px) {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .titleBlock {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.25;
+            color: $text-light;
+        }
+
+        .date {
+            color: $text-muted;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    }
+
+    .statsBlock {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+        width: 100%;
+
+        @media (min-width: 1280px) {
+            width: auto;
+        }
+
+        .statCard {
+            flex: 1;
+            min-width: 158px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #544b3b;
+            background-color: $bg-dark;
+
+            .label {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: $text-muted;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
+            .value {
+                color: $text-light;
+                font-size: 1.25rem;
+                font-weight: 700;
+                line-height: 1.25;
+
+                .unit {
+                    font-size: 0.875rem;
+                    color: $text-muted;
+                    font-weight: 400;
+                }
+            }
+        }
+
+        .editBtn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 82px;
+            min-width: 60px;
+            border-radius: 0.5rem;
+            background-color: $input-bg;
+            border: 1px solid #544b3b;
+            color: $text-light;
+            gap: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: #4a4235;
+            }
+
+            .icon {
+                color: $primary;
+            }
+
+            .text {
+                font-size: 0.75rem;
+                font-weight: 700;
+            }
+        }
+    }
+}
+
+// Main Grid
+.mainGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(12, 1fr);
+    }
+}
+
+// Left Column
+.formColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    @media (min-width: 1024px) {
+        grid-column: span 7;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: $text-light;
+        margin-bottom: 0.5rem;
+    }
+}
+
+// Form Controls
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        color: $text-muted;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+.metalSelector {
+    display: flex;
+    height: 3rem;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    background-color: $input-bg;
+    padding: 0.25rem;
+
+    .option {
+        flex-grow: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: $text-muted;
+        transition: all 0.2s;
+
+        &.active {
+            background-color: $primary;
+            color: #000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        &.activeSilver {
+            background-color: #d1d5db; // gray-300
+            color: #000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        input {
+            display: none;
+        }
+    }
+}
+
+.gridRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    border-radius: 0.5rem;
+    background-color: $input-bg;
+    border: 1px solid transparent;
+    height: 3rem;
+    padding: 0 1rem;
+    transition: all 0.2s;
+
+    &:focus-within {
+        border-color: $primary;
+        box-shadow: 0 0 0 1px $primary;
+    }
+
+    .icon {
+        color: $text-muted;
+        margin-right: 0.75rem;
+    }
+
+    input,
+    select {
+        background: transparent;
+        border: none;
+        color: $text-light;
+        width: 100%;
+        font-family: monospace;
+        font-size: 1.125rem;
+        outline: none;
+        cursor: pointer;
+
+        &::placeholder {
+            color: #6b604e;
+        }
+
+        // Fix for dropdown visibility in some browsers
+        option {
+            background-color: $bg-dark;
+            color: $text-light;
+            padding: 10px;
+        }
+    }
+
+    select {
+        padding-right: 2rem;
+        appearance: none;
+        color: $text-light !important; // Force visibility
+    }
+}
+
+.selectWrapper {
+    position: relative;
+
+    .dropdownIcon {
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        color: $text-muted;
+    }
+}
+
+.deductionGrid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1rem;
+
+    .inputCol {
+        grid-column: span 8;
+
+        @media (min-width: 768px) {
+            grid-column: span 9;
+        }
+    }
+
+    .unitCol {
+        grid-column: span 4;
+
+        @media (min-width: 768px) {
+            grid-column: span 3;
+        }
+
+        select {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.5rem;
+            background-color: $input-bg;
+            border: none;
+            color: $text-light;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+
+            &:focus {
+                box-shadow: 0 0 0 1px $primary;
+            }
+
+            option {
+                background-color: $bg-dark;
+                color: $text-light;
+            }
+        }
+    }
+}
+
+.infoBox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: rgba($input-bg, 0.3);
+    border: 1px solid $input-bg;
+    border-radius: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+
+    .icon {
+        color: $primary;
+        margin-top: 0.125rem;
+    }
+
+    p {
+        font-size: 0.875rem;
+        color: $text-muted;
+        line-height: 1.625;
+    }
+}
+
+// Right Column - Summary Card
+.summaryColumn {
+    @media (min-width: 1024px) {
+        grid-column: span 5;
+    }
+}
+
+.summaryCard {
+    position: sticky;
+    top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    background-color: $bg-dark;
+    border: 1px solid #544b3b;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.cardHeader {
+    background-color: #2a261d;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+        color: $text-light;
+        font-weight: 700;
+    }
+
+    .badge {
+        background-color: $input-bg;
+        color: $text-muted;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+    }
+}
+
+.cardBody {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        color: $text-muted;
+
+        .value {
+            font-family: monospace;
+
+            &.highlight {
+                color: $text-light;
+                font-weight: 500;
+            }
+
+            &.grand {
+                color: $text-light;
+                font-weight: 700;
+                font-size: 1.125rem;
+            }
+
+            &.negative {
+                color: #f87171; // red-400
+            }
+        }
+    }
+
+    .divider {
+        height: 1px;
+        background-color: $border-color;
+        width: 100%;
+        margin: 0.5rem 0;
+        border-top: 1px dashed #544b3b;
+    }
+}
+
+.totalSection {
+    background-color: rgba($primary, 0.1);
+    padding: 1.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid $border-color;
+    text-align: center;
+
+    .label {
+        color: $text-muted;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    .amount {
+        color: $primary;
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.025em;
+    }
+}
+
+.actionsSection {
+    padding: 1rem;
+    background-color: $bg-dark;
+    border-top: 1px solid $border-color;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .addBtn {
+        width: 100%;
+        height: 3rem;
+        border-radius: 0.5rem;
+        background-color: $primary;
+        color: #000;
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: background-color 0.2s;
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $primary-hover;
+        }
+    }
+
+    .secondaryActions {
+        display: flex;
+        gap: 0.75rem;
+
+        button {
+            flex: 1;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .printBtn {
+            background-color: $input-bg;
+            color: $text-light;
+            border: none;
+
+            &:hover {
+                background-color: #4a4235;
+            }
+        }
+
+        .resetBtn {
+            background-color: transparent;
+            border: 1px solid $input-bg;
+            color: $text-muted;
+
+            &:hover {
+                border-color: #4a4235;
+                background-color: $input-bg;
+                color: $text-light;
+            }
+        }
+    }
+}
+
+// History Section
+.historySection {
+    margin-top: 2rem;
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding: 0 0.25rem;
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: $text-light;
+        }
+
+        a {
+            font-size: 0.875rem;
+            color: $primary;
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover {
+                color: $text-light;
+            }
+        }
+    }
+
+    .tableContainer {
+        border-radius: 0.5rem;
+        border: 1px solid $border-color;
+        background-color: $bg-dark;
+        overflow: hidden;
+    }
+
+    .tableWrapper {
+        overflow-x: auto;
+        @include custom-scrollbar;
+    }
+
+    table {
+        width: 100%;
+        text-align: left;
+        font-size: 0.875rem;
+        color: $text-muted;
+        border-collapse: collapse;
+
+        thead {
+            background-color: #2a261d;
+            border-bottom: 1px solid $border-color;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+
+            th {
+                padding: 1rem 1.5rem;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+            }
+        }
+
+        tbody {
+            tr {
+                border-bottom: 1px solid $border-color;
+                transition: background-color 0.2s;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                &:hover {
+                    background-color: rgba(#2a261d, 0.5);
+                }
+
+                td {
+                    padding: 1rem 1.5rem;
+                    white-space: nowrap;
+                }
+            }
+        }
+    }
+}
+
+.metalBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+
+        &.gold {
+            background-color: $primary;
+        }
+
+        &.silver {
+            background-color: #9ca3af;
+        }
+
+        // gray-400
+    }
+}
+
+.fontMono {
+    font-family: monospace;
+}

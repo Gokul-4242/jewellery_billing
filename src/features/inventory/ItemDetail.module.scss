@@ -1,0 +1,445 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    
+    a {
+        color: $text-muted;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        
+        &:hover {
+            color: $primary;
+        }
+    }
+    
+    .icon {
+        font-size: 1rem;
+        color: $text-muted;
+    }
+    
+    .current {
+        color: $text-white;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+}
+
+.headerActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    
+    button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: $radius-lg;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        
+        &.deleteBtn {
+            background-color: rgba($surface-dark, 0.6);
+            border: 1px solid rgba($danger, 0.2);
+            color: $text-muted;
+            
+            &:hover {
+                background-color: rgba($danger, 0.1);
+                color: $danger;
+            }
+        }
+        
+        &.editBtn {
+            background-color: $primary;
+            border: 1px solid $primary;
+            color: $text-white;
+            
+            &:hover {
+                background-color: darken($primary, 5%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba($primary, 0.3);
+            }
+        }
+
+        &.addToCartBtn {
+            background-color: rgba($success, 0.1);
+            border: 1px solid rgba($success, 0.2);
+            color: $success;
+            
+            &:hover {
+                background-color: rgba($success, 0.2);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba($success, 0.3);
+            }
+        }
+    }
+}
+
+.productLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    
+    @include lg {
+        grid-template-columns: 5fr 7fr;
+    }
+}
+
+.gallerySection {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    
+    .mainImage {
+        width: 100%;
+        aspect-ratio: 1;
+        background-color: $surface-dark;
+        border: 1px solid $border-dark;
+        border-radius: $radius-xl;
+        overflow: hidden;
+        position: relative;
+        
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+            
+            &:hover {
+                transform: scale(1.05);
+            }
+        }
+        
+        .stockFiles {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 10;
+            
+            &:not(:has(.container)) {
+                background-color: rgba($success, 0.1);
+                color: $success;
+                border: 1px solid rgba($success, 0.2);
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .container {
+                min-width: 120px;
+            }
+        }
+    }
+    
+    .thumbnails {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        
+        button {
+            flex-shrink: 0;
+            width: 5rem;
+            height: 5rem;
+            border-radius: $radius-lg;
+            border: 1px solid $border-dark;
+            overflow: hidden;
+            padding: 0;
+            cursor: pointer;
+            
+            &.active {
+                border-color: $primary;
+                border-width: 2px;
+            }
+            
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+    }
+}
+
+.detailsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    
+    .infoCard {
+        background-color: $surface-dark;
+        border: 1px solid $border-dark;
+        border-radius: $radius-xl;
+        padding: 1.5rem;
+        
+        .meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: $text-muted;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            
+            .sku {
+                background-color: rgba(255, 255, 255, 0.05);
+                padding: 0.125rem 0.5rem;
+                border-radius: $radius-sm;
+            }
+        }
+        
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: $text-white;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            color: $text-muted;
+            line-height: 1.6;
+        }
+    }
+    
+    .statsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        
+        @include md {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .statItem {
+            background-color: rgba($surface-dark, 0.5);
+            border: 1px solid $border-dark;
+            border-radius: $radius-lg;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            
+            .label {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: $text-muted;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                
+                span {
+                    color: $primary;
+                    font-size: 1rem;
+                }
+            }
+            
+            .value {
+                color: $text-white;
+                font-size: 1.25rem;
+                font-weight: 700;
+                
+                // Reset for components inside
+                &:has(.container) {
+                    font-size: 1rem;
+                    font-weight: normal;
+                }
+            }
+        }
+    }
+    
+    .pricingCard {
+        background-color: lighten($surface-dark, 2%);
+        border: 1px solid $border-dark;
+        border-radius: $radius-xl;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        
+        @include md {
+            flex-direction: row;
+        }
+        
+        .priceBlock {
+            flex: 1;
+            
+            .label {
+                color: $text-muted;
+                font-size: 0.875rem;
+                font-weight: 500;
+                margin-bottom: 0.25rem;
+            }
+            
+            .amount {
+                color: $text-white;
+                font-size: 1.875rem;
+                font-weight: 700;
+            }
+            
+            .subtext {
+                color: $primary;
+                font-size: 0.75rem;
+                font-weight: 500;
+                margin-top: 0.25rem;
+                
+                &.green {
+                    color: $success;
+                }
+            }
+            
+            .blur {
+                color: $text-muted;
+                filter: blur(4px);
+                cursor: pointer;
+                user-select: none;
+                transition: filter 0.2s;
+                
+                &:hover {
+                    filter: blur(0);
+                }
+            }
+        }
+        
+        .divider {
+            width: 1px;
+            background-color: $border-dark;
+            display: none;
+            
+            @include md {
+                display: block;
+            }
+        }
+    }
+    
+    .specsCard {
+        background-color: $surface-dark;
+        border: 1px solid $border-dark;
+        border-radius: $radius-xl;
+        padding: 1.5rem;
+        
+        h3 {
+            color: $text-white;
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            
+            span {
+                color: $primary;
+            }
+        }
+        
+        .specsGrid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            
+            @include md {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            @include lg {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .specItem {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                
+                .label {
+                    color: $text-muted;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+                
+                .value {
+                    color: $text-white;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    
+                    .check {
+                        color: $success;
+                        font-size: 1.125rem;
+                    }
+                    
+                    a {
+                        color: $primary;
+                        text-decoration: none;
+                        
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.input, .select {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid $border-dark;
+    border-radius: $radius-md;
+    padding: 0.5rem;
+    color: $text-white;
+    font-size: 1rem;
+    font-family: inherit;
+    width: 100%;
+    transition: all 0.2s;
+    
+    &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 1px $primary;
+    }
+}
+
+.largeInput {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.statusSelect {
+    background-color: $surface-dark;
+    color: $text-white;
+    border: 1px solid $border-dark;
+    border-radius: 9999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    
+    &:focus {
+        outline: none;
+        border-color: $primary;
+    }
+}

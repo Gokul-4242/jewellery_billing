@@ -1,0 +1,75 @@
+@use 'variables';
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin card-base {
+    background-color: rgba(variables.$surface-dark, 0.5);
+    border: variables.$surface-border;
+    border-radius: variables.$radius-lg;
+    overflow: hidden;
+}
+
+@mixin glass-effect {
+    background: rgba(variables.$surface-dark, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(variables.$text-white, 0.1);
+}
+
+@mixin custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: variables.$sidebar-bg;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: variables.$border-dark;
+        border-radius: variables.$radius-full;
+
+        &:hover {
+            background: lighten(variables.$border-dark, 10%);
+        }
+    }
+}
+
+@mixin button-reset {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    outline: none;
+}
+
+// Responsive Breakpoints
+@mixin md {
+    @media (min-width: 768px) {
+        @content;
+    }
+}
+
+@mixin lg {
+    @media (min-width: 1024px) {
+        @content;
+    }
+}
+
+@mixin xl {
+    @media (min-width: 1280px) {
+        @content;
+    }
+}

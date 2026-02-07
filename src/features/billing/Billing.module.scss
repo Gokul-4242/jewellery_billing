@@ -1,0 +1,670 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as mixins;
+
+.billingContainer {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 4rem); // Adjust height to fit within dashboard layout if needed
+    background-color: $background-dark;
+    color: $text-white;
+    font-family: 'Manrope', sans-serif;
+    overflow: hidden;
+    border-radius: $radius-lg;
+    border: 1px solid $border-dark;
+}
+
+.header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    white-space: nowrap;
+    border-bottom: 1px solid $border-dark;
+    background-color: $surface-dark;
+    padding: 0.75rem 1.5rem;
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .logo {
+            width: 2rem;
+            height: 2rem;
+            color: $primary;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.875rem;
+        }
+
+        h2 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.015em;
+            color: $text-white;
+        }
+
+        p {
+            font-size: 0.75rem;
+            color: $text-muted;
+        }
+    }
+
+    .ratesBar {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        margin: 0 1rem;
+
+        .ratesContainer {
+            display: none;
+            @media (min-width: 768px) {
+                display: flex;
+            }
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background-color: $background-dark;
+            border: 1px solid $border-dark;
+        }
+
+        .rateItem {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-right: 1rem;
+            border-right: 1px solid $border-dark;
+
+            &:last-child {
+                padding-right: 0;
+                border-right: none;
+            }
+
+            .label {
+                font-size: 0.625rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: $text-muted;
+                font-weight: 700;
+            }
+
+            .value {
+                font-size: 0.875rem;
+                font-weight: 700;
+                color: $text-white;
+            }
+
+            .change {
+                font-size: 0.75rem;
+                font-weight: 500;
+                margin-left: 0.25rem;
+                
+                &.positive { color: $success; }
+                &.neutral { color: $text-muted; }
+            }
+        }
+    }
+
+    .userSection {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+
+        .dateTime {
+            text-align: right;
+            display: none;
+            @media (min-width: 640px) {
+                display: block;
+            }
+
+            .date {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: $text-white;
+            }
+            .time {
+                font-size: 0.75rem;
+                color: $text-muted;
+            }
+        }
+
+        .avatar {
+            height: 2.5rem;
+            width: 2.5rem;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            border-radius: 9999px;
+            border: 2px solid $primary;
+        }
+    }
+}
+
+.mainLayout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.leftPanel {
+    display: flex;
+    flex-direction: column;
+    flex: 2;
+    min-width: 0;
+    border-right: 1px solid $border-dark;
+    position: relative;
+    background-color: $background-dark;
+}
+
+.topBar {
+    padding: 1rem;
+    border-bottom: 1px solid $border-dark;
+    background-color: $surface-dark;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .searchSection {
+        display: flex;
+        gap: 0.75rem;
+
+        .searchWrapper {
+            flex: 1;
+            position: relative;
+            
+            .searchIcon, .scanIcon {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                display: flex;
+                align-items: center;
+                color: $text-muted;
+            }
+            .searchIcon { left: 0.75rem; pointer-events: none; }
+            .scanIcon { right: 0.75rem; }
+
+            input {
+                width: 100%;
+                background-color: $background-dark;
+                border: 1px solid $border-dark;
+                color: $text-white;
+                font-size: 0.875rem;
+                border-radius: 0.5rem;
+                padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+                // text-align: center;
+
+                &:focus {
+                    outline: none;
+                    border-color: $primary;
+                    box-shadow: 0 0 0 1px $primary;
+                }
+            }
+
+            .searchResults {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: lighten($background-dark, 2%);
+                border: 1px solid $border-dark;
+                border-radius: 0.5rem;
+                margin-top: 0.5rem;
+                max-height: 300px;
+                overflow-y: auto;
+                z-index: 50;
+                box-shadow: $shadow-xl;
+                @include mixins.custom-scrollbar;
+
+                .noResults {
+                    padding: 1rem;
+                    color: $text-muted;
+                    text-align: center;
+                    font-size: 0.875rem;
+                }
+
+                .searchResultItem {
+                    padding: 0.75rem 1rem;
+                    cursor: pointer;
+                    border-bottom: 1px solid $border-dark;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    transition: background-color 0.2s;
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    &:hover {
+                        background-color: lighten($background-dark, 5%);
+                    }
+
+                    img {
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        border-radius: 0.25rem;
+                        object-fit: cover;
+                    }
+
+                    .info {
+                        flex: 1;
+                        .name {
+                            font-weight: 600;
+                            color: $text-white;
+                            font-size: 0.875rem;
+                        }
+                        .details {
+                            font-size: 0.75rem;
+                            color: $text-muted;
+                        }
+                    }
+
+                    .action {
+                        color: $primary;
+                        font-weight: 600;
+                        font-size: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                    }
+                }
+
+                .addNewCustomerItem {
+                    padding: 1rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    background-color: rgba($primary, 0.05);
+                    color: $primary;
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    transition: all 0.2s;
+                    border-top: 1px solid $border-dark;
+
+                    &:hover {
+                        background-color: rgba($primary, 0.15);
+                        color: lighten($primary, 10%);
+                    }
+                }
+            }
+        }
+
+        .filterBtn {
+            background-color: $background-dark;
+            color: $text-white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid $border-dark;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: lighten($background-dark, 5%);
+            }
+        }
+    }
+
+    .categories {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        @include mixins.custom-scrollbar;
+
+        button {
+            flex-shrink: 0;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+
+            &.active {
+                background-color: $primary;
+                color: $background-dark;
+                font-weight: 700;
+                border: none;
+            }
+
+            &.inactive {
+                background-color: $background-dark;
+                border: 1px solid $border-dark;
+                color: $text-muted;
+
+                &:hover {
+                    border-color: $primary;
+                    color: $primary;
+                }
+            }
+        }
+    }
+}
+
+.contentArea {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+    background-color: $background-dark;
+    @include mixins.custom-scrollbar;
+}
+
+.tableContainer {
+    border-radius: 0.5rem;
+    border: 1px solid $border-dark;
+    overflow-x: auto;
+    @include mixins.custom-scrollbar;
+    margin-bottom: 1.5rem;
+    background-color: $surface-dark;
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+
+        thead {
+            background-color: darken($surface-dark, 3%);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+
+            th {
+                padding: 0.75rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
+                color: $text-muted;
+                border-bottom: 1px solid $border-dark;
+            }
+        }
+
+        tbody {
+            background-color: $surface-dark;
+
+            tr {
+                &:hover {
+                    background-color: lighten($surface-dark, 5%);
+                }
+
+                td {
+                    padding: 0.75rem;
+                    border-bottom: 1px solid $border-dark;
+                    color: $text-white;
+
+                    .subtext {
+                        font-size: 0.75rem;
+                        color: $text-muted;
+                        display: block;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.exchangeSection {
+    background-color: rgba(44, 36, 23, 0.3); // surface-dark varied
+    border-radius: 0.5rem;
+    border: 1px dashed rgba($primary, 0.4);
+    padding: 1rem;
+    margin-bottom: 1rem;
+
+    .exchangeHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: $primary;
+        }
+
+        .rateInfo {
+            font-size: 0.75rem;
+            background-color: rgba($primary, 0.1);
+            color: $primary;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+    }
+
+    .exchangeForm {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 0.75rem;
+        align-items: flex-end;
+        margin-bottom: 1rem;
+
+        .fieldGroup {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem; // Slightly more breathing room
+
+            label {
+                font-size: 0.75rem;
+                color: $text-muted;
+                font-weight: 500;
+            }
+        }
+    }
+
+    input, select {
+        width: 100%;
+        padding: 0.625rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba($border-dark, 0.5);
+        font-size: 0.875rem;
+        background-color: lighten($background-dark, 2%); 
+        color: $text-white;
+        transition: all 0.2s ease;
+        text-align: center;
+
+        &:focus {
+            outline: none;
+            border-color: $primary;
+            box-shadow: 0 0 0 2px rgba($primary, 0.1);
+        }
+        
+        &.readOnly {
+            background-color: rgba($primary, 0.05);
+            color: $primary;
+            font-weight: 700;
+            border-color: rgba($primary, 0.2);
+            font-family: monospace;
+        }
+    }
+
+    .addButton {
+        width: 100%;
+        height: 2.5rem; // Match input height roughly
+        background-color: $primary;
+        color: $background-dark;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        padding: 0 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+
+        &:hover {
+            background-color: darken($primary, 10%);
+            transform: translateY(-1px);
+        }
+        
+        &:active {
+            transform: translateY(0);
+        }
+    }
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 320px;
+    max-width: 450px;
+    background-color: $surface-dark;
+    border-left: 1px solid $border-dark;
+    overflow-y: auto;
+    @include mixins.custom-scrollbar;
+
+    .customerSection {
+        padding: 1.25rem;
+        border-bottom: 1px solid $border-dark;
+
+        .sectionHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            
+            h3 {
+                font-size: 0.875rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: $text-muted;
+            }
+            
+        }
+        .customerCard {
+            background-color: $background-dark;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid $border-dark;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+
+            .avatarInitials {
+                height: 2.5rem;
+                width: 2.5rem;
+                border-radius: 9999px;
+                background-color: rgba($primary, 0.2);
+                color: $primary;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1.125rem;
+                flex-shrink: 0;
+            }
+        }
+    }
+
+    .billSummary {
+        padding: 1.25rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            
+            &.total {
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid $border-dark;
+                align-items: flex-end;
+                
+                .grandTotal {
+                    font-size: 1.875rem;
+                    font-weight: 800;
+                    color: $primary;
+                }
+            }
+        }
+    }
+
+    .footer {
+        padding: 1.25rem;
+        background-color: $surface-dark;
+        border-top: 1px solid $border-dark;
+        margin-top: auto;
+
+        .processBtn {
+            width: 100%;
+            background-color: $primary;
+            color: $background-dark;
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 10px 15px -3px rgba($primary, 0.2);
+            border: none;
+
+            &:hover {
+                background-color: darken($primary, 10%);
+            }
+        }
+    }
+}
+
+// Global utilities for internal use
+.textRight { text-align: right; }
+.textCenter { text-align: center; }
+.textMono { font-family: monospace; }
+.textSm { font-size: 0.875rem; }
+.textBold { font-weight: 700; }
+.textPrimary { color: $primary; }
+.flexCol { display: flex; flex-direction: column; }
+.tableInput {
+    width: 85px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid $border-dark;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    color: white;
+    text-align: right;
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: $primary;
+        background: rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 0 1px $primary;
+    }
+
+    /* Hide arrows for number input */
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}

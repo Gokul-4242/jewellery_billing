@@ -1,0 +1,497 @@
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1rem;
+
+    @media (min-width: 1024px) {
+        padding: 2rem;
+    }
+}
+
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+
+    a {
+        color: $text-muted;
+        text-decoration: none;
+        transition: color 0.2s;
+
+        &:hover {
+            color: $primary;
+        }
+    }
+
+    span {
+        color: $text-muted;
+    }
+
+    .current {
+        color: $text-white;
+        font-weight: 500;
+    }
+}
+
+.pageHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid $border-dark;
+    margin-bottom: 2rem;
+
+    .titleBlock {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        h1 {
+            color: $text-white;
+            font-size: 2.25rem;
+            font-weight: 900;
+            line-height: 1.25;
+            letter-spacing: -0.033em;
+        }
+
+        p {
+            color: $text-muted;
+            font-size: 1rem;
+        }
+    }
+
+    .importBtn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: transparent;
+        border: 1px solid $border-dark;
+        color: $text-white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: $surface-dark;
+        }
+
+        .icon {
+            font-size: 1.25rem;
+        }
+    }
+}
+
+.formSection {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(12, 1fr);
+    }
+
+    .sectionInfo {
+        @media (min-width: 768px) {
+            grid-column: span 4;
+        }
+
+        h3 {
+            color: $text-white;
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        p {
+            color: $text-muted;
+            font-size: 0.875rem;
+        }
+    }
+
+    .sectionFields {
+        background-color: #1e1912;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid $border-dark;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+
+        @media (min-width: 640px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (min-width: 768px) {
+            grid-column: span 8;
+        }
+
+        &.fullWidth {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid rgba($border-dark, 0.5);
+    margin: 0.5rem 0;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &.spanFull {
+        grid-column: 1 / -1;
+    }
+
+    label {
+        color: $text-white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .inputWrapper {
+        position: relative;
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background-color: $surface-dark;
+            border: 1px solid $border-dark;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            color: $text-white;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+
+            &::placeholder {
+                color: rgba($text-muted, 0.5);
+            }
+
+            &:focus {
+                outline: none;
+                border-color: $primary;
+                box-shadow: 0 0 0 1px $primary;
+            }
+
+            &:disabled {
+                background-color: rgba($surface-dark, 0.5);
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+        }
+
+        &.hasIconLeft {
+            input {
+                padding-left: 2.75rem;
+            }
+        }
+
+        &.hasIconRight {
+
+            input,
+            select {
+                padding-right: 2.75rem;
+            }
+        }
+
+        .icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: $text-muted;
+            font-size: 1.25rem;
+            pointer-events: none;
+
+            &.left {
+                left: 0.75rem;
+            }
+
+            &.right {
+                right: 0.75rem;
+            }
+        }
+    }
+}
+
+.phoneList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .phoneRow {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .addPhoneBtn {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: none;
+        border: none;
+        color: $primary;
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+        width: fit-content;
+
+        &:hover {
+            color: #ffc107;
+        }
+
+        .icon {
+            font-size: 1.125rem;
+        }
+    }
+}
+
+.toggleSwitch {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+
+    input {
+        display: none;
+    }
+
+    .slider {
+        position: relative;
+        width: 2.75rem;
+        height: 1.5rem;
+        background-color: $border-dark;
+        border-radius: 9999px;
+        transition: background-color 0.3s;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 1.25rem;
+            height: 1.25rem;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+    }
+
+    input:checked+.slider {
+        background-color: $primary;
+
+        &::after {
+            transform: translateX(1.25rem);
+        }
+    }
+
+    .label {
+        color: $text-white;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    &:hover .label {
+        color: $primary;
+    }
+}
+
+.loyaltyCard {
+    background: linear-gradient(to bottom right, #1e1912, #251f16);
+    position: relative;
+    overflow: hidden;
+
+    .accent {
+        position: absolute;
+        top: -2.5rem;
+        right: -2.5rem;
+        width: 8rem;
+        height: 8rem;
+        background-color: rgba($primary, 0.1);
+        border-radius: 50%;
+        filter: blur(40px);
+        pointer-events: none;
+    }
+
+    .loyaltyHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+
+        .brandInfo {
+            display: flex;
+            gap: 1rem;
+
+            .brandIcon {
+                width: 3rem;
+                height: 3rem;
+                background-color: rgba($primary, 0.1);
+                color: $primary;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                .icon {
+                    font-size: 1.5rem;
+                }
+            }
+
+            .brandText {
+                h4 {
+                    color: $text-white;
+                    font-size: 1rem;
+                    font-weight: 700;
+                }
+
+                p {
+                    color: $text-muted;
+                    font-size: 0.875rem;
+                    margin-top: 0.25rem;
+                    max-width: 24rem;
+                }
+            }
+        }
+    }
+
+    .loyaltyDetails {
+        padding-top: 1rem;
+        border-top: 1px solid rgba($border-dark, 0.5);
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+
+        @media (min-width: 640px) {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+}
+
+.radioGroup {
+    display: flex;
+    gap: 0.5rem;
+
+    .radioOption {
+        cursor: pointer;
+
+        input {
+            display: none;
+        }
+
+        .tag {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid $border-dark;
+            background-color: $surface-dark;
+            color: $text-muted;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        input:checked+.tag {
+            border-color: $primary;
+            color: $primary;
+            background-color: rgba($primary, 0.05);
+        }
+
+        &.silver input:checked+.tag {
+            border-color: #94a3b8;
+            color: white;
+            background-color: #334155;
+        }
+    }
+}
+
+.actionBar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba($sidebar-bg, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem 1rem;
+    border-top: 1px solid $border-dark;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin: 2rem -1rem -1rem -1rem;
+    z-index: 40;
+
+    @media (min-width: 1024px) {
+        padding: 1.5rem 40px;
+        margin-left: -40px;
+        margin-right: -40px;
+    }
+
+    button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &.cancel {
+            background: transparent;
+            border: 1px solid $border-dark;
+            color: $text-white;
+
+            &:hover {
+                background-color: $surface-dark;
+            }
+        }
+
+        &.save {
+            background-color: $primary;
+            color: $sidebar-bg;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba($primary, 0.3);
+
+            &:hover {
+                background-color: $primary-hover;
+            }
+
+            .icon {
+                font-size: 1.25rem;
+            }
+        }
+    }
+}

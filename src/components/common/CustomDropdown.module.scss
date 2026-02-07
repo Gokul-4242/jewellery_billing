@@ -1,0 +1,194 @@
+@use '../../styles/variables' as *;
+
+.container {
+    position: relative;
+    width: 100%;
+}
+
+.label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $text-muted;
+}
+
+.trigger {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid $border-dark;
+    border-radius: $radius-lg;
+    color: $text-white;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: rgba($primary, 0.5);
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    &.open {
+        border-color: $primary;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 0 1px $primary;
+    }
+
+    .placeholder {
+        color: rgba($text-muted, 0.5);
+    }
+
+    .arrow {
+        font-size: 1.25rem;
+        transition: transform 0.2s;
+        color: $text-muted;
+    }
+
+    &.open .arrow {
+        transform: rotate(180deg);
+        color: $primary;
+    }
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background-color: #1e1b15; // Darker surface consistency
+    border: 1px solid $border-dark;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-xl;
+    z-index: 100;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.searchArea {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba($border-dark, 0.3);
+
+    .searchInput {
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid $border-dark;
+        border-radius: $radius-md;
+        color: $text-white;
+        font-size: 0.875rem;
+        outline: none;
+
+        &:focus {
+            border-color: $primary;
+        }
+    }
+}
+
+.optionsList {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.25rem;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba($text-muted, 0.3);
+        border-radius: 2px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: rgba($primary, 0.5);
+    }
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.75rem;
+    border-radius: $radius-md;
+    font-size: 0.875rem;
+    color: $text-light;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+    }
+
+    &.selected {
+        background-color: rgba($primary, 0.15);
+        color: $primary;
+        font-weight: 600;
+    }
+
+    .checkIcon {
+        font-size: 1.125rem;
+    }
+}
+
+.noResults {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: $text-muted;
+    font-size: 0.875rem;
+
+    .addPrompt {
+        display: block;
+        margin-top: 0.5rem;
+        color: $primary;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.customAdd {
+    padding: 0.75rem;
+    background-color: rgba($primary, 0.05);
+    border-top: 1px solid rgba($border-dark, 0.2);
+    display: flex;
+    gap: 0.5rem;
+
+    input {
+        flex: 1;
+        padding: 0.5rem 0.75rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid $border-dark;
+        border-radius: $radius-md;
+        color: $text-white;
+        font-size: 0.875rem;
+        outline: none;
+
+        &:focus {
+            border-color: $primary;
+        }
+    }
+
+    button {
+        padding: 0.5rem 1rem;
+        background-color: $primary;
+        color: $text-white;
+        border: none;
+        border-radius: $radius-md;
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+
+        &:hover {
+            background-color: lighten($primary, 5%);
+        }
+    }
+}

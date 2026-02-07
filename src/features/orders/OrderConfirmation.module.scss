@@ -1,0 +1,460 @@
+@import '../../styles/variables';
+
+.container {
+    padding: 2rem 10rem; // Based on lg:px-40
+    width: 100%;
+    margin: 0 auto;
+    max-width: 1200px;
+    font-family: 'Manrope', sans-serif;
+    color: $text-white;
+
+    @media (max-width: 1024px) {
+        padding: 2rem 2.5rem;
+    }
+    @media (max-width: 768px) {
+        padding: 2rem 1rem;
+    }
+
+    &.printMode {
+        padding: 0;
+        background: white;
+        color: black;
+    }
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    
+    .link {
+        color: $text-muted;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+
+        &:hover {
+            color: $primary;
+        }
+    }
+
+    .divider {
+        color: $text-muted;
+    }
+
+    .current {
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    @media print {
+        display: none;
+    }
+}
+
+.successHeader {
+    text-align: center;
+    margin-bottom: 2.5rem;
+
+    .iconCircle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4rem;
+        height: 4rem;
+        background-color: rgba($primary, 0.1);
+        border-radius: 50%;
+        margin-bottom: 1rem;
+
+        .icon {
+            font-size: 2.25rem;
+            color: $primary;
+        }
+    }
+
+    h1 {
+        font-size: 2.25rem; // 3xl/4xl
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: $text-white;
+    }
+
+    .orderInfo {
+        color: $text-muted;
+        font-size: 1.125rem; // lg
+
+        .highlight {
+            color: $text-white;
+            font-family: monospace;
+            font-weight: 700;
+        }
+    }
+
+    .paymentBadge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 1rem;
+        padding: 0.25rem 0.75rem;
+        background-color: rgba($success, 0.2); // Green-900/30
+        color: $success; // Green-400
+        font-size: 0.875rem;
+        font-weight: 700;
+        border-radius: 9999px;
+
+        .icon {
+            font-size: 1rem;
+            margin-right: 0.25rem;
+        }
+    }
+}
+
+.receiptCard {
+    background-color: $sidebar-bg; // Dark bg #2c2415 equivalent
+    border-radius: $radius-xl;
+    box-shadow: $shadow-xl;
+    overflow: hidden;
+    border: 1px solid rgba($text-white, 0.1);
+
+    @media print {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        background-color: white;
+        color: black;
+    }
+}
+
+.cardHeader {
+    padding: 2rem;
+    border-bottom: 1px solid rgba($text-white, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    h3 {
+        color: $primary;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .customerDetails {
+        flex: 1;
+        .name { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; color: $text-white; }
+        .contact { color: $text-muted; }
+        .addressLabel { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: $text-muted; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+        .address { color: $text-white; line-height: 1.4; }
+    }
+
+    .deliveryInfo {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        
+        @media (min-width: 768px) {
+            text-align: right;
+            align-items: flex-end;
+        }
+
+        .timelineBox {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba($text-white, 0.05);
+            padding: 0.75rem 1rem;
+            border-radius: $radius-lg;
+            border-left: 4px solid $primary;
+
+            .icon { color: $primary; }
+            .content {
+                text-align: left;
+                .label { font-size: 0.75rem; font-weight: 700; color: $text-muted; display: block; }
+                .date { font-weight: 700; color: $text-white; }
+            }
+        }
+    }
+}
+
+.itemsSection {
+    padding: 2rem;
+
+    h3 {
+        color: $primary;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.tableContainer {
+    overflow-x: auto;
+
+    table {
+        width: 100%;
+        text-align: left;
+        border-collapse: collapse;
+
+        th {
+            padding-bottom: 1rem;
+            font-weight: 700;
+            color: $text-muted;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba($text-white, 0.1);
+        }
+
+        td {
+            padding: 1.5rem 0;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba($text-white, 0.05);
+            color: $text-white;
+
+            &.detailsCell {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+
+                .imgWrapper {
+                    height: 5rem;
+                    width: 5rem;
+                    border-radius: $radius-lg;
+                    overflow: hidden;
+                    background-color: rgba($text-white, 0.05);
+                    border: 1px solid rgba($text-white, 0.1);
+                    flex-shrink: 0;
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                }
+
+                .textInfo {
+                    .name { font-weight: 700; font-size: 1.125rem; margin-bottom: 0.25rem; }
+                    .sku { font-size: 0.875rem; color: $text-muted; }
+                    .extra { font-size: 0.75rem; color: $primary; font-weight: 500; margin-top: 0.25rem; }
+                }
+            }
+
+            &.alignRight { text-align: right; }
+            &.alignCenter { text-align: center; }
+            
+            .badge {
+                padding: 0.25rem 0.75rem;
+                background-color: rgba($text-white, 0.05);
+                border-radius: 0.25rem;
+                font-size: 0.875rem;
+                font-weight: 700;
+            }
+
+            .price { font-weight: 500; }
+            .total { font-weight: 700; font-size: 1rem; }
+        }
+    }
+}
+
+.financialBreakdown {
+    display: grid;
+    background-color: rgba(0,0,0,0.2); // dark:bg-black/20
+    padding: 2rem;
+    border-top: 1px solid rgba($text-white, 0.1);
+    
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .exchangeNote {
+        display: flex;
+        align-items: start;
+        gap: 0.75rem;
+        padding: 1rem;
+        background-color: rgba($text-white, 0.05);
+        border-radius: $radius-lg;
+        border: 1px dashed rgba($text-muted, 0.3);
+        margin-bottom: 1.5rem;
+
+        @media (min-width: 768px) {
+            margin-bottom: 0;
+        }
+
+        .icon { color: $text-muted; }
+        p {
+            font-size: 0.875rem;
+            color: $text-muted;
+            line-height: 1.4;
+            margin: 0;
+            
+            &.title { color: $text-white; font-weight: 700; margin-bottom: 0.25rem; }
+        }
+    }
+
+    .totalsList {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: $text-muted;
+            font-size: 0.95rem;
+
+            &.deduction {
+                color: $danger; // Red-500 equivalent
+                font-weight: 500;
+                
+                .labelWithIcon {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                }
+            }
+
+            .amount { font-weight: 700; color: $text-white; }
+            &.deduction .amount { color: $danger; }
+        }
+
+        .divider {
+            height: 1px;
+            background-color: rgba($text-white, 0.1);
+            margin: 0.5rem 0;
+        }
+
+        .grandTotalBox {
+            background-color: $primary;
+            padding: 1.25rem;
+            border-radius: $radius-lg;
+            color: white; // Always white on primary
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba($primary, 0.2);
+
+            .label {
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                font-weight: 700;
+                opacity: 0.9;
+            }
+            .subLabel {
+                font-size: 1.5rem;
+                font-weight: 700;
+                line-height: 1;
+                margin-top: 0.25rem;
+            }
+            .amount {
+                font-size: 1.875rem; // 3xl
+                font-weight: 700;
+                letter-spacing: -0.025em;
+            }
+        }
+    }
+}
+
+.footer {
+    padding: 2rem;
+    text-align: center;
+    border-top: 1px solid rgba($text-white, 0.1);
+
+    p {
+        color: $text-muted;
+        font-size: 0.875rem;
+        margin: 0;
+        
+        span { color: $text-white; font-weight: 700; }
+        &.disclaimer {
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+    }
+}
+
+.actionsToolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-bottom: 5rem;
+
+    @media (min-width: 640px) {
+        flex-direction: row;
+    }
+
+    @media print {
+        display: none;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 2rem;
+        border-radius: $radius-lg;
+        font-weight: 700;
+        transition: all 0.2s;
+        width: 100%;
+
+        @media (min-width: 640px) {
+            width: auto;
+        }
+
+        &.secondary {
+            background-color: rgba($text-white, 0.1); // bg-white/10 equivalent
+            color: $text-white;
+            border: 1px solid rgba($text-white, 0.2);
+
+            &:hover {
+                background-color: rgba($text-white, 0.2);
+            }
+        }
+
+        &.primary {
+            background-color: $primary;
+            color: white;
+            border: none;
+            box-shadow: 0 10px 15px -3px rgba($primary, 0.3);
+            padding: 0.75rem 3rem;
+
+            &:hover {
+                background-color: darken($primary, 5%);
+            }
+            
+            .icon { font-size: 1.25rem; }
+        }
+    }
+}
+
+.printFooter {
+    display: none;
+    @media print {
+        display: block;
+        position: fixed;
+        bottom: 2.5rem;
+        left: 2.5rem;
+        right: 2.5rem;
+        text-align: center;
+        font-size: 0.65rem;
+        color: #9ca3af;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
+    }
+}

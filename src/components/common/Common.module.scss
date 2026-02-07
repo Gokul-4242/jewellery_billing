@@ -1,0 +1,170 @@
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: $radius-md;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    font-family: inherit;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &.primary {
+        background-color: $primary;
+        color: black;
+        font-weight: 700;
+        box-shadow: $shadow-primary;
+
+        &:hover:not(:disabled) {
+            background-color: $primary-hover;
+            transform: translateY(-1px);
+        }
+    }
+
+    &.secondary {
+        background-color: $surface-dark;
+        color: white;
+        border: $surface-border;
+
+        &:hover:not(:disabled) {
+            background-color: lighten($surface-dark, 5%);
+        }
+    }
+
+    &.outline {
+        background-color: transparent;
+        color: $text-white;
+        border: 1px solid rgba($text-white, 0.2);
+
+        &:hover:not(:disabled) {
+            background-color: rgba($text-white, 0.05);
+            border-color: rgba($text-white, 0.4);
+        }
+    }
+
+    &.ghost {
+        background: none;
+        color: $text-muted;
+        padding: 0.5rem;
+
+        &:hover:not(:disabled) {
+            background-color: rgba($text-white, 0.05);
+            color: white;
+        }
+    }
+}
+
+.card {
+    @include card-base;
+    padding: 1.5rem;
+
+    &.interactive {
+        cursor: pointer;
+        transition: transform 0.2s, background-color 0.2s;
+
+        &:hover {
+            background-color: $surface-dark;
+            transform: translateY(-2px);
+        }
+    }
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: $radius-full;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &.gold {
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+        border: 1px solid rgba($primary, 0.2);
+    }
+
+    &.silver {
+        background-color: rgba($secondary-silver, 0.1);
+        color: $secondary-silver;
+        border: 1px solid rgba($secondary-silver, 0.2);
+    }
+
+    &.success {
+        background-color: rgba($success, 0.1);
+        color: $success;
+    }
+
+    &.danger {
+        background-color: rgba($danger, 0.1);
+        color: $danger;
+    }
+
+    &.warning {
+        background-color: rgba($warning, 0.1);
+        color: $warning;
+    }
+}
+
+.inputField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+
+    label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $text-muted;
+    }
+
+    .inputWrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background-color: $surface-dark;
+            border: $surface-border;
+            border-radius: $radius-md;
+            color: white;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+
+            &::placeholder {
+                color: rgba($text-muted, 0.5);
+            }
+
+            &:focus {
+                outline: none;
+                border-color: $primary;
+                box-shadow: 0 0 0 2px rgba($primary, 0.2);
+            }
+        }
+
+        .icon {
+            position: absolute;
+            left: 0.75rem;
+            color: $text-muted;
+            pointer-events: none;
+        }
+
+        &.hasIcon input {
+            padding-left: 2.5rem;
+        }
+    }
+}
