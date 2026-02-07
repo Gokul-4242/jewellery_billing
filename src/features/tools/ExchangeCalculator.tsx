@@ -8,7 +8,10 @@ interface ExchangeCalculatorProps {
 }
 
 const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddToInvoice }) => {
-    const { rates } = useRates();
+    const { rates, getTrend } = useRates();
+    const goldTrend = getTrend(rates.gold24k, rates.previous?.gold24k);
+    const silverTrend = getTrend(rates.silver, rates.previous?.silver);
+
     // State
     const [metalType, setMetalType] = useState<'gold' | 'silver'>('gold');
     const [grossWeight, setGrossWeight] = useState<number>(15.450); // Default from HTML
@@ -127,7 +130,20 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                     />
                                 </div>
                             ) : (
-                                <>₹{formatNumber(goldRate24k, 2)} <span className={styles.unit}>/g</span></>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span>₹{formatNumber(goldRate24k, 2)} <span className={styles.unit}>/g</span></span>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        color: goldTrend.direction === 'up' ? '#22c55e' : goldTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                            {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'remove'}
+                                        </span>
+                                        {goldTrend.percent}%
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -148,7 +164,20 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                     />
                                 </div>
                             ) : (
-                                <>₹{formatNumber(silverRateFine, 2)} <span className={styles.unit}>/g</span></>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span>₹{formatNumber(silverRateFine, 2)} <span className={styles.unit}>/g</span></span>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        color: silverTrend.direction === 'up' ? '#22c55e' : silverTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                            {silverTrend.direction === 'up' ? 'trending_up' : silverTrend.direction === 'down' ? 'trending_down' : 'remove'}
+                                        </span>
+                                        {silverTrend.percent}%
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -162,8 +191,8 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                         </span>
                         <span className="text">{isEditingRates ? 'Done' : 'Edit'}</span>
                     </button>
-                </div>
-            </section>
+                </div >
+            </section >
 
             <div className={styles.mainGrid}>
                 <div className={styles.formColumn}>
@@ -366,7 +395,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

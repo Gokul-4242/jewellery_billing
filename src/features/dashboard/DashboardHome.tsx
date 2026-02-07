@@ -9,7 +9,7 @@ import { useRates } from '../../context/RateContext';
 
 const DashboardHome: React.FC = () => {
     const { products } = useInventory();
-    const { rates } = useRates();
+    const { rates, getTrend } = useRates();
 
     const [tableFilter, setTableFilter] = React.useState<'All' | 'Alerts'>('All');
     const inventoryRef = React.useRef<HTMLDivElement>(null);
@@ -28,6 +28,12 @@ const DashboardHome: React.FC = () => {
 
     // Valuation based on current market rates
     const totalValuation = (goldStock * rates.gold22k) + (silverStock * rates.silver);
+
+    // Valuation trend calculation
+    const previousGoldRate = rates.previous?.gold22k || rates.gold22k;
+    const previousSilverRate = rates.previous?.silver || rates.silver;
+    const previousValuation = (goldStock * previousGoldRate) + (silverStock * previousSilverRate);
+    const valuationTrend = getTrend(totalValuation, previousValuation);
 
     const handleAlertClick = () => {
         setTableFilter('Alerts');
@@ -86,8 +92,8 @@ const DashboardHome: React.FC = () => {
                     value={`₹${totalValuation.toLocaleString('en-IN')}`}
                     icon="monetization_on"
                     trend={`₹${rates.gold22k}/g Gold`}
-                    trendLabel="Market Value"
-                    trendDirection="up"
+                    trendLabel={valuationTrend.direction === 'neutral' ? 'Stable Market' : 'Market Value'}
+                    trendDirection={valuationTrend.direction === 'neutral' ? 'flat' : valuationTrend.direction}
                     isHighlight={true}
                 />
             </div>

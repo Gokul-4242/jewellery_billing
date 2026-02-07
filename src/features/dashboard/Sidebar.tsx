@@ -11,9 +11,12 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
-    const { rates } = useRates();
+    const { rates, getTrend } = useRates();
     const { settings } = useSettings();
     const [isRateModalOpen, setIsRateModalOpen] = useState(false);
+
+    const goldTrend = getTrend(rates.gold22k, rates.previous?.gold22k);
+    const silverTrend = getTrend(rates.silver, rates.previous?.silver);
 
     const navItems = [
         { name: 'Dashboard', icon: 'dashboard', path: '/dashboard', end: true },
@@ -33,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     return (
         <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
             <div className={styles.sidebarContent}>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
                     {/* Brand */}
                     <div className={styles.brandWrapper}>
@@ -62,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                                 key={item.name}
                                 to={item.path}
                                 end={item.end}
-                                className={({ isActive }) => 
+                                className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }
                             >
@@ -82,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             <NavLink
                                 key={item.name}
                                 to={item.path}
-                                className={({ isActive }) => 
+                                className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }
                             >
@@ -96,29 +99,53 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 {/* Live Rates Widget */}
-                <div className={styles.ratesWidget} style={{ 
-                    marginBottom: '1rem', 
-                    padding: '1rem', 
-                    backgroundColor: 'rgba(226, 157, 18, 0.1)', 
+                <div className={styles.ratesWidget} style={{
+                    marginBottom: '1rem',
+                    padding: '1rem',
+                    backgroundColor: 'rgba(226, 157, 18, 0.1)',
                     borderRadius: '0.5rem',
                     border: '1px solid #4a4030'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e29d12', textTransform: 'uppercase' }}>Today's Rates</span>
-                        <button 
+                        <button
                             onClick={() => setIsRateModalOpen(true)}
                             style={{ background: 'none', border: 'none', color: '#e29d12', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}
                         >
                             Update
                         </button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
                         <span style={{ color: '#b9b09d' }}>Gold (22k)</span>
-                        <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.gold22k.toLocaleString('en-IN')}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.gold22k.toLocaleString('en-IN')}</span>
+                            <span style={{
+                                fontSize: '0.75rem',
+                                color: goldTrend.direction === 'up' ? '#22c55e' : goldTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                    {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'remove'}
+                                </span>
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                         <span style={{ color: '#b9b09d' }}>Silver</span>
-                        <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.silver.toLocaleString('en-IN')}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.silver.toLocaleString('en-IN')}</span>
+                            <span style={{
+                                fontSize: '0.75rem',
+                                color: silverTrend.direction === 'up' ? '#22c55e' : silverTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                    {silverTrend.direction === 'up' ? 'trending_up' : silverTrend.direction === 'down' ? 'trending_down' : 'remove'}
+                                </span>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -132,25 +159,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             />
                             <div className={styles.status}></div>
                         </div>
-                     {!isCollapsed ? (
-                        <>
-                            <div className={styles.userInfo}>
-                                <span className={styles.userName}>Venkadesh</span>
-                                <span className={styles.userRole}>Owner</span>
+                        {!isCollapsed ? (
+                            <>
+                                <div className={styles.userInfo}>
+                                    <span className={styles.userName}>Venkadesh</span>
+                                    <span className={styles.userRole}>Owner</span>
+                                </div>
+                                <span className="material-symbols-outlined" style={{ marginLeft: 'auto', color: '#b9b09d' }}>
+                                    expand_more
+                                </span>
+                            </>
+                        ) : (
+                            <div className={styles.avatarOverlay}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#b9b09d' }}>expand_less</span>
                             </div>
-                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', color: '#b9b09d' }}>
-                                expand_more
-                            </span>
-                        </>
-                    ) : (
-                        <div className={styles.avatarOverlay}>
-                             <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#b9b09d' }}>expand_less</span>
-                        </div>
-                    )}
+                        )}
                     </div>
                 </div>
             </div>
-            
+
             <RateUpdater isOpen={isRateModalOpen} onClose={() => setIsRateModalOpen(false)} />
         </aside>
     );

@@ -15,9 +15,11 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     const handleSave = () => {
-        updateRate('gold22k', Number(localRates.gold22k));
-        updateRate('gold24k', Number(localRates.gold24k));
-        updateRate('silver', Number(localRates.silver));
+        updateRate('all', {
+            gold22k: Number(localRates.gold22k),
+            gold24k: Number(localRates.gold24k),
+            silver: Number(localRates.silver)
+        });
         onClose();
     };
 
@@ -30,7 +32,7 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
-                
+
                 <div className={styles.form}>
                     <div className={styles.inputGroup}>
                         <label>Gold 22k (per gram)</label>
@@ -43,7 +45,7 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
                             />
                         </div>
                     </div>
-                    
+
                     <div className={styles.inputGroup}>
                         <label>Gold 24k (per gram)</label>
                         <div className={styles.inputWrapper}>
