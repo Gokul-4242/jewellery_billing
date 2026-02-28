@@ -81,7 +81,7 @@ const ItemDetail: React.FC = () => {
             showToast('Please fill in all required fields', 'error');
             return;
         }
-        
+
         updateProduct(product.id, editForm);
         setIsEditing(false);
         showToast('Product updated successfully', 'success');
@@ -120,7 +120,7 @@ const ItemDetail: React.FC = () => {
             <div className={styles.headerActions}>
                 {isEditing ? (
                     <>
-                         <button className={styles.deleteBtn} onClick={handleEditToggle}>
+                        <button className={styles.deleteBtn} onClick={handleEditToggle}>
                             <span className="material-symbols-outlined">close</span>
                             Cancel
                         </button>
@@ -152,20 +152,20 @@ const ItemDetail: React.FC = () => {
                 {/* Left Column: Gallery */}
                 <div className={styles.gallerySection}>
                     <div className={styles.mainImage}>
-                         <div className={styles.stockFiles}>
-                             {isEditing ? (
-                                 <CustomDropdown 
+                        <div className={styles.stockFiles}>
+                            {isEditing ? (
+                                <CustomDropdown
                                     options={['In Stock', 'Low Stock', 'Out of Stock']}
                                     value={editForm.status}
                                     onChange={(val) => setEditForm(prev => ({ ...prev, status: val as StockStatus }))}
-                                 />
-                             ) : product.status}
-                         </div>
+                                />
+                            ) : product.status}
+                        </div>
                         <img src={mainImage} alt={product.name} />
                     </div>
                     <div className={styles.thumbnails}>
                         {product.images?.map((img, idx) => (
-                            <button 
+                            <button
                                 key={idx}
                                 className={mainImage === img ? styles.active : ''}
                                 onClick={() => setSelectedImage(img)}
@@ -182,12 +182,12 @@ const ItemDetail: React.FC = () => {
                     <div className={styles.infoCard}>
                         <div className={styles.meta}>
                             {isEditing ? (
-                                <input 
-                                    type="text" 
-                                    name="sku" 
-                                    value={editForm.sku} 
-                                    onChange={handleInputChange} 
-                                    className={styles.input} 
+                                <input
+                                    type="text"
+                                    name="sku"
+                                    value={editForm.sku}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
                                     placeholder="SKU"
                                 />
                             ) : (
@@ -197,12 +197,12 @@ const ItemDetail: React.FC = () => {
                             <span>{product.material} ({product.category})</span>
                         </div>
                         {isEditing ? (
-                            <input 
-                                type="text" 
-                                name="name" 
-                                value={editForm.name} 
-                                onChange={handleInputChange} 
-                                className={`${styles.input} ${styles.largeInput}`} 
+                            <input
+                                type="text"
+                                name="name"
+                                value={editForm.name}
+                                onChange={handleInputChange}
+                                className={`${styles.input} ${styles.largeInput}`}
                                 placeholder="Product Name"
                             />
                         ) : (
@@ -220,11 +220,11 @@ const ItemDetail: React.FC = () => {
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
-                                    <input 
-                                        type="number" 
-                                        name="weight" 
-                                        value={editForm.weight} 
-                                        onChange={handleInputChange} 
+                                    <input
+                                        type="number"
+                                        name="weight"
+                                        value={editForm.weight}
+                                        onChange={handleInputChange}
                                         className={styles.input}
                                         step="0.01"
                                     />
@@ -237,8 +237,8 @@ const ItemDetail: React.FC = () => {
                                 Purity
                             </div>
                             <div className={styles.value}>
-                                 {isEditing ? (
-                                    <CustomDropdown 
+                                {isEditing ? (
+                                    <CustomDropdown
                                         options={materials}
                                         value={editForm.material}
                                         onChange={(val) => setEditForm(prev => ({ ...prev, material: val }))}
@@ -248,7 +248,7 @@ const ItemDetail: React.FC = () => {
                                 ) : product.material}
                             </div>
                         </div>
-                         <div className={styles.statItem}>
+                        <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">inventory</span>
                                 Stock
@@ -261,8 +261,8 @@ const ItemDetail: React.FC = () => {
                                 Type
                             </div>
                             <div className={styles.value}>
-                                 {isEditing ? (
-                                    <CustomDropdown 
+                                {isEditing ? (
+                                    <CustomDropdown
                                         options={categories}
                                         value={editForm.category}
                                         onChange={(val) => setEditForm(prev => ({ ...prev, category: val }))}
@@ -279,54 +279,49 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.priceBlock}>
                             <div className={styles.label}>Selling Price</div>
                             {isEditing ? (
-                                <input 
-                                    type="number" 
-                                    name="price" 
-                                    value={editForm.price} 
-                                    onChange={handleInputChange} 
-                                    className={styles.input} 
+                                <input
+                                    type="number"
+                                    name="price"
+                                    value={editForm.price}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
                                     placeholder="0.00"
                                 />
                             ) : (
                                 <div className={styles.amount}>₹{product.price.toLocaleString('en-IN')}</div>
                             )}
-                             <div className={styles.subtext}>Includes tax & making charges</div>
+
                         </div>
-                        <div className={styles.divider}></div>
-                        <div className={styles.priceBlock}>
-                            <div className={styles.label}>Purchase Cost</div>
-                             <div className={styles.blur}>₹{(product.price * 0.8).toLocaleString('en-IN')}</div>
-                             <div className={`${styles.subtext} ${styles.green}`}>+20% Margin</div>
-                        </div>
+
                     </div>
 
                     {/* Specs */}
                     <div className={styles.specsCard}>
-                         <h3>
+                        <h3>
                             <span className="material-symbols-outlined">manufacturing</span>
                             Technical Specifications
                         </h3>
                         <div className={styles.specsGrid}>
-                             <div className={styles.specItem}>
+                            <div className={styles.specItem}>
                                 <span className={styles.label}>Net Weight</span>
                                 <span className={styles.value}>{product.weight.toFixed(2)} grams</span>
                             </div>
-                             <div className={styles.specItem}>
+                            <div className={styles.specItem}>
                                 <span className={styles.label}>Material</span>
                                 <span className={styles.value}>{product.material}</span>
                             </div>
-                             <div className={styles.specItem}>
+                            <div className={styles.specItem}>
                                 <span className={styles.label}>Hallmarked</span>
                                 <span className={styles.value}>
                                     <span className={`material-symbols-outlined ${styles.check}`}>check_circle</span>
                                     Yes (BIS)
                                 </span>
                             </div>
-                             <div className={styles.specItem}>
+                            <div className={styles.specItem}>
                                 <span className={styles.label}>Category</span>
                                 <span className={styles.value}>{product.category}</span>
                             </div>
-                             <div className={styles.specItem}>
+                            <div className={styles.specItem}>
                                 <span className={styles.label}>Date Added</span>
                                 <span className={styles.value}>{new Date().toLocaleDateString()}</span>
                             </div>

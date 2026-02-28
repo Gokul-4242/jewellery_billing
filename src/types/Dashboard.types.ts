@@ -22,5 +22,6 @@ export interface Product {
     weight: number;
     price: number;
     status: StockStatus;
+    quantity: number;
     lastModified: string;
 }

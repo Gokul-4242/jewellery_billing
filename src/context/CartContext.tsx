@@ -27,13 +27,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addToCart = (product: Product) => {
         // Determine rate based on product material
         const rate = product.material.includes('Gold') ? rates.gold22k : (product.material.includes('Silver') ? rates.silver : 3210);
-        
+
         // Default making charges per gram
-        const makingRate = 500; 
+        const makingRate = 500;
         const rawTotal = (product.weight * rate) + (product.weight * makingRate);
 
         const newItem: BillingItem = {
             id: Math.random().toString(36).substr(2, 9),
+            productId: product.id,
             name: product.name,
             code: product.sku,
             weight: product.weight,

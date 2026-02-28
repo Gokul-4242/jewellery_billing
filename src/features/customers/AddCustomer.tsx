@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './AddCustomer.module.scss';
-import type { Customer } from './CustomerManagement';
-import { Button, Input } from '../../components/common';
+import type { Customer } from '../../types/Customer';
+import { Button, Input, FormSelect } from '../../components/common';
 import { useToast } from '../../context/ToastContext';
 
 interface AddCustomerProps {
@@ -61,8 +61,8 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
         e.preventDefault();
 
         if (!formData.name) {
-             showToast('Customer name is required.', 'error');
-             return;
+            showToast('Customer name is required.', 'error');
+            return;
         }
 
         const customerData: Customer = {
@@ -78,7 +78,7 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
         };
 
         showToast(
-            isEditing ? 'Customer profile updated successfully.' : 'New customer profile created.', 
+            isEditing ? 'Customer profile updated successfully.' : 'New customer profile created.',
             'success'
         );
         onSave(customerData);
@@ -167,17 +167,15 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
                                             icon="call"
                                             className="flex-1"
                                         />
-                                        <Input
-                                            as="select"
+                                        <FormSelect
                                             value={phone.type}
-                                            onChange={(e) => handlePhoneChange(index, 'type', (e.target as any).value)}
                                             options={[
                                                 { label: 'Mobile', value: 'Mobile' },
                                                 { label: 'Home', value: 'Home' },
                                                 { label: 'Work', value: 'Work' }
                                             ]}
-                                            icon="expand_more"
-                                            style={{ width: '120px' }}
+                                            onChange={(val) => handlePhoneChange(index, 'type', val)}
+                                            className={styles.phoneTypeSelect}
                                         />
                                     </div>
                                 ))}

@@ -1,5 +1,6 @@
 export interface BillingItem {
     id: string;
+    productId: string;
     name: string;
     code: string;
     weight: number;
@@ -34,6 +35,7 @@ export interface InvoiceData {
     exchangeItems: ExchangeItem[];
     subtotal: number;
     gst: number; // calculated tax
+    gstRate?: number; // percentage
     discount: number;
     grandTotal: number;
     goldRate: number;

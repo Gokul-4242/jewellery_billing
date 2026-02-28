@@ -18,6 +18,7 @@ const AddItem: React.FC = () => {
         material: '',
         weight: '',
         price: '',
+        quantity: '1',
         stoneDetails: '',
         supplier: ''
     });
@@ -37,7 +38,7 @@ const AddItem: React.FC = () => {
         const files = e.target.files;
         if (files) {
             const filesArray = Array.from(files);
-            
+
             // Limit to 3 images total
             const remainingSlots = 3 - imagePreviews.length;
             if (remainingSlots <= 0) {
@@ -65,9 +66,9 @@ const AddItem: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Basic validation
-        if (!formData.name || !formData.sku || !formData.category || !formData.material || !formData.weight || !formData.price) {
+        if (!formData.name || !formData.sku || !formData.category || !formData.material || !formData.weight || !formData.price || !formData.quantity) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -85,6 +86,7 @@ const AddItem: React.FC = () => {
             material: formData.material,
             weight: parseFloat(formData.weight),
             price: parseFloat(formData.price),
+            quantity: parseInt(formData.quantity) || 1,
             status: 'In Stock' as StockStatus,
             images: imagePreviews,
             lastModified: new Date().toISOString()
@@ -122,27 +124,27 @@ const AddItem: React.FC = () => {
                     <div className={styles.grid}>
                         <div className={styles.formGroup}>
                             <label>Product Name</label>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                value={formData.name} 
-                                onChange={handleInputChange} 
-                                placeholder="e.g., Diamond Encrusted Gold Bangle" 
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                placeholder="e.g., Diamond Encrusted Gold Bangle"
                             />
                         </div>
                         <div className={styles.formGroup}>
                             <label>SKU / Product ID</label>
-                            <input 
-                                type="text" 
-                                name="sku" 
-                                value={formData.sku} 
-                                onChange={handleInputChange} 
-                                placeholder="e.g., GLD-BNG-001" 
+                            <input
+                                type="text"
+                                name="sku"
+                                value={formData.sku}
+                                onChange={handleInputChange}
+                                placeholder="e.g., GLD-BNG-001"
                             />
                         </div>
                         <div className={styles.formGroup}>
                             <label>Category</label>
-                            <CustomDropdown 
+                            <CustomDropdown
                                 options={categories}
                                 value={formData.category}
                                 onChange={(val) => handleDropdownChange('category', val)}
@@ -153,7 +155,7 @@ const AddItem: React.FC = () => {
                         </div>
                         <div className={styles.formGroup}>
                             <label>Material & Purity</label>
-                            <CustomDropdown 
+                            <CustomDropdown
                                 options={materials}
                                 value={formData.material}
                                 onChange={(val) => handleDropdownChange('material', val)}
@@ -171,36 +173,47 @@ const AddItem: React.FC = () => {
                         <span className={`material-symbols-outlined ${styles.icon}`}>measuring_tape</span>
                         Specifications & Quality
                     </h2>
-                    <div className={`${styles.grid} ${styles.cols3}`}>
+                    <div className={`${styles.grid} ${styles.cols4}`}>
                         <div className={styles.formGroup}>
                             <label>Weight (Grams)</label>
-                            <input 
-                                type="number" 
-                                name="weight" 
-                                value={formData.weight} 
-                                onChange={handleInputChange} 
-                                placeholder="0.00" 
-                                step="0.01" 
+                            <input
+                                type="number"
+                                name="weight"
+                                value={formData.weight}
+                                onChange={handleInputChange}
+                                placeholder="0.00"
+                                step="0.01"
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Quantity</label>
+                            <input
+                                type="number"
+                                name="quantity"
+                                value={formData.quantity}
+                                onChange={handleInputChange}
+                                placeholder="1"
+                                min="1"
                             />
                         </div>
                         <div className={styles.formGroup}>
                             <label>Stone Details</label>
-                            <input 
-                                type="text" 
-                                name="stoneDetails" 
-                                value={formData.stoneDetails} 
-                                onChange={handleInputChange} 
-                                placeholder="e.g., 2ct VVS Diamond" 
+                            <input
+                                type="text"
+                                name="stoneDetails"
+                                value={formData.stoneDetails}
+                                onChange={handleInputChange}
+                                placeholder="e.g., 2ct VVS Diamond"
                             />
                         </div>
                         <div className={styles.formGroup}>
                             <label>Price (₹)</label>
-                            <input 
-                                type="number" 
-                                name="price" 
-                                value={formData.price} 
-                                onChange={handleInputChange} 
-                                placeholder="0.00" 
+                            <input
+                                type="number"
+                                name="price"
+                                value={formData.price}
+                                onChange={handleInputChange}
+                                placeholder="0.00"
                             />
                         </div>
                     </div>
@@ -215,12 +228,12 @@ const AddItem: React.FC = () => {
                     <div className={styles.grid}>
                         <div className={styles.formGroup}>
                             <label>Supplier Name</label>
-                            <input 
-                                type="text" 
-                                name="supplier" 
-                                value={formData.supplier} 
-                                onChange={handleInputChange} 
-                                placeholder="Search or Enter Supplier" 
+                            <input
+                                type="text"
+                                name="supplier"
+                                value={formData.supplier}
+                                onChange={handleInputChange}
+                                placeholder="Search or Enter Supplier"
                             />
                         </div>
                     </div>
@@ -232,17 +245,17 @@ const AddItem: React.FC = () => {
                         <span className={`material-symbols-outlined ${styles.icon}`}>image</span>
                         Product Images (Up to 3)
                     </h2>
-                    
+
                     <div className={styles.uploadArea}>
                         {imagePreviews.length === 0 ? (
                             <label>
                                 <span className={`material-symbols-outlined ${styles.uploadIcon}`}>cloud_upload</span>
                                 <p><strong>Click to upload</strong> or drag and drop</p>
                                 <span className={styles.hint}>Upload up to 3 high resolution images</span>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     multiple
-                                    accept="image/*" 
+                                    accept="image/*"
                                     onChange={handleImageChange}
                                     style={{ display: 'none' }}
                                 />
@@ -252,8 +265,8 @@ const AddItem: React.FC = () => {
                                 {imagePreviews.map((preview, index) => (
                                     <div key={index} className={styles.imagePreview}>
                                         <img src={preview} alt={`Preview ${index + 1}`} />
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             className={styles.removeBtn}
                                             onClick={() => removeImage(index)}
                                         >
@@ -265,10 +278,10 @@ const AddItem: React.FC = () => {
                                     <label className={styles.addMore}>
                                         <span className={`material-symbols-outlined ${styles.addIcon}`}>add_a_photo</span>
                                         <span>Add More</span>
-                                        <input 
-                                            type="file" 
+                                        <input
+                                            type="file"
                                             multiple
-                                            accept="image/*" 
+                                            accept="image/*"
                                             onChange={handleImageChange}
                                             style={{ display: 'none' }}
                                         />
@@ -281,8 +294,8 @@ const AddItem: React.FC = () => {
 
                 {/* Action Buttons */}
                 <div className={styles.actions}>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={styles.cancel}
                         onClick={() => navigate('/dashboard/inventory')}
                     >

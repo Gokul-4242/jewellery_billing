@@ -252,6 +252,11 @@
     .phoneRow {
         display: flex;
         gap: 0.5rem;
+
+        .phoneTypeSelect {
+            width: 140px;
+            flex-shrink: 0;
+        }
     }
 
     .addPhoneBtn {

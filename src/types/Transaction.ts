@@ -22,6 +22,7 @@ export interface Transaction {
     items: TransactionItem[];
     subtotal: number;
     gst: number;
+    gstRate?: number;
     discount: number;
     exchangeTotal: number;
     exchangeItems?: any[]; // Using any to avoid importing ExchangeItem for now, or define a simplified version

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import styles from './Billing.module.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FormSelect } from '../../components/common';
 import type { ExchangeItem, InvoiceData } from './types';
 import { useCustomers } from '../../context/CustomerContext';
 import { useInventory } from '../../context/InventoryContext';
@@ -40,7 +41,7 @@ const Billing: React.FC = () => {
 
 
     const { settings } = useSettings();
-    const { products } = useInventory(); // Dynamic products
+    const { products, updateProduct, getProductById } = useInventory(); // Dynamic products
     const { showToast } = useToast();
     const { cartItems, addToCart, removeFromCart, updateCartItem } = useCart();
 
@@ -274,6 +275,7 @@ const Billing: React.FC = () => {
 
     // Payment State
     const [selectedPayment, setSelectedPayment] = useState<'Cash' | 'Card' | 'UPI'>('Cash');
+    const [gstRate, setGstRate] = useState<string>('3'); // Default 3% GST
 
     // Totals Calculation
     const totals = useMemo(() => {
@@ -290,8 +292,9 @@ const Billing: React.FC = () => {
 
         const exchangeTotal = exchangeItems.reduce((sum, item) => sum + item.value, 0);
 
-        // Tax (GST 3%) - Usually calculated on net amount after making charges and item-level discounts
-        const gst = itemWiseTotals.netAmount * 0.03;
+        // Tax (GST) calculation based on selected rate
+        const gstPercent = parseFloat(gstRate) || 0;
+        const gst = itemWiseTotals.netAmount * (gstPercent / 100);
 
         const grandTotal = itemWiseTotals.netAmount + gst - exchangeTotal;
 
@@ -306,7 +309,7 @@ const Billing: React.FC = () => {
             exchangeTotal,
             grandTotal
         };
-    }, [cartItems, exchangeItems]);
+    }, [cartItems, exchangeItems, gstRate]);
 
     const handleProcessInvoice = () => {
         if (cartItems.length === 0) {
@@ -335,6 +338,7 @@ const Billing: React.FC = () => {
             exchangeItems: exchangeItems,
             subtotal: totals.subtotal,
             gst: totals.gst,
+            gstRate: parseFloat(gstRate) || 0,
             discount: totals.discount,
             grandTotal: totals.grandTotal,
             goldRate: rates.gold22k,
@@ -361,6 +365,7 @@ const Billing: React.FC = () => {
             })),
             subtotal: totals.subtotal,
             gst: totals.gst,
+            gstRate: parseFloat(gstRate) || 0,
             discount: totals.discount,
             exchangeTotal: totals.exchangeTotal,
             exchangeItems: exchangeItems,
@@ -369,6 +374,25 @@ const Billing: React.FC = () => {
             status: 'Completed',
             goldRate: rates.gold22k
         };
+
+        // Update Inventory Stock
+        cartItems.forEach(item => {
+            const product = getProductById(item.productId || item.id); // Fallback for legacy items
+            if (product) {
+                const currentQty = product.quantity || 1;
+                const newQuantity = Math.max(0, currentQty - 1);
+
+                let newStatus: any = 'In Stock';
+                if (newQuantity === 0) newStatus = 'Out of Stock';
+                else if (newQuantity <= 2) newStatus = 'Low Stock';
+
+                updateProduct(product.id, {
+                    quantity: newQuantity,
+                    status: newStatus,
+                    lastModified: new Date().toISOString()
+                });
+            }
+        });
 
         addTransaction(newTransaction);
         showToast('Invoice processed successfully', 'success', 'Billed');
@@ -472,8 +496,9 @@ const Billing: React.FC = () => {
                                             filteredProducts.map((product) => (
                                                 <div
                                                     key={product.id}
-                                                    onClick={() => handleAddToCart(product)}
-                                                    className={styles.searchResultItem}
+                                                    onClick={() => (product.quantity === undefined || product.quantity > 0) && handleAddToCart(product)}
+                                                    className={`${styles.searchResultItem} ${(product.quantity === 0) ? styles.disabled : ''}`}
+                                                    style={{ cursor: (product.quantity === 0) ? 'not-allowed' : 'pointer', opacity: (product.quantity === 0) ? 0.6 : 1 }}
                                                 >
                                                     <img
                                                         src={(product.images && product.images[0]) || (product as any).image || 'https://via.placeholder.com/50'}
@@ -481,10 +506,19 @@ const Billing: React.FC = () => {
                                                     />
                                                     <div className={styles.info}>
                                                         <div className={styles.name}>{product.name}</div>
-                                                        <div className={styles.details}>{product.sku} • {product.weight}g • {product.material}</div>
+                                                        <div className={styles.details}>
+                                                            {product.sku} • {product.weight}g • {product.material} •
+                                                            <span style={{
+                                                                color: (product.quantity || 1) > 0 ? '#22c55e' : '#ef4444',
+                                                                fontWeight: 600,
+                                                                marginLeft: '4px'
+                                                            }}>
+                                                                Qty: {product.quantity !== undefined ? product.quantity : 1}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className={styles.action}>
-                                                        Add
+                                                    <div className={styles.action} style={{ opacity: (product.quantity === 0) ? 0.5 : 1 }}>
+                                                        {(product.quantity === 0) ? 'Out' : 'Add'}
                                                     </div>
                                                 </div>
                                             ))
@@ -644,13 +678,15 @@ const Billing: React.FC = () => {
                                 </div>
                                 <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
                                     <label>Metal Type</label>
-                                    <select
+                                    <FormSelect
                                         value={exchangeType}
-                                        onChange={(e) => setExchangeType(e.target.value)}
-                                    >
-                                        <option value="Old Gold">Old Gold</option>
-                                        <option value="Old Silver">Old Silver</option>
-                                    </select>
+                                        onChange={(val) => setExchangeType(val)}
+                                        options={[
+                                            { label: 'Old Gold', value: 'Old Gold' },
+                                            { label: 'Old Silver', value: 'Old Silver' }
+                                        ]}
+                                        className={styles.metalTypeSelect}
+                                    />
                                 </div>
                                 <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
                                     <label>Weight (g)</label>
@@ -886,8 +922,28 @@ const Billing: React.FC = () => {
                             <span style={{ color: '#b9b09d' }}>Making Charges</span>
                             <span className={styles.textBold}>₹{totals.totalMaking.toFixed(2)}</span>
                         </div>
-                        <div className={styles.row}>
-                            <span style={{ color: '#b9b09d' }}>Tax (GST 3%)</span>
+                        <div className={styles.row} style={{ alignItems: 'center' }}>
+                            <span style={{ color: '#b9b09d', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                Tax (GST)
+                                <select
+                                    className={styles.miniSelect}
+                                    value={gstRate}
+                                    onChange={(e) => setGstRate(e.target.value)}
+                                    style={{
+                                        padding: '0.1rem 0.25rem',
+                                        borderRadius: '0.25rem',
+                                        border: '1px solid #4a4030',
+                                        backgroundColor: '#2c2417',
+                                        color: '#e29d12',
+                                        fontSize: '0.75rem',
+                                        width: 'auto',
+                                        marginLeft: '0.25rem'
+                                    }}
+                                >
+                                    <option value="3">3%</option>
+                                    <option value="0">None</option>
+                                </select>
+                            </span>
                             <span className={styles.textBold}>₹{totals.gst.toFixed(2)}</span>
                         </div>
                         <div className={styles.row}>

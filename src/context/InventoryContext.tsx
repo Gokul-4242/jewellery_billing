@@ -20,7 +20,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const [products, setProducts] = useState<Product[]>(() => {
         const stored = localStorage.getItem('inventory');
         const initialProducts = stored ? JSON.parse(stored) : MOCK_PRODUCTS;
-        
+
         // Data Migration: Ensure all products have required fields and arrays
         return initialProducts.map((p: any) => {
             const migrated = { ...p };
@@ -34,6 +34,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (!migrated.material) migrated.material = 'Unknown';
             if (!migrated.name) migrated.name = 'Unnamed Product';
             if (!migrated.sku) migrated.sku = 'NO-SKU';
+            if (migrated.quantity === undefined) migrated.quantity = 1;
             return migrated;
         });
     });
@@ -41,7 +42,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const [categories, setCategories] = useState<string[]>(() => {
         const stored = localStorage.getItem('inventory_categories');
         if (stored) {
-            try { return JSON.parse(stored); } catch(e) { console.error(e); }
+            try { return JSON.parse(stored); } catch (e) { console.error(e); }
         }
         return ['Ring', 'Necklace', 'Pendant', 'Earrings', 'Bracelet', 'Bangle'];
     });
@@ -49,7 +50,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const [materials, setMaterials] = useState<string[]>(() => {
         const stored = localStorage.getItem('inventory_materials');
         if (stored) {
-            try { return JSON.parse(stored); } catch(e) { console.error(e); }
+            try { return JSON.parse(stored); } catch (e) { console.error(e); }
         }
         return ['22k Gold', '24k Gold', '18k Gold', '925 Silver', 'Platinum', 'Rose Gold'];
     });
@@ -107,14 +108,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const getProductById = (id: string) => products.find(p => p.id === id);
 
     return (
-        <InventoryContext.Provider value={{ 
-            products, 
-            categories, 
-            materials, 
-            addProduct, 
-            updateProduct, 
-            deleteProduct, 
-            getProductById, 
+        <InventoryContext.Provider value={{
+            products,
+            categories,
+            materials,
+            addProduct,
+            updateProduct,
+            deleteProduct,
+            getProductById,
             addCategory,
             addMaterial
         }}>
