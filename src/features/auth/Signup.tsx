@@ -113,7 +113,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         id="email"
                                         name="email"
                                         type="email"
-                                        placeholder="name@luxejewellery.com"
+                                        placeholder="name@vghjewellers.com"
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         required

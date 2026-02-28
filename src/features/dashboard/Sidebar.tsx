@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import styles from './Dashboard.module.scss';
 import { useRates } from '../../context/RateContext';
 import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import RateUpdater from '../tools/RateUpdater';
 
 interface SidebarProps {
@@ -13,7 +14,9 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     const { rates, getTrend } = useRates();
     const { settings } = useSettings();
+    const { user, logout } = useAuth();
     const [isRateModalOpen, setIsRateModalOpen] = useState(false);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
     const goldTrend = getTrend(rates.gold22k, rates.previous?.gold22k);
     const silverTrend = getTrend(rates.silver, rates.previous?.silver);
@@ -150,8 +153,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 {/* User Profile */}
-                <div className={styles.userProfile}>
-                    <div className={styles.profileCard}>
+                <div className={styles.userProfile} style={{ position: 'relative' }}>
+                    <div
+                        className={styles.profileCard}
+                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    >
                         <div className={styles.avatar}>
                             <img
                                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzQYHy0QnIT1t3iXevWaMdHkHWqMfgh9IR37AuoQ8TA6VI7PbVmUa61-W4Yc9p6Ugc7froH_YIGcsgsXdrEP2Q-GME5s-XypdkX0iQZjzFTIsuW-clLYTIirVw6aDzs3syfpYCx4hDRlF7WV8ZUJJX5W1KoZ_CYqLzXlJqwPuAs22-jr6q6AKGD3gieWG_HaheSkW-XrE-jGGcxBW3JnlrK4UWAWREb2uVIDfSVhiFNQHukm0011G8id5SDcHrrOM2FVF-GoidlMlL"
@@ -162,11 +168,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                         {!isCollapsed ? (
                             <>
                                 <div className={styles.userInfo}>
-                                    <span className={styles.userName}>Venkadesh</span>
+                                    <span className={styles.userName}>{user?.username || 'Venkadesh'}</span>
                                     <span className={styles.userRole}>Owner</span>
                                 </div>
                                 <span className="material-symbols-outlined" style={{ marginLeft: 'auto', color: '#b9b09d' }}>
-                                    expand_more
+                                    {isProfileDropdownOpen ? 'expand_less' : 'expand_more'}
                                 </span>
                             </>
                         ) : (
@@ -175,6 +181,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             </div>
                         )}
                     </div>
+
+                    {/* Logout Dropdown */}
+                    {isProfileDropdownOpen && (
+                        <div className={styles.actionMenu} style={{
+                            top: '100%',
+                            bottom: 'auto',
+                            marginTop: '0.25rem',
+                            width: isCollapsed ? '10rem' : 'calc(100% - 3.25rem)',
+                            left: isCollapsed ? '100%' : '3.25rem',
+                            zIndex: 100
+                        }}>
+                            <button className={`${styles.actionItem} ${styles.deleteAction}`} onClick={logout}>
+                                <span className="material-symbols-outlined">logout</span>
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
