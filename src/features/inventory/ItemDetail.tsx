@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ItemDetail.module.scss';
 import { useInventory } from '../../context/InventoryContext';
@@ -16,32 +17,28 @@ const ItemDetail: React.FC = () => {
     const { addToCart } = useCart();
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
-    const [editForm, setEditForm] = useState({
-        name: '',
-        sku: '',
-        category: '' as string,
-        material: '' as string,
-        weight: 0,
-        price: 0,
-        status: '' as StockStatus
-    });
-
     const product = id ? getProductById(id) : undefined;
 
-    useEffect(() => {
-        if (product) {
-            setEditForm({
-                name: product.name,
-                sku: product.sku,
-                category: product.category,
-                material: product.material,
-                weight: product.weight,
-                price: product.price,
-                status: product.status
-            });
+    const [isEditing, setIsEditing] = useState<boolean>(location.state?.edit || false);
+    const [editForm, setEditForm] = useState({
+        name: product?.name ?? '',
+        sku: product?.sku ?? '',
+        category: (product?.category ?? '') as string,
+        material: (product?.material ?? '') as string,
+        weight: product?.weight ?? 0,
+        price: product?.price ?? 0,
+        status: (product?.status ?? '') as StockStatus,
+        quantity: product?.quantity ?? 1
+    });
+
+    const getStatusClass = (status: string) => {
+        switch (status) {
+            case 'In Stock': return styles.inStock;
+            case 'Low Stock': return styles.lowStock;
+            case 'Out of Stock': return styles.outOfStock;
+            default: return '';
         }
-    }, [product]);
+    };
 
     if (!product) {
         return (
@@ -70,7 +67,8 @@ const ItemDetail: React.FC = () => {
                 material: product.material,
                 weight: product.weight,
                 price: product.price,
-                status: product.status
+                status: product.status,
+                quantity: product.quantity ?? 1
             });
         }
         setIsEditing(!isEditing);
@@ -91,7 +89,7 @@ const ItemDetail: React.FC = () => {
         const { name, value } = e.target;
         setEditForm(prev => ({
             ...prev,
-            [name]: name === 'weight' || name === 'price' ? parseFloat(value) || 0 : value
+            [name]: name === 'weight' || name === 'price' || name === 'quantity' ? parseFloat(value) || 0 : value
         }));
     };
 
@@ -152,7 +150,7 @@ const ItemDetail: React.FC = () => {
                 {/* Left Column: Gallery */}
                 <div className={styles.gallerySection}>
                     <div className={styles.mainImage}>
-                        <div className={styles.stockFiles}>
+                        <div className={`${styles.stockFiles} ${!isEditing ? getStatusClass(product.status) : ''}`}>
                             {isEditing ? (
                                 <CustomDropdown
                                     options={['In Stock', 'Low Stock', 'Out of Stock']}
@@ -253,7 +251,18 @@ const ItemDetail: React.FC = () => {
                                 <span className="material-symbols-outlined">inventory</span>
                                 Stock
                             </div>
-                            <div className={styles.value}>1 Unit</div>
+                            <div className={styles.value}>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        value={editForm.quantity}
+                                        onChange={handleInputChange}
+                                        className={styles.input}
+                                        step="1"
+                                    />
+                                ) : `${product.quantity ?? 1} Units`}
+                            </div>
                         </div>
                         <div className={styles.statItem}>
                             <div className={styles.label}>

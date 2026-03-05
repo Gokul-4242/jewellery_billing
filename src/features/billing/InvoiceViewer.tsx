@@ -46,7 +46,13 @@ const InvoiceViewer: React.FC = () => {
                         email: customer?.email
                     },
                     items: tx.items.map(item => ({ ...item, productId: item.id })) as BillingItem[],
-                    exchangeItems: tx.exchangeItems || [],
+                    exchangeItems: (tx.exchangeItems || []).map(ei => ({
+                        id: ei.id,
+                        description: ei.name || ei.description || '',
+                        weight: ei.weight,
+                        purity: typeof ei.purity === 'number' ? ei.purity : parseFloat(String(ei.purity)) || 0,
+                        value: ei.value
+                    })),
                     subtotal: tx.subtotal,
                     gst: tx.gst,
                     discount: tx.discount,

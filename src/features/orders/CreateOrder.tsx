@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import styles from './CreateOrder.module.scss';
 import { useCustomers } from '../../context/CustomerContext';
@@ -17,118 +17,114 @@ const CreateOrder: React.FC = () => {
     const { showToast } = useToast();
     const { rates } = useRates();
 
-    // Form State
-    const [customerId, setCustomerId] = useState('');
-    const [description, setDescription] = useState('');
-    const [deliveryDate, setDeliveryDate] = useState('');
+    // Form State (lazy initializers populate from existing order on mount, avoiding setState in useEffect)
+    const [customerId, setCustomerId] = useState(() => {
+        if (id) return transactions.find(t => t.id === id)?.customerId || '';
+        return (location.state as { customerId?: string })?.customerId || '';
+    });
+    const [description, setDescription] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item ? item.name.replace('Custom Order: ', '').replace('...', '') : '';
+    });
+    const [deliveryDate, setDeliveryDate] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        const dateSource = order?.deliveryDate || order?.date;
+        return dateSource ? new Date(dateSource).toISOString().split('T')[0] : '';
+    });
     const [urgency, setUrgency] = useState('normal');
-    const [valuationRef, setValuationRef] = useState('');
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [valuationRef, setValuationRef] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.exchangeItems?.[0]?.name || '';
+    });
+    const [imagePreview, setImagePreview] = useState<string | null>(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.imageUrl || null;
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
     // Item Details State
-    const [metalType, setMetalType] = useState('Gold');
-    const [metalWeight, setMetalWeight] = useState('');
-    const [stoneWeight, setStoneWeight] = useState('');
-    const [stoneRate, setStoneRate] = useState('');
-    const [makingCharges, setMakingCharges] = useState('');
-    const [wastagePercentage, setWastagePercentage] = useState('');
+    const [metalType, setMetalType] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.metalType || 'Gold';
+    });
+    const [metalWeight, setMetalWeight] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.weight ? item.weight.toString() : '';
+    });
+    const [stoneWeight, setStoneWeight] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.stoneWeight ? item.stoneWeight.toString() : '';
+    });
+    const [stoneRate, setStoneRate] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.stoneRate ? item.stoneRate.toString() : '';
+    });
+    const [makingCharges, setMakingCharges] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.makingCharges ? item.makingCharges.toString() : '';
+    });
+    const [wastagePercentage, setWastagePercentage] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.wastage ? item.wastage.toString() : '';
+    });
 
     // Financials (Strings for input handling)
-    const [totalAmountStr, setTotalAmount] = useState('0.00');
+    const [totalAmountStr, setTotalAmount] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order ? order.grandTotal.toString() : '0.00';
+    });
     const [advanceStr, setAdvance] = useState('0.00');
-    const [exchangeCreditStr, setExchangeCredit] = useState('0.00');
-    const [exchangeWeight, setExchangeWeight] = useState('');
+    const [exchangeCreditStr, setExchangeCredit] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order ? order.exchangeTotal.toString() : '0.00';
+    });
+    const [exchangeWeight, setExchangeWeight] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.exchangeItems?.[0]?.weight?.toString() || '';
+    });
     
     // Auto-calculate state - default to true for new orders, false for edits
     const [autoCalculate, setAutoCalculate] = useState(!id);
 
-    // Reset auto-calculate when switching between create/edit
-    useEffect(() => {
-        setAutoCalculate(!id);
-    }, [id]);
+
+
+    // Stable IDs for this form session (generated once on mount via lazy initializer)
+    const [orderIdRef] = useState(() => id ? id : `ORD-${Date.now()}`);
+    const [invoiceNoRef] = useState(() => `INV-${Math.floor(Math.random() * 10000)}`);
+    const [itemIdRef] = useState(() => `item-${Date.now()}`);
+    const [exchangeIdRef] = useState(() => `ex-${Date.now()}`);
 
     // Derived State
     const selectedCustomer = customers.find(c => c.id === customerId);
     
+    // Auto-Calculate Total (derived, no setState in effect)
+    const autoCalculatedTotal = (() => {
+        if (!autoCalculate) return null;
+        const weight = parseFloat(metalWeight) || 0;
+        const wastage = parseFloat(wastagePercentage) || 0;
+        const making = parseFloat(makingCharges) || 0;
+        const stone = parseFloat(stoneRate) || 0;
+        let rate = 0;
+        if (metalType === 'Gold') rate = rates.gold22k;
+        else if (metalType === 'Gold-18k') rate = rates.gold22k * (18/22);
+        else if (metalType === 'Silver') rate = rates.silver;
+        if (rate > 0) {
+            const metalCost = weight * rate;
+            const wastageCost = metalCost * (wastage / 100);
+            return (metalCost + wastageCost + making + stone).toFixed(2);
+        }
+        return null;
+    })();
+    const effectiveTotalAmountStr = (autoCalculate && autoCalculatedTotal) ? autoCalculatedTotal : totalAmountStr;
+    
     // Parsing Helpers
     const parseCurrency = (str: string) => parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
-    const totalAmount = parseCurrency(totalAmountStr);
+    const totalAmount = parseCurrency(effectiveTotalAmountStr);
     const advance = parseCurrency(advanceStr);
     const exchangeCredit = parseCurrency(exchangeCreditStr);
     
     const cashToPay = Math.max(0, advance - exchangeCredit);
     const remaining = Math.max(0, totalAmount - advance); 
-    
-    // Auto-Calculate Total
-    useEffect(() => {
-        if (autoCalculate) { 
-            const weight = parseFloat(metalWeight) || 0;
-            const wastage = parseFloat(wastagePercentage) || 0;
-            const making = parseFloat(makingCharges) || 0;
-            const stone = parseFloat(stoneRate) || 0;
-            
-            let rate = 0;
-            if (metalType === 'Gold') rate = rates.gold22k;
-            else if (metalType === 'Gold-18k') rate = rates.gold22k * (18/22);
-            else if (metalType === 'Silver') rate = rates.silver;
-            
-            if (rate > 0) {
-                const metalCost = weight * rate;
-                const wastageCost = metalCost * (wastage / 100);
-                const total = metalCost + wastageCost + making + stone;
-                // Round to 2 decimal places? or nearest integer? usually currency is 2 decimals
-                setTotalAmount(total.toFixed(2));
-                
-                // Also update advance if it was previously default? 
-                // Maybe set default advance as 30%?
-                // setAdvance((total * 0.3).toFixed(2));
-            }
-        }
-    }, [autoCalculate, metalWeight, wastagePercentage, makingCharges, stoneRate, metalType, rates, id]);
 
-    // Effect to populate form if editing
-    useEffect(() => {
-        if (id) {
-            const existingOrder = transactions.find(t => t.id === id);
-            if (existingOrder) {
-                setCustomerId(existingOrder.customerId || '');
-                
-                const item = existingOrder.items[0];
-                if (item) {
-                    const desc = item.name.replace('Custom Order: ', '').replace('...', '') || '';
-                    setDescription(desc);
-                    setMetalType(item.metalType || 'Gold');
-                    setMetalWeight(item.weight ? item.weight.toString() : '');
-                    setStoneWeight(item.stoneWeight ? item.stoneWeight.toString() : '');
-                    setStoneRate(item.stoneRate ? item.stoneRate.toString() : '');
-                    setMakingCharges(item.makingCharges ? item.makingCharges.toString() : '');
-                    setWastagePercentage(item.wastage ? item.wastage.toString() : '');
-                }
-                
-                // Date: Parse ISO to YYYY-MM-DD
-                // Prefer explicit deliveryDate column, fallback to date for legacy records
-                const dateSource = existingOrder.deliveryDate || existingOrder.date;
-                const date = dateSource ? new Date(dateSource).toISOString().split('T')[0] : '';
-                setDeliveryDate(date);
-                
-                if (existingOrder.imageUrl) {
-                    setImagePreview(existingOrder.imageUrl);
-                }
-
-                // Financials
-                setTotalAmount(existingOrder.grandTotal.toString());
-                setExchangeCredit(existingOrder.exchangeTotal.toString());
-                
-                if (existingOrder.exchangeItems && existingOrder.exchangeItems.length > 0) {
-                     setValuationRef(existingOrder.exchangeItems[0].name || '');
-                     setExchangeWeight(existingOrder.exchangeItems[0].weight?.toString() || '');
-                }
-            }
-        } else if (location.state && (location.state as { customerId?: string }).customerId) {
-            // If new order and customer ID passed in state
-            setCustomerId((location.state as { customerId?: string }).customerId!);
-        }
-    }, [id, transactions, location.state]);
 
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -171,25 +167,25 @@ const CreateOrder: React.FC = () => {
         }
 
         const orderData = {
-             id: id || `ORD-${Date.now()}`,
-             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : `INV-${Math.floor(Math.random() * 10000)}`,
+             id: id || orderIdRef,
+             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : invoiceNoRef,
              date: id ? (transactions.find(t => t.id === id)?.date || new Date().toISOString()) : new Date().toISOString(), 
              deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined,
              customerName: selectedCustomer?.name || 'Unknown',
              customerId: customerId,
              items: [
                  {
-                     id: `item-${Date.now()}`,
+                     id: itemIdRef,
                      name: `Custom Order: ${description}`,
                      code: 'CUST-BESPOKE',
                      weight: parseFloat(metalWeight) || 0,
-                     purity: 'N/A', // Could infer from metalType but leaving as N/A or user specified in description
+                     purity: 'N/A',
                      metalType: metalType,
                      stoneWeight: parseFloat(stoneWeight) || 0,
                      stoneRate: parseFloat(stoneRate) || 0,
                      makingCharges: parseFloat(makingCharges) || 0,
                      wastage: parseFloat(wastagePercentage) || 0,
-                     rate: 0, // Base rate not explicitly asked for, could be per gram
+                     rate: 0,
                      total: totalAmount 
                  }
              ],
@@ -199,11 +195,11 @@ const CreateOrder: React.FC = () => {
              exchangeTotal: exchangeCredit,
              exchangeItems: exchangeCredit > 0 || valuationRef ? [
                  {
-                     id: `ex-${Date.now()}`,
+                     id: exchangeIdRef,
                      name: valuationRef,
                      weight: parseFloat(exchangeWeight) || 0,
                      value: exchangeCredit,
-                     purity: 'N/A' // Default
+                     purity: 'N/A'
                  }
              ] : [],
              grandTotal: totalAmount,

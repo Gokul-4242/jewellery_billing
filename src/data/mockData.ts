@@ -16,6 +16,7 @@ export const MOCK_PRODUCTS: Product[] = [
         weight: 12.50,
         price: 1200,
         status: 'In Stock',
+        quantity: 10,
         lastModified: '2024-02-04T10:00:00Z'
     },
     {
@@ -28,6 +29,7 @@ export const MOCK_PRODUCTS: Product[] = [
         weight: 45.00,
         price: 120,
         status: 'Low Stock',
+        quantity: 3,
         lastModified: '2024-02-04T09:30:00Z'
     },
     {
@@ -40,6 +42,7 @@ export const MOCK_PRODUCTS: Product[] = [
         weight: 8.00,
         price: 950,
         status: 'In Stock',
+        quantity: 5,
         lastModified: '2024-02-03T15:00:00Z'
     },
     {
@@ -52,6 +55,7 @@ export const MOCK_PRODUCTS: Product[] = [
         weight: 6.50,
         price: 55,
         status: 'Out of Stock',
+        quantity: 0,
         lastModified: '2024-02-02T11:00:00Z'
     },
     {
@@ -64,6 +68,7 @@ export const MOCK_PRODUCTS: Product[] = [
         weight: 24.20,
         price: 2100,
         status: 'In Stock',
+        quantity: 7,
         lastModified: '2024-02-04T12:00:00Z'
     }
 ];

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+
 import styles from './ExchangeCalculator.module.scss';
 import { useRates } from '../../context/RateContext';
 
@@ -24,15 +25,8 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
     const [silverRateFine, setSilverRateFine] = useState<number>(rates.silver);
     const [isEditingRates, setIsEditingRates] = useState<boolean>(false);
 
-    // Derived State
-    const [netWeight, setNetWeight] = useState<number>(0);
-    const [purityConvertedWeight, setPurityConvertedWeight] = useState<number>(0);
-    const [deductionAmount, setDeductionAmount] = useState<number>(0);
-    const [totalValue, setTotalValue] = useState<number>(0);
-    const [appliedRate, setAppliedRate] = useState<number>(0);
-
-    // Calculate
-    useEffect(() => {
+    // Derived calculations (no useEffect needed)
+    const { netWeight, purityConvertedWeight, deductionAmount, totalValue, appliedRate } = useMemo(() => {
         let purityFactor = 1;
 
         if (metalType === 'gold') {
@@ -61,12 +55,13 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
         const rate = metalType === 'gold' ? goldRate24k : silverRateFine;
         const value = net * rate;
 
-        setPurityConvertedWeight(convertedWeight);
-        setDeductionAmount(deduc);
-        setNetWeight(net);
-        setTotalValue(value);
-        setAppliedRate(rate);
-
+        return {
+            purityConvertedWeight: convertedWeight,
+            deductionAmount: deduc,
+            netWeight: net,
+            totalValue: value,
+            appliedRate: rate
+        };
     }, [metalType, grossWeight, purity, deductionValue, deductionUnit, goldRate24k, silverRateFine]);
 
     const formatNumber = (num: number, decimals: number = 3) => {

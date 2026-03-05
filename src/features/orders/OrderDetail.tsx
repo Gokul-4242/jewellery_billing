@@ -67,7 +67,7 @@ const OrderDetail: React.FC = () => {
             setShowCancelModal(true);
             setShowStatusMenu(false);
         } else {
-            // @ts-ignore
+            // @ts-expect-error - status type may not include all string values
             updateTransaction({ ...order, status });
             setShowStatusMenu(false);
         }
@@ -76,7 +76,6 @@ const OrderDetail: React.FC = () => {
     const confirmCancellation = () => {
         if (!cancelReason.trim()) return;
 
-        // @ts-ignore
         updateTransaction({ 
             ...order, 
             status: 'Cancelled',

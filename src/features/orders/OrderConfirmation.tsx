@@ -33,8 +33,8 @@ const OrderConfirmation: React.FC = () => {
         name: customer?.name || order?.customerName || "Walk-in Customer",
         email: customer?.email || "N/A", // We might not have email in our Customer type yet
         phone: customer?.phone || "N/A",
-        // @ts-ignore
-        address: customer?.address || "No address on file" // Assuming address field exists or we mock it
+        // @ts-expect-error - address field may not exist on Customer type yet
+        address: customer?.address || "No address on file"
     };
 
     if (!order) {

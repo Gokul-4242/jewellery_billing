@@ -22,12 +22,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
         const initialProducts = stored ? JSON.parse(stored) : MOCK_PRODUCTS;
 
         return initialProducts.map((p: Partial<Product>) => {
-            const migrated = { ...p };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const migrated = { ...p } as any;
             if (!migrated.images && migrated.image) {
                 migrated.images = [migrated.image];
+                delete migrated.image;
             }
             if (!migrated.images || !Array.isArray(migrated.images)) {
-                migrated.images = ['https://via.placeholder.com/150'];
+                migrated.images = [];
             }
             if (!migrated.category) migrated.category = 'Uncategorized';
             if (!migrated.material) migrated.material = 'Unknown';
