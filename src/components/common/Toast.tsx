@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import styles from './Toast.module.scss';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -15,21 +15,21 @@ export interface ToastProps {
 export const Toast: React.FC<ToastProps> = ({ id, message, title, type, duration = 3000, onClose }) => {
     const [isExiting, setIsExiting] = useState(false);
 
+    const handleClose = useCallback(() => {
+        setIsExiting(true);
+        // Wait for animation to finish before actually calling close
+        setTimeout(() => {
+            onClose(id);
+        }, 300); 
+    }, [id, onClose]);
+
     useEffect(() => {
         const timer = setTimeout(() => {
             handleClose();
         }, duration);
 
         return () => clearTimeout(timer);
-    }, [duration]);
-
-    const handleClose = () => {
-        setIsExiting(true);
-        // Wait for animation to finish before actually calling close
-        setTimeout(() => {
-            onClose(id);
-        }, 300); 
-    };
+    }, [duration, handleClose]);
 
     const getIcon = () => {
         switch (type) {

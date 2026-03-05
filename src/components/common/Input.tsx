@@ -21,7 +21,7 @@ export const Input: React.FC<InputProps> = ({
     children,
     ...props
 }) => {
-    const Component = as as any;
+    const Component = as as 'input' | 'select' | 'textarea';
 
     return (
         <div className={`${styles.inputField} ${className}`}>

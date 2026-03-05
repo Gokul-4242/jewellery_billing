@@ -163,7 +163,7 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
                                             type="tel"
                                             placeholder="+91 00000 00000"
                                             value={phone.number}
-                                            onChange={(e) => handlePhoneChange(index, 'number', (e.target as any).value)}
+                                            onChange={(e) => handlePhoneChange(index, 'number', e.target.value)}
                                             icon="call"
                                             className="flex-1"
                                         />

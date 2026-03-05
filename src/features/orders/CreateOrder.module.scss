@@ -91,6 +91,11 @@
         font-size: 0.875rem;
         font-weight: 500;
         color: $text-muted;
+        
+        .required {
+            color: $danger;
+            margin-left: 0.25rem;
+        }
     }
 
     input, select, textarea {

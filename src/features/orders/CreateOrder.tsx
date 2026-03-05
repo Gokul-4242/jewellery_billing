@@ -6,6 +6,7 @@ import { useTransactions } from '../../context/TransactionContext';
 import { useToast } from '../../context/ToastContext';
 import { useRates } from '../../context/RateContext';
 import { FormSelect } from '../../components/common';
+import type { Transaction } from '../../types/Transaction';
 
 const CreateOrder: React.FC = () => {
     const navigate = useNavigate();
@@ -47,7 +48,7 @@ const CreateOrder: React.FC = () => {
     }, [id]);
 
     // Derived State
-    const selectedCustomer = customers.find((c: any) => c.id === customerId);
+    const selectedCustomer = customers.find(c => c.id === customerId);
     
     // Parsing Helpers
     const parseCurrency = (str: string) => parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
@@ -123,9 +124,9 @@ const CreateOrder: React.FC = () => {
                      setExchangeWeight(existingOrder.exchangeItems[0].weight?.toString() || '');
                 }
             }
-        } else if (location.state && (location.state as any).customerId) {
+        } else if (location.state && (location.state as { customerId?: string }).customerId) {
             // If new order and customer ID passed in state
-            setCustomerId((location.state as any).customerId);
+            setCustomerId((location.state as { customerId?: string }).customerId!);
         }
     }, [id, transactions, location.state]);
 
@@ -169,7 +170,7 @@ const CreateOrder: React.FC = () => {
             return;
         }
 
-        const orderData: any = {
+        const orderData = {
              id: id || `ORD-${Date.now()}`,
              invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : `INV-${Math.floor(Math.random() * 10000)}`,
              date: id ? (transactions.find(t => t.id === id)?.date || new Date().toISOString()) : new Date().toISOString(), 
@@ -210,7 +211,7 @@ const CreateOrder: React.FC = () => {
              paymentMethod: 'Split', 
              status: id ? (transactions.find(t => t.id === id)?.status || 'Pending') : 'Pending',
              imageUrl: imagePreview || undefined
-        };
+        } as Transaction;
 
         if (id) {
             updateTransaction(orderData);
@@ -247,12 +248,12 @@ const CreateOrder: React.FC = () => {
                     </h2>
                     <div className={styles.gridTwo}>
                         <div className={styles.fieldGroup}>
-                            <label>Select Customer</label>
+                            <label>Select Customer <span className={styles.required}>*</span></label>
                             <FormSelect 
                                 value={customerId} 
                                 onChange={(val) => setCustomerId(val)}
                                 options={[
-                                    ...customers.map((c: any) => ({ value: c.id, label: `${c.name} - ${c.phone}` })),
+                                    ...customers.map(c => ({ value: c.id, label: `${c.name} - ${c.phone}` })),
                                     { value: 'new', label: '+ Add New Customer (Not implemented)' }
                                 ]}
                                 placeholder="Select existing customer..."
@@ -275,7 +276,7 @@ const CreateOrder: React.FC = () => {
                     <div className={styles.gridThree}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div className={styles.fieldGroup}>
-                                <label>Detailed Description</label>
+                                <label>Detailed Description <span className={styles.required}>*</span></label>
                                 <textarea 
                                     placeholder="Specify metal type (18k Gold, Sterling Silver), stone details, engravings, sizing, and design nuances..."
                                     value={description}
@@ -284,7 +285,7 @@ const CreateOrder: React.FC = () => {
                             </div>
                             <div className={styles.gridTwo}>
                                 <div className={styles.fieldGroup}>
-                                    <label>Target Delivery Date</label>
+                                    <label>Target Delivery Date <span className={styles.required}>*</span></label>
                                     <input 
                                         type="date" 
                                         value={deliveryDate}

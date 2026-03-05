@@ -21,8 +21,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
         const stored = localStorage.getItem('inventory');
         const initialProducts = stored ? JSON.parse(stored) : MOCK_PRODUCTS;
 
-        // Data Migration: Ensure all products have required fields and arrays
-        return initialProducts.map((p: any) => {
+        return initialProducts.map((p: Partial<Product>) => {
             const migrated = { ...p };
             if (!migrated.images && migrated.image) {
                 migrated.images = [migrated.image];

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -17,22 +17,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => {
+        return localStorage.getItem('isAuthenticated') === 'true' 
+            ? { id: '1', username: 'Admin', role: 'admin' }
+            : null;
+    });
     // Initialize from localStorage to check if we have a session
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         return localStorage.getItem('isAuthenticated') === 'true';
     });
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        // Sync state if needed on mount, mostly useful if we had a real token
-        const storedAuth = localStorage.getItem('isAuthenticated');
-        if (storedAuth === 'true' && !user) {
-             // Rehydrate user (mock)
-             setUser({ id: '1', username: 'Admin', role: 'admin' });
-        }
-    }, []);
 
     const login = (username: string) => {
         const mockUser: User = { id: '1', username, role: 'admin' };

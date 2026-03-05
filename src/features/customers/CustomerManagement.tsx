@@ -48,7 +48,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onSelectCustome
         });
 
         return result;
-    }, [searchTerm, sortBy]);
+    }, [searchTerm, sortBy, customers]);
 
     const formatCurrency = (amount: number) => {
         return amount.toLocaleString('en-IN', {

@@ -309,7 +309,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                         <div
                                             className={styles.productImage}
                                             style={{ 
-                                                backgroundImage: `url("${(product.images && product.images.length > 0) ? product.images[0] : 'https://via.placeholder.com/150'}")` 
+                                                backgroundImage: (product.images && product.images.length > 0) ? `url("${product.images[0]}")` : 'none'
                                             }}
                                         ></div>
                                         <div className={styles.productInfo}>

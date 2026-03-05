@@ -13,6 +13,7 @@ import type { Product } from '../../types/Dashboard.types';
 import type { Transaction } from '../../types/Transaction';
 import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
+import avatarImg from '../../assets/billing page.png';
 
 const Billing: React.FC = () => {
     const navigate = useNavigate();
@@ -46,8 +47,18 @@ const Billing: React.FC = () => {
     const { cartItems, addToCart, removeFromCart, updateCartItem } = useCart();
 
     // Customer Search State
-    const [searchPhone, setSearchPhone] = useState('');
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(() => {
+        if (location.state?.newCustomerId) {
+            return getCustomerById(location.state.newCustomerId) || null;
+        }
+        return null;
+    });
+    const [searchPhone, setSearchPhone] = useState(() => {
+        if (location.state?.newCustomerId) {
+            return getCustomerById(location.state.newCustomerId)?.phone || '';
+        }
+        return '';
+    });
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
 
     // Edit State
@@ -90,14 +101,10 @@ const Billing: React.FC = () => {
     // Auto-select new customer if redirected from Add Customer page
     useEffect(() => {
         if (location.state?.newCustomerId) {
-            const newCust = getCustomerById(location.state.newCustomerId);
-            if (newCust) {
-                selectCustomer(newCust);
-                // Clear the state to avoid re-selecting on re-renders
-                window.history.replaceState({}, document.title);
-            }
+            // Clear the state to avoid re-selecting on re-renders
+            window.history.replaceState({}, document.title);
         }
-    }, [location.state, getCustomerById, selectCustomer]);
+    }, [location.state]);
 
     const handleEditClick = () => {
         if (selectedCustomer) {
@@ -245,7 +252,7 @@ const Billing: React.FC = () => {
             const purity = parseFloat(exchangePurity) || 100;
             return weight * rate * (purity / 100);
         }
-    }, [exchangeWeight, exchangeType, exchangePurity, buyingRates]);
+    }, [exchangeWeight, exchangeType, exchangePurity, buyingRates, rates.gold24k]);
 
     const addExchangeItem = () => {
         if (!exchangeName || !exchangeWeight || parseFloat(exchangeWeight) <= 0) {
@@ -382,7 +389,7 @@ const Billing: React.FC = () => {
                 const currentQty = product.quantity || 1;
                 const newQuantity = Math.max(0, currentQty - 1);
 
-                let newStatus: any = 'In Stock';
+                let newStatus: 'In Stock' | 'Out of Stock' | 'Low Stock' = 'In Stock';
                 if (newQuantity === 0) newStatus = 'Out of Stock';
                 else if (newQuantity <= 2) newStatus = 'Low Stock';
 
@@ -465,7 +472,7 @@ const Billing: React.FC = () => {
                     </div>
                     <div
                         className={styles.avatar}
-                        style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCzREsVNl3mmOSBEngBgcFd9N3X75RvbX0kA0gVEI-G6n2KQHjmsJUiQf-U0_wEVMtycuf0gXjRHfmUCYzI3gs5ACdNZ8xeDwrKLjxC7irpyF0c6BTHdTs1X_EJqFVEj2Nbc9_0YgUMH4WpYY7UFzdqDddlyLrRaVqPvDJ_yAJwEcsWWutNgzEMxqWNXr1_1N91Y8FLmSYzB-V9D-IryXk3kedyFxxM34s-ok7YECOjZtqmDVhpFvWFZjtLoFPjx4pgpUx2GkyEewOV")' }}
+                        style={{ backgroundImage: `url("${avatarImg}")` }}
                     ></div>
                 </div>
             </header>
@@ -501,7 +508,7 @@ const Billing: React.FC = () => {
                                                     style={{ cursor: (product.quantity === 0) ? 'not-allowed' : 'pointer', opacity: (product.quantity === 0) ? 0.6 : 1 }}
                                                 >
                                                     <img
-                                                        src={(product.images && product.images[0]) || (product as any).image || 'https://via.placeholder.com/50'}
+                                                        src={(product.images && product.images[0]) || (product as Product & { image?: string }).image || 'https://via.placeholder.com/50'}
                                                         alt={product.name}
                                                     />
                                                     <div className={styles.info}>

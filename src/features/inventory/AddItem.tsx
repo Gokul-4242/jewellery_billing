@@ -123,7 +123,7 @@ const AddItem: React.FC = () => {
                     </h2>
                     <div className={styles.grid}>
                         <div className={styles.formGroup}>
-                            <label>Product Name</label>
+                            <label>Product Name <span className={styles.required}>*</span></label>
                             <input
                                 type="text"
                                 name="name"
@@ -133,7 +133,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>SKU / Product ID</label>
+                            <label>SKU / Product ID <span className={styles.required}>*</span></label>
                             <input
                                 type="text"
                                 name="sku"
@@ -143,7 +143,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Category</label>
+                            <label>Category <span className={styles.required}>*</span></label>
                             <CustomDropdown
                                 options={categories}
                                 value={formData.category}
@@ -154,7 +154,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Material & Purity</label>
+                            <label>Material & Purity <span className={styles.required}>*</span></label>
                             <CustomDropdown
                                 options={materials}
                                 value={formData.material}
@@ -175,7 +175,7 @@ const AddItem: React.FC = () => {
                     </h2>
                     <div className={`${styles.grid} ${styles.cols4}`}>
                         <div className={styles.formGroup}>
-                            <label>Weight (Grams)</label>
+                            <label>Weight (Grams) <span className={styles.required}>*</span></label>
                             <input
                                 type="number"
                                 name="weight"
@@ -186,7 +186,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Quantity</label>
+                            <label>Quantity <span className={styles.required}>*</span></label>
                             <input
                                 type="number"
                                 name="quantity"
@@ -207,7 +207,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Price (₹)</label>
+                            <label>Price (₹) <span className={styles.required}>*</span></label>
                             <input
                                 type="number"
                                 name="price"
@@ -243,7 +243,7 @@ const AddItem: React.FC = () => {
                 <div className={styles.formSection}>
                     <h2>
                         <span className={`material-symbols-outlined ${styles.icon}`}>image</span>
-                        Product Images (Up to 3)
+                        Product Images (Up to 3) <span className={styles.required}>*</span>
                     </h2>
 
                     <div className={styles.uploadArea}>

@@ -25,7 +25,7 @@ export interface Transaction {
     gstRate?: number;
     discount: number;
     exchangeTotal: number;
-    exchangeItems?: any[]; // Using any to avoid importing ExchangeItem for now, or define a simplified version
+    exchangeItems?: { id: string; name?: string; description?: string; weight: number; purity: number | string; value: number }[];
     grandTotal: number;
     paymentMethod: 'Cash' | 'Card' | 'UPI' | 'Split';
     status: 'Completed' | 'Pending' | 'Cancelled' | 'In Production' | 'Quality Check';

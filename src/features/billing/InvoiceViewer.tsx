@@ -1,15 +1,15 @@
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import { useReactToPrint } from 'react-to-print';
-// @ts-ignore
 import html2pdf from 'html2pdf.js';
 import styles from './InvoiceViewer.module.scss';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import type { InvoiceData } from './types';
+import type { InvoiceData, BillingItem } from './types';
 import { useTransactions } from '../../context/TransactionContext';
 import { useCustomers } from '../../context/CustomerContext';
 import { useToast } from '../../context/ToastContext';
 import { useSettings } from '../../context/SettingsContext';
+import signImg from '../../assets/sign in inovice page.png';
 
 const InvoiceViewer: React.FC = () => {
     const navigate = useNavigate();
@@ -45,7 +45,7 @@ const InvoiceViewer: React.FC = () => {
                         address: 'Address not stored', // Assumption
                         email: customer?.email
                     },
-                    items: tx.items,
+                    items: tx.items.map(item => ({ ...item, productId: item.id })) as BillingItem[],
                     exchangeItems: tx.exchangeItems || [],
                     subtotal: tx.subtotal,
                     gst: tx.gst,
@@ -53,20 +53,24 @@ const InvoiceViewer: React.FC = () => {
                     grandTotal: tx.grandTotal,
                     goldRate: tx.goldRate || 0,
                     paymentMethod: tx.paymentMethod,
-                    status: tx.status
+                    status: tx.status as 'Completed' | 'Pending' | 'Cancelled'
                 };
             }
         }
         return null;
     }, [id, location.state, transactions, getCustomerById]);
 
-    const [currentStatus, setCurrentStatus] = useState<'Completed' | 'Pending' | 'Cancelled'>('Completed');
+    const [currentStatus, setCurrentStatus] = useState<'Completed' | 'Pending' | 'Cancelled'>(
+        (data?.status as 'Completed' | 'Pending' | 'Cancelled') || 'Completed'
+    );
+    const [prevDataId, setPrevDataId] = useState(data?.invoiceNo);
 
-    useEffect(() => {
+    if (data?.invoiceNo !== prevDataId) {
+        setPrevDataId(data?.invoiceNo);
         if (data?.status) {
-            setCurrentStatus(data.status);
+            setCurrentStatus(data.status as 'Completed' | 'Pending' | 'Cancelled');
         }
-    }, [data]);
+    }
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -116,7 +120,7 @@ const InvoiceViewer: React.FC = () => {
                                     <select 
                                         value={currentStatus} 
                                         onChange={(e) => {
-                                            const newStatus = e.target.value as any;
+                                            const newStatus = e.target.value as 'Completed' | 'Pending' | 'Cancelled';
                                             setCurrentStatus(newStatus);
                                             showToast(`Status updated to ${newStatus} for this invoice view`, 'info');
                                         }}
@@ -354,7 +358,7 @@ const InvoiceViewer: React.FC = () => {
                                 <div className={styles.signature}>
                                     <div 
                                         className={styles.signImg}
-                                        style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuD42-tFvaNFOEVITJUPHau0_RM0GGeoTo1rHfCDOiXatRgRCsNdtyDP1gXQD-9IDxHh_ODEAmzQlEUgyJK3ph82Nm-ek6BJ1WwnZHhqID9HihaKa6s4qpNElNOUVVUtV0zkZabbMJiSeELzK20n5eSLv-_sv2FO2uwh8p8yis11eZNOZU6yOHwP_aF3jHAfbwUJ4BWU_J_nYyqT6ZgjEwxaiVd54NAzy65ADHqpcDN4f7NRCFv5dZJOikpusePKnpJAbbg3GDzyYp8d")' }}
+                                        style={{ backgroundImage: `url("${signImg}")` }}
                                     ></div>
                                     <p>Authorized Signatory</p>
                                 </div>
