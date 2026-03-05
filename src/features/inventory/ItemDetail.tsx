@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ItemDetail.module.scss';
@@ -18,6 +18,11 @@ const ItemDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     const product = id ? getProductById(id) : undefined;
+
+    const nameInputRef = useRef<HTMLInputElement>(null);
+    const skuInputRef = useRef<HTMLInputElement>(null);
+    const priceInputRef = useRef<HTMLInputElement>(null);
+    const weightInputRef = useRef<HTMLInputElement>(null);
 
     const [isEditing, setIsEditing] = useState<boolean>(location.state?.edit || false);
     const [editForm, setEditForm] = useState({
@@ -75,12 +80,32 @@ const ItemDetail: React.FC = () => {
     };
 
     const handleSave = () => {
-        if (!editForm.name || !editForm.sku || !editForm.price || !editForm.weight) {
-            showToast('Please fill in all required fields', 'error');
+        if (!editForm.name) {
+            showToast('Please fill in the product name', 'error');
+            nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => nameInputRef.current?.focus(), 500);
+            return;
+        }
+        if (!editForm.sku) {
+            showToast('Please fill in the SKU', 'error');
+            skuInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => skuInputRef.current?.focus(), 500);
+            return;
+        }
+        if (!editForm.price || editForm.price <= 0) {
+            showToast('Please enter a valid price', 'error');
+            priceInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => priceInputRef.current?.focus(), 500);
+            return;
+        }
+        if (!editForm.weight || editForm.weight <= 0) {
+            showToast('Please enter a valid weight', 'error');
+            weightInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => weightInputRef.current?.focus(), 500);
             return;
         }
 
-        updateProduct(product.id, editForm);
+        updateProduct(product!.id, editForm);
         setIsEditing(false);
         showToast('Product updated successfully', 'success');
     };
@@ -181,6 +206,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.meta}>
                             {isEditing ? (
                                 <input
+                                    ref={skuInputRef}
                                     type="text"
                                     name="sku"
                                     value={editForm.sku}
@@ -196,6 +222,7 @@ const ItemDetail: React.FC = () => {
                         </div>
                         {isEditing ? (
                             <input
+                                ref={nameInputRef}
                                 type="text"
                                 name="name"
                                 value={editForm.name}
@@ -219,6 +246,7 @@ const ItemDetail: React.FC = () => {
                             <div className={styles.value}>
                                 {isEditing ? (
                                     <input
+                                        ref={weightInputRef}
                                         type="number"
                                         name="weight"
                                         value={editForm.weight}
@@ -289,6 +317,7 @@ const ItemDetail: React.FC = () => {
                             <div className={styles.label}>Selling Price</div>
                             {isEditing ? (
                                 <input
+                                    ref={priceInputRef}
                                     type="number"
                                     name="price"
                                     value={editForm.price}

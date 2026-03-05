@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 
 import styles from './ExchangeCalculator.module.scss';
 import { useRates } from '../../context/RateContext';
+import { useToast } from '../../context/ToastContext';
 
 interface ExchangeCalculatorProps {
     onBack?: () => void;
@@ -24,6 +25,12 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
     const [goldRate24k, setGoldRate24k] = useState<number>(rates.gold24k);
     const [silverRateFine, setSilverRateFine] = useState<number>(rates.silver);
     const [isEditingRates, setIsEditingRates] = useState<boolean>(false);
+    const { showToast } = useToast();
+
+    const grossWeightRef = useRef<HTMLInputElement>(null);
+    const deductionValueRef = useRef<HTMLInputElement>(null);
+    const goldRateRef = useRef<HTMLInputElement>(null);
+    const silverRateRef = useRef<HTMLInputElement>(null);
 
     // Derived calculations (no useEffect needed)
     const { netWeight, purityConvertedWeight, deductionAmount, totalValue, appliedRate } = useMemo(() => {
@@ -118,6 +125,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ fontSize: '1rem' }}>₹</span>
                                     <input
+                                        ref={goldRateRef}
                                         type="number"
                                         value={goldRate24k}
                                         onChange={(e) => setGoldRate24k(parseFloat(e.target.value) || 0)}
@@ -152,6 +160,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ fontSize: '1rem' }}>₹</span>
                                     <input
+                                        ref={silverRateRef}
                                         type="number"
                                         value={silverRateFine}
                                         onChange={(e) => setSilverRateFine(parseFloat(e.target.value) || 0)}
@@ -217,6 +226,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                             <div className={styles.inputWrapper}>
                                 <span className="material-symbols-outlined icon">scale</span>
                                 <input
+                                    ref={grossWeightRef}
                                     type="number"
                                     step="0.001"
                                     placeholder="0.000"
@@ -256,6 +266,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                             <div className={`${styles.inputWrapper} ${styles.inputCol}`}>
                                 <span className="material-symbols-outlined icon">trending_down</span>
                                 <input
+                                    ref={deductionValueRef}
                                     type="number"
                                     step="0.1"
                                     placeholder="0"
@@ -328,7 +339,14 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                         </div>
 
                         <div className={styles.actionsSection}>
-                            <button className={styles.addBtn} onClick={() => onAddToInvoice?.(totalValue)}>
+                            <button className={styles.addBtn} onClick={() => {
+                                if (!grossWeight || grossWeight <= 0) {
+                                    showToast('Please enter gross weight', 'error');
+                                    grossWeightRef.current?.focus();
+                                    return;
+                                }
+                                onAddToInvoice?.(totalValue);
+                            }}>
                                 <span className="material-symbols-outlined">add_circle</span>
                                 Add to Invoice
                             </button>

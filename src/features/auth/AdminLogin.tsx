@@ -1,4 +1,4 @@
-import React, { useState, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { AdminLoginProps, LoginFormData } from './AdminLogin.types';
@@ -14,6 +14,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
         rememberMe: false,
     });
 
+    const usernameInputRef = useRef<HTMLInputElement>(null);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
+
     const [showPassword, setShowPassword] = useState<boolean>(false);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -27,8 +30,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        if (!formData.username || !formData.password) {
-            showToast('Please enter both username and password.', 'warning');
+        if (!formData.username) {
+            showToast('Please enter your username.', 'warning');
+            usernameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => usernameInputRef.current?.focus(), 500);
+            return;
+        }
+
+        if (!formData.password) {
+            showToast('Please enter your password.', 'warning');
+            passwordInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => passwordInputRef.current?.focus(), 500);
             return;
         }
 
@@ -81,6 +93,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         <span className="material-symbols-outlined">person</span>
                                     </div>
                                     <input
+                                        ref={usernameInputRef}
                                         className={styles.input}
                                         id="username"
                                         name="username"
@@ -101,6 +114,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         <span className="material-symbols-outlined">lock</span>
                                     </div>
                                     <input
+                                        ref={passwordInputRef}
                                         className={`${styles.input} ${styles.passwordInput}`}
                                         id="password"
                                         name="password"

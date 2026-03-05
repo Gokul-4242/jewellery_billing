@@ -1,11 +1,14 @@
-import React, { useState, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { ForgotPasswordProps, ForgotPasswordFormData } from './ForgotPassword.types';
+import { useToast } from '../../context/ToastContext';
 
 const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
     const [email, setEmail] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const { showToast } = useToast();
+    const emailRef = useRef<HTMLInputElement>(null);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
@@ -13,6 +16,12 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (!email) {
+            showToast('Please enter your email address.', 'warning');
+            emailRef.current?.focus();
+            return;
+        }
 
         const formData: ForgotPasswordFormData = { email };
 
@@ -68,6 +77,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
                                                 mail
                                             </span>
                                             <input
+                                                ref={emailRef}
                                                 className={styles.input}
                                                 id="email"
                                                 name="email"

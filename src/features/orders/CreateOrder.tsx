@@ -41,6 +41,9 @@ const CreateOrder: React.FC = () => {
         return order?.imageUrl || null;
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const customerDivRef = useRef<HTMLDivElement>(null);
+    const descriptionRef = useRef<HTMLTextAreaElement>(null);
+    const deliveryDateRef = useRef<HTMLInputElement>(null);
     // Item Details State
     const [metalType, setMetalType] = useState(() => {
         const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
@@ -155,14 +158,19 @@ const CreateOrder: React.FC = () => {
         
         if (!customerId) {
             showToast("Please select a customer to proceed", "error", "Missing Information");
+            customerDivRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
         if (!description.trim()) {
             showToast("Please provide a detailed description for the order", "error", "Missing Information");
+            descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => descriptionRef.current?.focus(), 500);
             return;
         }
         if (!deliveryDate) {
             showToast("Please select a target delivery date", "error", "Missing Information");
+            deliveryDateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => deliveryDateRef.current?.focus(), 500);
             return;
         }
 
@@ -243,7 +251,7 @@ const CreateOrder: React.FC = () => {
                         Customer Information
                     </h2>
                     <div className={styles.gridTwo}>
-                        <div className={styles.fieldGroup}>
+                        <div className={styles.fieldGroup} ref={customerDivRef}>
                             <label>Select Customer <span className={styles.required}>*</span></label>
                             <FormSelect 
                                 value={customerId} 
@@ -274,6 +282,7 @@ const CreateOrder: React.FC = () => {
                             <div className={styles.fieldGroup}>
                                 <label>Detailed Description <span className={styles.required}>*</span></label>
                                 <textarea 
+                                    ref={descriptionRef}
                                     placeholder="Specify metal type (18k Gold, Sterling Silver), stone details, engravings, sizing, and design nuances..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -283,6 +292,7 @@ const CreateOrder: React.FC = () => {
                                 <div className={styles.fieldGroup}>
                                     <label>Target Delivery Date <span className={styles.required}>*</span></label>
                                     <input 
+                                        ref={deliveryDateRef}
                                         type="date" 
                                         value={deliveryDate}
                                         onChange={(e) => setDeliveryDate(e.target.value)}

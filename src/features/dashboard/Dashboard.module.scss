@@ -16,8 +16,30 @@
 }
 
 // Sidebar
+.sidebarOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s ease;
+
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
 .sidebar {
-    display: none;
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
     width: 18rem;
     flex-direction: column;
     border-right: 1px solid $border-dark;
@@ -25,7 +47,12 @@
     overflow-y: auto;
     flex-shrink: 0;
     @include custom-scrollbar;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.mobileOpen {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    }
 
     &.collapsed {
         width: 5rem;
@@ -57,7 +84,8 @@
     }
 
     @media (min-width: 1024px) {
-        display: flex;
+        position: static;
+        transform: translateX(0);
     }
 }
 

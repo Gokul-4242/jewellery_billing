@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './AddItem.module.scss';
 import { useInventory } from '../../context/InventoryContext';
@@ -10,6 +10,7 @@ const AddItem: React.FC = () => {
     const navigate = useNavigate();
     const { addProduct, categories, materials, addCategory, addMaterial } = useInventory();
     const { showToast } = useToast();
+    const firstInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -70,6 +71,8 @@ const AddItem: React.FC = () => {
         // Basic validation
         if (!formData.name || !formData.sku || !formData.category || !formData.material || !formData.weight || !formData.price || !formData.quantity) {
             showToast('Please fill in all required fields.', 'error');
+            firstInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => firstInputRef.current?.focus(), 500);
             return;
         }
 
@@ -125,6 +128,7 @@ const AddItem: React.FC = () => {
                         <div className={styles.formGroup}>
                             <label>Product Name <span className={styles.required}>*</span></label>
                             <input
+                                ref={firstInputRef}
                                 type="text"
                                 name="name"
                                 value={formData.name}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styles from './AddCustomer.module.scss';
 import type { Customer } from '../../types/Customer';
 import { Button, Input, FormSelect } from '../../components/common';
@@ -18,6 +18,7 @@ interface Phone {
 const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }) => {
     console.log('AddCustomer mounted', { initialData });
     const { showToast } = useToast();
+    const nameInputRef = useRef<HTMLInputElement>(null);
     const isEditing = !!initialData;
     const [phones, setPhones] = useState<Phone[]>(
         initialData?.phone
@@ -62,6 +63,8 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
 
         if (!formData.name) {
             showToast('Customer name is required.', 'error');
+            nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => nameInputRef.current?.focus(), 500);
             return;
         }
 
@@ -116,6 +119,7 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
                     </div>
                     <div className={styles.sectionFields}>
                         <Input
+                            ref={nameInputRef}
                             label="Full Name"
                             name="name"
                             placeholder="e.g. Eleanor Rigby"

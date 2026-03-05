@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import styles from './Billing.module.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FormSelect } from '../../components/common';
@@ -64,6 +64,11 @@ const Billing: React.FC = () => {
     // Edit State
     const [isEditingCustomer, setIsEditingCustomer] = useState(false);
     const [editForm, setEditForm] = useState<Customer | null>(null);
+
+    // Refs for auto-scrolling
+    const customerInputRef = useRef<HTMLInputElement>(null);
+    const exchangeNameRef = useRef<HTMLInputElement>(null);
+    const exchangeWeightRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -255,8 +260,17 @@ const Billing: React.FC = () => {
     }, [exchangeWeight, exchangeType, exchangePurity, buyingRates, rates.gold24k]);
 
     const addExchangeItem = () => {
-        if (!exchangeName || !exchangeWeight || parseFloat(exchangeWeight) <= 0) {
-            showToast('Please enter Item Name and Weight', 'error');
+        if (!exchangeName) {
+            showToast('Please enter an Item Name', 'error');
+            exchangeNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => exchangeNameRef.current?.focus(), 500);
+            return;
+        }
+        
+        if (!exchangeWeight || parseFloat(exchangeWeight) <= 0) {
+            showToast('Please enter a valid Weight', 'error');
+            exchangeWeightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => exchangeWeightRef.current?.focus(), 500);
             return;
         }
 
@@ -326,6 +340,8 @@ const Billing: React.FC = () => {
 
         if (!selectedCustomer) {
             showToast('Please select a customer to process the invoice.', 'error');
+            customerInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => customerInputRef.current?.focus(), 500);
             return;
         }
 
@@ -674,16 +690,17 @@ const Billing: React.FC = () => {
                             </div>
 
                             <div className={styles.exchangeForm}>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 3' }}>
+                                <div className={`${styles.fieldGroup} ${styles.large}`}>
                                     <label>Item Name</label>
                                     <input
+                                        ref={exchangeNameRef}
                                         type="text"
                                         placeholder="e.g. Gold Chain"
                                         value={exchangeName}
                                         onChange={(e) => setExchangeName(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
+                                <div className={styles.fieldGroup}>
                                     <label>Metal Type</label>
                                     <FormSelect
                                         value={exchangeType}
@@ -695,16 +712,17 @@ const Billing: React.FC = () => {
                                         className={styles.metalTypeSelect}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
+                                <div className={styles.fieldGroup}>
                                     <label>Weight (g)</label>
                                     <input
+                                        ref={exchangeWeightRef}
                                         type="number"
                                         placeholder="0.00"
                                         value={exchangeWeight}
                                         onChange={(e) => setExchangeWeight(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
+                                <div className={styles.fieldGroup}>
                                     <label>Purity (%)</label>
                                     <input
                                         type="number"
@@ -713,7 +731,7 @@ const Billing: React.FC = () => {
                                         onChange={(e) => setExchangePurity(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
+                                <div className={styles.fieldGroup}>
                                     <label>Calculated Value</label>
                                     <input
                                         type="text"
@@ -722,7 +740,7 @@ const Billing: React.FC = () => {
                                         className={styles.readOnly}
                                     />
                                 </div>
-                                <div style={{ gridColumn: 'span 1' }}>
+                                <div className={styles.addButtonContainer}>
                                     <button
                                         className={styles.addButton}
                                         onClick={addExchangeItem}
@@ -784,6 +802,7 @@ const Billing: React.FC = () => {
                         <div className={styles.customerSearchWrapper}>
                             <span className={`material-symbols-outlined ${styles.searchIcon}`}>person_search</span>
                             <input
+                                ref={customerInputRef}
                                 type="text"
                                 value={searchPhone}
                                 onChange={(e) => {

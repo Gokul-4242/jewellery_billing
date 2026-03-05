@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import styles from './CostEstimator.module.scss';
 import { Button } from '../../components/common';
 import { useRates } from '../../context/RateContext';
+import { useToast } from '../../context/ToastContext';
 
 interface CostEstimatorProps {
     exchangeValue: number;
@@ -18,6 +19,9 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 }) => {
     const navigate = useNavigate();
     const { rates } = useRates();
+    const { showToast } = useToast();
+
+    const grossWeightRef = useRef<HTMLInputElement>(null);
 
     // State
     const [metalType, setMetalType] = useState<'gold' | 'silver'>('gold');
@@ -139,6 +143,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                 <label>Gross Weight</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        ref={grossWeightRef}
                                         type="number"
                                         value={grossWeight}
                                         onChange={(e) => setGrossWeight(parseFloat(e.target.value) || 0)}
@@ -336,7 +341,15 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restart_alt</span>
                                     Reset
                                 </button>
-                                <button className={`${styles.btn} ${styles.primary}`} style={{ justifyContent: 'center' }}>
+                                <button className={`${styles.btn} ${styles.primary}`} style={{ justifyContent: 'center' }} onClick={() => {
+                                    if (!grossWeight || grossWeight <= 0) {
+                                        showToast('Please enter gross weight', 'error');
+                                        grossWeightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        setTimeout(() => grossWeightRef.current?.focus(), 500);
+                                        return;
+                                    }
+                                    showToast('Estimate saved to history', 'success');
+                                }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>
                                     Save
                                 </button>

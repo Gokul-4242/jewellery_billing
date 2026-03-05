@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import classNames from 'classnames';
 import styles from './Settings.module.scss';
 import { useToast } from '../../context/ToastContext';
@@ -12,6 +12,9 @@ const Settings: React.FC = () => {
     // Form State
     const [formState, setFormState] = useState(settings);
 
+    const shopNameRef = useRef<HTMLInputElement>(null);
+    const locationRef = useRef<HTMLInputElement>(null);
+
     const [notifications, setNotifications] = useState({
         lowStock: true,
         marketAlerts: true,
@@ -20,6 +23,26 @@ const Settings: React.FC = () => {
 
 
     const handleSave = () => {
+        if (!formState.name) {
+            showToast('Shop Name is required.', 'error');
+            setActiveTab('general');
+            setTimeout(() => {
+                shopNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                shopNameRef.current?.focus();
+            }, 100);
+            return;
+        }
+
+        if (!formState.location) {
+            showToast('Location is required.', 'error');
+            setActiveTab('general');
+            setTimeout(() => {
+                locationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                locationRef.current?.focus();
+            }, 100);
+            return;
+        }
+
         updateSettings(formState);
         showToast('Settings saved successfully', 'success');
     };
@@ -63,6 +86,7 @@ const Settings: React.FC = () => {
                             <div className={styles.fieldGroup}>
                                 <label>Shop Name</label>
                                 <input 
+                                    ref={shopNameRef}
                                     type="text" 
                                     value={formState.name}
                                     onChange={(e) => setFormState({ ...formState, name: e.target.value })}
@@ -71,6 +95,7 @@ const Settings: React.FC = () => {
                             <div className={styles.fieldGroup}>
                                 <label>Location</label>
                                 <input 
+                                    ref={locationRef}
                                     type="text" 
                                     value={formState.location}
                                     onChange={(e) => setFormState({ ...formState, location: e.target.value })}

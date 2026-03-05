@@ -9,9 +9,11 @@ import RateUpdater from '../tools/RateUpdater';
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
+    isMobileOpen?: boolean;
+    onMobileClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, isMobileOpen, onMobileClose }) => {
     const { rates, getTrend } = useRates();
     const { settings } = useSettings();
     const { user, logout } = useAuth();
@@ -37,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     ];
 
     return (
-        <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+        <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''} ${isMobileOpen ? styles.mobileOpen : ''}`}>
             <div className={styles.sidebarContent}>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
@@ -54,9 +56,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                                 </div>
                             )}
                         </div>
-                        <button className={styles.toggleBtn} onClick={onToggle}>
+                        <button 
+                            className={styles.toggleBtn} 
+                            onClick={isMobileOpen && onMobileClose ? onMobileClose : onToggle}
+                        >
                             <span className="material-symbols-outlined">
-                                {isCollapsed ? 'menu' : 'menu_open'}
+                                {isMobileOpen ? 'close' : (isCollapsed ? 'menu' : 'menu_open')}
                             </span>
                         </button>
                     </div>
@@ -68,6 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                                 key={item.name}
                                 to={item.path}
                                 end={item.end}
+                                onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}
                                 className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }
@@ -88,6 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             <NavLink
                                 key={item.name}
                                 to={item.path}
+                                onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}
                                 className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }

@@ -1,7 +1,8 @@
-import React, { useState, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { SignupProps, SignupFormData, UserRole } from './Signup.types';
+import { useToast } from '../../context/ToastContext';
 
 const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
     const [formData, setFormData] = useState<SignupFormData>({
@@ -12,6 +13,12 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
         confirmPassword: '',
         agreeToTerms: false,
     });
+
+    const { showToast } = useToast();
+    const fullNameRef = useRef<HTMLInputElement>(null);
+    const emailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
+    const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -32,13 +39,36 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
         e.preventDefault();
 
         // Basic validation
+        if (!formData.fullName) {
+            showToast('Full Name is required.', 'error');
+            fullNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => fullNameRef.current?.focus(), 500);
+            return;
+        }
+
+        if (!formData.email) {
+            showToast('Email Address is required.', 'error');
+            emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => emailRef.current?.focus(), 500);
+            return;
+        }
+
+        if (!formData.password) {
+            showToast('Password is required.', 'error');
+            passwordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => passwordRef.current?.focus(), 500);
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match!');
+            showToast('Passwords do not match!', 'error');
+            confirmPasswordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => confirmPasswordRef.current?.focus(), 500);
             return;
         }
 
         if (!formData.agreeToTerms) {
-            alert('Please agree to the Terms of Service and Privacy Policy');
+            showToast('Please agree to the Terms of Service and Privacy Policy', 'warning');
             return;
         }
 
@@ -87,6 +117,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         person
                                     </span>
                                     <input
+                                        ref={fullNameRef}
                                         className={styles.input}
                                         id="fullName"
                                         name="fullName"
@@ -109,6 +140,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         mail
                                     </span>
                                     <input
+                                        ref={emailRef}
                                         className={styles.input}
                                         id="email"
                                         name="email"
@@ -172,6 +204,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                             lock
                                         </span>
                                         <input
+                                            ref={passwordRef}
                                             className={styles.input}
                                             id="password"
                                             name="password"
@@ -193,6 +226,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                             lock_reset
                                         </span>
                                         <input
+                                            ref={confirmPasswordRef}
                                             className={styles.input}
                                             id="confirmPassword"
                                             name="confirmPassword"
