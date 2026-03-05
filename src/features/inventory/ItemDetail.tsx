@@ -105,7 +105,7 @@ const ItemDetail: React.FC = () => {
             return;
         }
 
-        updateProduct(product!.id, editForm);
+        updateProduct(product.id, editForm);
         setIsEditing(false);
         showToast('Product updated successfully', 'success');
     };
@@ -114,7 +114,7 @@ const ItemDetail: React.FC = () => {
         const { name, value } = e.target;
         setEditForm(prev => ({
             ...prev,
-            [name]: name === 'weight' || name === 'price' || name === 'quantity' ? parseFloat(value) || 0 : value
+            [name]: name === 'weight' || name === 'price' || name === 'quantity' ? Number.parseFloat(value) || 0 : value
         }));
     };
 

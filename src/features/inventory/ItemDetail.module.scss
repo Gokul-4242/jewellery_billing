@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
@@ -71,7 +72,7 @@
             color: $text-white;
 
             &:hover {
-                background-color: darken($primary, 5%);
+                background-color: color.adjust($primary, $lightness: -5%);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba($primary, 0.3);
             }
@@ -284,7 +285,7 @@
     }
 
     .pricingCard {
-        background-color: lighten($surface-dark, 2%);
+        background-color: color.adjust($surface-dark, $lightness: 2%);
         border: 1px solid $border-dark;
         border-radius: $radius-xl;
         padding: 1.25rem;

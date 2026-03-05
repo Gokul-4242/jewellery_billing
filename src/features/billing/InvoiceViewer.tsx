@@ -50,7 +50,7 @@ const InvoiceViewer: React.FC = () => {
                         id: ei.id,
                         description: ei.name || ei.description || '',
                         weight: ei.weight,
-                        purity: typeof ei.purity === 'number' ? ei.purity : parseFloat(String(ei.purity)) || 0,
+                        purity: typeof ei.purity === 'number' ? ei.purity : Number.parseFloat(String(ei.purity)) || 0,
                         value: ei.value
                     })),
                     subtotal: tx.subtotal,
@@ -138,20 +138,16 @@ const InvoiceViewer: React.FC = () => {
                                     </select>
                                 </div>
                                 <button className={styles.secondary} onClick={() => handlePrint()}>
-                                    <span className="material-symbols-outlined">print</span>
-                                    Print
+                                    <span className="material-symbols-outlined">print</span> Print
                                 </button>
                                 <button className={styles.secondary} onClick={handleDownloadPDF}>
-                                    <span className="material-symbols-outlined">download</span>
-                                    PDF
+                                    <span className="material-symbols-outlined">download</span> PDF
                                 </button>
                                 <button className={styles.primary}>
-                                    <span className="material-symbols-outlined">mail</span>
-                                    Send Email
+                                    <span className="material-symbols-outlined">mail</span> Send Email
                                 </button>
                                 <button className={styles.secondary} onClick={() => navigate(-1)}>
-                                    <span className="material-symbols-outlined">close</span>
-                                    Close
+                                    <span className="material-symbols-outlined">close</span> Close
                                 </button>
                             </div>
                         </div>
@@ -172,8 +168,7 @@ const InvoiceViewer: React.FC = () => {
                                 <div className={styles.paymentStatus}>
                                     {currentStatus === 'Completed' ? (
                                         <div className={classNames(styles.badge, styles.paid)}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
-                                            PAID
+                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span> PAID
                                         </div>
                                     ) : (
                                         <div className={classNames(styles.badge, currentStatus === 'Cancelled' ? styles.cancelled : styles.pending)}>

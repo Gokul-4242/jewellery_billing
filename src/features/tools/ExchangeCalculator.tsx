@@ -109,16 +109,14 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                         <h1>Exchange Calculator</h1>
                     </div>
                     <p className={styles.date}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>calendar_today</span>
-                        {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>calendar_today</span> {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                 </div>
 
                 <div className={styles.statsBlock}>
                     <div className={styles.statCard}>
                         <div className={styles.label}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#e29d12' }}>monetization_on</span>
-                            Gold Rate (24k)
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#e29d12' }}>monetization_on</span> Gold Rate (24k)
                         </div>
                         <div className={styles.value}>
                             {isEditingRates ? (
@@ -128,7 +126,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                         ref={goldRateRef}
                                         type="number"
                                         value={goldRate24k}
-                                        onChange={(e) => setGoldRate24k(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setGoldRate24k(Number.parseFloat(e.target.value) || 0)}
                                         style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid #544b3b', color: 'white', fontSize: '1rem', width: '80px', borderRadius: '4px', padding: '2px 4px' }}
                                     />
                                 </div>
@@ -143,8 +141,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                     }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
                                             {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'remove'}
-                                        </span>
-                                        {goldTrend.percent}%
+                                        </span> {goldTrend.percent}%
                                     </span>
                                 </div>
                             )}
@@ -152,8 +149,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                     </div>
                     <div className={styles.statCard}>
                         <div className={styles.label}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#9ca3af' }}>diamond</span>
-                            Silver Rate (Fine)
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#9ca3af' }}>diamond</span> Silver Rate (Fine)
                         </div>
                         <div className={styles.value}>
                             {isEditingRates ? (
@@ -163,7 +159,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                         ref={silverRateRef}
                                         type="number"
                                         value={silverRateFine}
-                                        onChange={(e) => setSilverRateFine(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setSilverRateFine(Number.parseFloat(e.target.value) || 0)}
                                         style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid #544b3b', color: 'white', fontSize: '1rem', width: '80px', borderRadius: '4px', padding: '2px 4px' }}
                                     />
                                 </div>
@@ -231,7 +227,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                     step="0.001"
                                     placeholder="0.000"
                                     value={grossWeight}
-                                    onChange={(e) => setGrossWeight(parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => setGrossWeight(Number.parseFloat(e.target.value) || 0)}
                                 />
                             </div>
                         </div>
@@ -271,7 +267,7 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                                     step="0.1"
                                     placeholder="0"
                                     value={deductionValue}
-                                    onChange={(e) => setDeductionValue(parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => setDeductionValue(Number.parseFloat(e.target.value) || 0)}
                                 />
                             </div>
                             <div className={styles.unitCol}>
@@ -339,21 +335,19 @@ const ExchangeCalculator: React.FC<ExchangeCalculatorProps> = ({ onBack, onAddTo
                         </div>
 
                         <div className={styles.actionsSection}>
-                            <button className={styles.addBtn} onClick={() => {
-                                if (!grossWeight || grossWeight <= 0) {
-                                    showToast('Please enter gross weight', 'error');
-                                    grossWeightRef.current?.focus();
-                                    return;
-                                }
-                                onAddToInvoice?.(totalValue);
-                            }}>
-                                <span className="material-symbols-outlined">add_circle</span>
-                                Add to Invoice
-                            </button>
+                                <button className={styles.addBtn} onClick={() => {
+                                    if (!grossWeight || grossWeight <= 0) {
+                                        showToast('Please enter gross weight', 'error');
+                                        grossWeightRef.current?.focus();
+                                        return;
+                                    }
+                                    onAddToInvoice?.(totalValue);
+                                }}>
+                                    <span className="material-symbols-outlined">add_circle</span> Add to Invoice
+                                </button>
                             <div className={styles.secondaryActions}>
                                 <button className={styles.printBtn}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
-                                    Print
+                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span> Print
                                 </button>
                                 <button
                                     className={styles.resetBtn}

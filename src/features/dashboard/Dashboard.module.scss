@@ -1,5 +1,6 @@
-@import '../../styles/variables';
-@import '../../styles/mixins';
+@use "sass:color";
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .dashboardContainer {
     display: flex;
@@ -79,6 +80,19 @@
 
             .icon {
                 font-size: 1.5rem;
+            }
+        }
+
+        .ratesWidget {
+            display: none;
+        }
+
+        .userProfile {
+            padding: 1rem 0;
+
+            .profileCard {
+                justify-content: center;
+                padding: 0.5rem 0;
             }
         }
     }
@@ -306,20 +320,6 @@
     }
 }
 
-.sidebar.collapsed {
-    .ratesWidget {
-        display: none;
-    }
-
-    .userProfile {
-        padding: 1rem 0;
-        
-        .profileCard {
-            justify-content: center;
-            padding: 0.5rem 0;
-        }
-    }
-}
 
 // Main Content
 .main {
@@ -444,7 +444,7 @@
         border: 1px solid $border-dark;
 
         &:hover {
-            background-color: #3a3222; // approx lighten($surface-dark, 5%)
+            background-color: #3a3222; // approx color.adjust($surface-dark, $lightness: 5%)
         }
     }
 }
@@ -481,7 +481,7 @@
         
         &:hover {
             transform: translateY(-2px);
-            background-color: lighten($surface-dark, 2%);
+            background-color: color.adjust($surface-dark, $lightness: 2%);
         }
 
         &:active {
@@ -614,7 +614,7 @@
 .interfaceContainer {
     display: flex;
     flex-direction: column;
-    background-color: #1d1b15; // approx lighten($sidebar-bg, 2%)
+    background-color: #1d1b15; // approx color.adjust($sidebar-bg, $lightness: 2%)
     border: 1px solid $border-dark;
     border-radius: 0.75rem;
     overflow: hidden;

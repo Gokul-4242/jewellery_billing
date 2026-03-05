@@ -8,6 +8,7 @@ interface Option {
 }
 
 interface FormSelectProps {
+    id?: string;
     value: string;
     options: Option[];
     onChange: (value: string) => void;
@@ -17,6 +18,7 @@ interface FormSelectProps {
 }
 
 export const FormSelect: React.FC<FormSelectProps> = ({ 
+    id,
     value, 
     options, 
     onChange, 
@@ -39,23 +41,35 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+        } else if (e.key === 'Escape') {
+            setIsOpen(false);
+        }
+    };
+
     return (
         <div className={classNames(styles.container, className)} ref={containerRef}>
-            <div 
+            <button 
+                id={id}
+                type="button"
                 className={classNames(styles.trigger, isOpen && styles.open)} 
                 onClick={() => setIsOpen(!isOpen)}
-                role="button"
-                tabIndex={0}
+                onKeyDown={handleKeyDown}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
             >
                 <span className={classNames(selectedOption ? styles.value : styles.placeholder)}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 <span className="material-symbols-outlined icon">expand_more</span>
-            </div>
+            </button>
             
             {isOpen && (
-                <div className={styles.dropdownMenu}>
-                    {label && <div className={styles.menuHeader}>{label}</div>}
+                <div className={styles.dropdownMenu} role="listbox">
+                    {label && <div className={styles.menuHeader} role="presentation">{label}</div>}
                     {options.map(option => (
                         <div 
                             key={option.value} 
@@ -63,6 +77,16 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                             onClick={() => {
                                 onChange(option.value);
                                 setIsOpen(false);
+                            }}
+                            role="option"
+                            aria-selected={option.value === value}
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onChange(option.value);
+                                    setIsOpen(false);
+                                }
                             }}
                         >
                             {option.label}

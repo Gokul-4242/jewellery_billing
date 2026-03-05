@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as mixins;
 
@@ -196,7 +197,7 @@
                 color: $text-white;
 
                 &:hover {
-                    background-color: lighten($surface-dark, 5%);
+                    background-color: color.adjust($surface-dark, $lightness: 5%);
                 }
             }
 
@@ -206,7 +207,7 @@
                 color: $text-white;
 
                 &:hover {
-                    background-color: darken($primary, 10%);
+                    background-color: color.adjust($primary, $lightness: -10%);
                 }
             }
         }
@@ -409,7 +410,7 @@
         text-align: left;
 
         thead {
-            background-color: lighten($surface-dark, 3%);
+            background-color: color.adjust($surface-dark, $lightness: 3%);
             border-bottom: 1px solid $border-dark;
             @media print { background-color: #f9f9f9; border-color: #eee; }
 

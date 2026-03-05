@@ -1,5 +1,6 @@
-@import '../../styles/variables';
-@import '../../styles/mixins';
+@use "sass:color";
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .button {
     display: flex;
@@ -38,7 +39,7 @@
         border: $surface-border;
 
         &:hover:not(:disabled) {
-            background-color: lighten($surface-dark, 5%);
+            background-color: color.adjust($surface-dark, $lightness: 5%);
         }
     }
 

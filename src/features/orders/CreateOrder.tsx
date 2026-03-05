@@ -90,11 +90,11 @@ const CreateOrder: React.FC = () => {
 
 
 
-    // Stable IDs for this form session (generated once on mount via lazy initializer)
-    const [orderIdRef] = useState(() => id ? id : `ORD-${Date.now()}`);
-    const [invoiceNoRef] = useState(() => `INV-${Math.floor(Math.random() * 10000)}`);
-    const [itemIdRef] = useState(() => `item-${Date.now()}`);
-    const [exchangeIdRef] = useState(() => `ex-${Date.now()}`);
+    // Stable IDs for this form session (generated once on mount)
+    const [orderId] = useState(() => id ?? `ORD-${Date.now()}`);
+    const [invoiceNo] = useState(() => `INV-${Math.floor(Math.random() * 10000)}`);
+    const [itemId] = useState(() => `item-${Date.now()}`);
+    const [exchangeId] = useState(() => `ex-${Date.now()}`);
 
     // Derived State
     const selectedCustomer = customers.find(c => c.id === customerId);
@@ -102,10 +102,10 @@ const CreateOrder: React.FC = () => {
     // Auto-Calculate Total (derived, no setState in effect)
     const autoCalculatedTotal = (() => {
         if (!autoCalculate) return null;
-        const weight = parseFloat(metalWeight) || 0;
-        const wastage = parseFloat(wastagePercentage) || 0;
-        const making = parseFloat(makingCharges) || 0;
-        const stone = parseFloat(stoneRate) || 0;
+        const weight = Number.parseFloat(metalWeight) || 0;
+        const wastage = Number.parseFloat(wastagePercentage) || 0;
+        const making = Number.parseFloat(makingCharges) || 0;
+        const stone = Number.parseFloat(stoneRate) || 0;
         let rate = 0;
         if (metalType === 'Gold') rate = rates.gold22k;
         else if (metalType === 'Gold-18k') rate = rates.gold22k * (18/22);
@@ -120,7 +120,7 @@ const CreateOrder: React.FC = () => {
     const effectiveTotalAmountStr = (autoCalculate && autoCalculatedTotal) ? autoCalculatedTotal : totalAmountStr;
     
     // Parsing Helpers
-    const parseCurrency = (str: string) => parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+    const parseCurrency = (str: string) => Number.parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
     const totalAmount = parseCurrency(effectiveTotalAmountStr);
     const advance = parseCurrency(advanceStr);
     const exchangeCredit = parseCurrency(exchangeCreditStr);
@@ -175,24 +175,24 @@ const CreateOrder: React.FC = () => {
         }
 
         const orderData = {
-             id: id || orderIdRef,
-             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : invoiceNoRef,
+             id: id || orderId,
+             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : invoiceNo,
              date: id ? (transactions.find(t => t.id === id)?.date || new Date().toISOString()) : new Date().toISOString(), 
              deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined,
              customerName: selectedCustomer?.name || 'Unknown',
              customerId: customerId,
              items: [
                  {
-                     id: itemIdRef,
+                     id: itemId,
                      name: `Custom Order: ${description}`,
                      code: 'CUST-BESPOKE',
-                     weight: parseFloat(metalWeight) || 0,
+                     weight: Number.parseFloat(metalWeight) || 0,
                      purity: 'N/A',
                      metalType: metalType,
-                     stoneWeight: parseFloat(stoneWeight) || 0,
-                     stoneRate: parseFloat(stoneRate) || 0,
-                     makingCharges: parseFloat(makingCharges) || 0,
-                     wastage: parseFloat(wastagePercentage) || 0,
+                     stoneWeight: Number.parseFloat(stoneWeight) || 0,
+                     stoneRate: Number.parseFloat(stoneRate) || 0,
+                     makingCharges: Number.parseFloat(makingCharges) || 0,
+                     wastage: Number.parseFloat(wastagePercentage) || 0,
                      rate: 0,
                      total: totalAmount 
                  }
@@ -203,9 +203,9 @@ const CreateOrder: React.FC = () => {
              exchangeTotal: exchangeCredit,
              exchangeItems: exchangeCredit > 0 || valuationRef ? [
                  {
-                     id: exchangeIdRef,
+                     id: exchangeId,
                      name: valuationRef,
-                     weight: parseFloat(exchangeWeight) || 0,
+                     weight: Number.parseFloat(exchangeWeight) || 0,
                      value: exchangeCredit,
                      purity: 'N/A'
                  }
@@ -232,7 +232,7 @@ const CreateOrder: React.FC = () => {
         <div className={styles.container}>
             {/* Breadcrumbs */}
             <nav className={styles.breadcrumbs}>
-                <a href="#" onClick={handleBack} className={styles.link}>Orders</a>
+                <button type="button" onClick={handleBack} className={styles.link}>Orders</button>
                 <span className={styles.divider}>/</span>
                 <span className={styles.current}>New Custom Order</span>
             </nav>
@@ -247,13 +247,13 @@ const CreateOrder: React.FC = () => {
                 {/* Customer Information */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">person</span>
-                        Customer Information
+                        <span className="material-symbols-outlined icon">person</span> Customer Information
                     </h2>
                     <div className={styles.gridTwo}>
                         <div className={styles.fieldGroup} ref={customerDivRef}>
-                            <label>Select Customer <span className={styles.required}>*</span></label>
+                            <label htmlFor="customerSelect">Select Customer <span className={styles.required}>*</span></label>
                             <FormSelect 
+                                id="customerSelect"
                                 value={customerId} 
                                 onChange={(val) => setCustomerId(val)}
                                 options={[
@@ -265,8 +265,8 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Contact Number</label>
-                            <input type="text" value={selectedCustomer?.phone || ''} readOnly placeholder="Auto-filled" />
+                            <label htmlFor="contactPhone">Contact Number</label>
+                            <input id="contactPhone" type="text" value={selectedCustomer?.phone || ''} readOnly placeholder="Auto-filled" />
                         </div>
                     </div>
                 </div>
@@ -274,14 +274,14 @@ const CreateOrder: React.FC = () => {
                 {/* Order Specifications */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">draw</span>
-                        Order Specifications
+                        <span className="material-symbols-outlined icon">draw</span> Order Specifications
                     </h2>
                     <div className={styles.gridThree}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className={styles.specsControls}>
                             <div className={styles.fieldGroup}>
-                                <label>Detailed Description <span className={styles.required}>*</span></label>
+                                <label htmlFor="orderDescription">Detailed Description <span className={styles.required}>*</span></label>
                                 <textarea 
+                                    id="orderDescription"
                                     ref={descriptionRef}
                                     placeholder="Specify metal type (18k Gold, Sterling Silver), stone details, engravings, sizing, and design nuances..."
                                     value={description}
@@ -290,8 +290,9 @@ const CreateOrder: React.FC = () => {
                             </div>
                             <div className={styles.gridTwo}>
                                 <div className={styles.fieldGroup}>
-                                    <label>Target Delivery Date <span className={styles.required}>*</span></label>
+                                    <label htmlFor="deliveryDate">Target Delivery Date <span className={styles.required}>*</span></label>
                                     <input 
+                                        id="deliveryDate"
                                         ref={deliveryDateRef}
                                         type="date" 
                                         value={deliveryDate}
@@ -299,8 +300,9 @@ const CreateOrder: React.FC = () => {
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Urgency Level</label>
+                                    <label htmlFor="urgencyLevel">Urgency Level</label>
                                     <FormSelect 
+                                        id="urgencyLevel"
                                         value={urgency} 
                                         onChange={(val) => setUrgency(val)}
                                         options={[
@@ -314,50 +316,38 @@ const CreateOrder: React.FC = () => {
                         </div>
                         
                         {/* Image Upload */}
-                        <div className={styles.fieldGroup} style={{ height: '100%' }}>
-                            <label>Item Model Image / Sketch</label>
-                            <div 
-                                className={styles.imageUpload} 
-                                onClick={() => fileInputRef.current?.click()}
-                                style={{ 
-                                    backgroundImage: imagePreview ? `url(${imagePreview})` : 'none',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    position: 'relative'
-                                }}
-                            >
+                        <div className={`${styles.fieldGroup} ${styles.fullHeight}`}>
+                            <label htmlFor="modelImage">Item Model Image / Sketch</label>
+                            <div className={styles.imageContainer}>
                                 <input 
+                                    id="modelImage"
                                     type="file" 
                                     ref={fileInputRef} 
                                     onChange={handleImageUpload} 
                                     style={{ display: 'none' }} 
                                     accept="image/*"
                                 />
-                                {!imagePreview ? (
-                                    <>
-                                        <span className="material-symbols-outlined uploadIcon">add_a_photo</span>
-                                        <p>Upload sketch or reference photo (JPG, PNG)</p>
-                                    </>
-                                ) : (
+                                <button 
+                                    type="button"
+                                    className={styles.imageUpload} 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    aria-label={imagePreview ? "Change image" : "Upload sketch or reference photo"}
+                                    style={{ 
+                                        backgroundImage: imagePreview ? `url(${imagePreview})` : 'none'
+                                    }}
+                                >
+                                    {!imagePreview && (
+                                        <>
+                                            <span className="material-symbols-outlined uploadIcon">add_a_photo</span> <p>Upload sketch or reference photo (JPG, PNG)</p>
+                                        </>
+                                    )}
+                                </button>
+                                {imagePreview && (
                                     <button 
                                         type="button"
                                         className={styles.removeImageBtn}
                                         onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '10px',
-                                            right: '10px',
-                                            background: 'rgba(0,0,0,0.6)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '30px',
-                                            height: '30px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            cursor: 'pointer'
-                                        }}
+                                        aria-label="Remove image"
                                     >
                                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                                     </button>
@@ -370,13 +360,13 @@ const CreateOrder: React.FC = () => {
                 {/* Metal & Cost Details */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">diamond</span>
-                        Metal & Cost Details
+                        <span className="material-symbols-outlined icon">diamond</span> Metal & Cost Details
                     </h2>
                     <div className={styles.gridTwo}>
                          <div className={styles.fieldGroup}>
-                            <label>Metal Type</label>
+                            <label htmlFor="metalType">Metal Type</label>
                             <FormSelect 
+                                id="metalType"
                                 value={metalType} 
                                 onChange={(val) => setMetalType(val)}
                                 options={[
@@ -388,8 +378,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Metal Weight (g)</label>
+                            <label htmlFor="metalWeight">Metal Weight (g)</label>
                             <input 
+                                id="metalWeight"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={metalWeight}
@@ -398,10 +389,11 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                     </div>
-                    <div className={styles.gridThree} style={{ marginTop: '1.5rem' }}>
+                    <div className={`${styles.gridThree} ${styles.gridMargin}`}>
                          <div className={styles.fieldGroup}>
-                            <label>Stone Weight (cts/g)</label>
+                            <label htmlFor="stoneWeight">Stone Weight (cts/g)</label>
                             <input 
+                                id="stoneWeight"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={stoneWeight}
@@ -410,8 +402,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Stone Rate</label>
+                            <label htmlFor="stoneRate">Stone Rate</label>
                             <input 
+                                id="stoneRate"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={stoneRate}
@@ -420,13 +413,14 @@ const CreateOrder: React.FC = () => {
                         </div>
                         <div className={styles.fieldGroup}>
                              {/* Placeholder to balance grid if needed, or maybe Total Stone Cost read-only */}
-                             <label style={{ visibility: 'hidden' }}>Spacer</label>
+                             <label className={styles.hiddenLabel} aria-hidden="true">Spacer</label>
                         </div>
                     </div>
-                     <div className={styles.gridTwo} style={{ marginTop: '1.5rem' }}>
+                     <div className={`${styles.gridTwo} ${styles.gridMargin}`}>
                         <div className={styles.fieldGroup}>
-                            <label>Making Charges (Fixed)</label>
+                            <label htmlFor="makingCharges">Making Charges (Fixed)</label>
                             <input 
+                                id="makingCharges"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={makingCharges}
@@ -434,8 +428,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Wastage Percentage (%)</label>
+                            <label htmlFor="wastagePercentage">Wastage Percentage (%)</label>
                             <input 
+                                id="wastagePercentage"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={wastagePercentage}
@@ -451,21 +446,21 @@ const CreateOrder: React.FC = () => {
                     {/* Exchange Item */}
                     <div className={styles.formSection}>
                         <h2 className={styles.sectionTitle}>
-                            <span className="material-symbols-outlined icon">autorenew</span>
-                            Exchange Item
+                            <span className="material-symbols-outlined icon">autorenew</span> Exchange Item
                         </h2>
-                        <p style={{ color: '#b9b09d', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                        <p className={styles.sectionDescription}>
                             Link an old gold/silver valuation as part of the initial payment.
                         </p>
                         <div className={styles.fieldGroup}>
-                            <label>Exchange Item Name</label>
+                            <label htmlFor="exchangeItemName">Exchange Item Name & Weight</label>
                             <div className={styles.exchangeInputGroup}>
                                 <input 
+                                    id="exchangeItemName"
                                     type="text" 
                                     placeholder="e.g. Old Gold Chain, Silver Ring" 
                                     value={valuationRef}
                                     onChange={(e) => setValuationRef(e.target.value)}
-                                    style={{ flex: 2 }}
+                                    className={styles.large}
                                 />
                                 <input 
                                     type="number" 
@@ -473,15 +468,16 @@ const CreateOrder: React.FC = () => {
                                     value={exchangeWeight}
                                     onChange={(e) => setExchangeWeight(e.target.value)}
                                     step="0.01"
-                                    style={{ flex: 1 }}
+                                    aria-label="Exchange Item Weight"
                                 />
                             </div>
                         </div>
                         
                         {/* Exchange Amount Input (Hidden or visible? Mockup had result, assume editable for now) */}
-                         <div className={styles.fieldGroup} style={{ marginTop: '1rem' }}>
-                            <label>Exchange Value Adjustment</label>
+                         <div className={styles.fieldGroup} style={{ marginTop: '20px' }}>
+                            <label htmlFor="exchangeValue">Exchange Value Adjustment</label>
                              <input 
+                                id="exchangeValue"
                                 type="text" 
                                 value={'₹' + exchangeCreditStr} 
                                 onChange={(e) => setExchangeCredit(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -499,42 +495,41 @@ const CreateOrder: React.FC = () => {
 
                     {/* Financials */}
                 <div className={`${styles.formSection} ${styles.financialsSection}`}>
-                    <div className={styles.sectionTitle} style={{justifyContent: 'space-between'}}>
-                        <div style={{display:'flex', alignItems:'center', gap:'0.75rem'}}>
-                            <span className="material-symbols-outlined icon">calculate</span>
-                            Order Financials
+                    <div className={`${styles.sectionTitle} ${styles.summaryRow}`}>
+                        <div className={styles.titleMain}>
+                            <span className="material-symbols-outlined icon">calculate</span> Order Financials
                         </div>
-                        <div style={{display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.875rem', fontWeight:400}}>
+                        <div className={styles.titleAction}>
                              <input 
                                 type="checkbox" 
                                 checked={autoCalculate} 
                                 onChange={(e) => setAutoCalculate(e.target.checked)}
                                 id="autoCalc"
                              />
-                             <label htmlFor="autoCalc" style={{cursor:'pointer', color: autoCalculate ? '#e29d12' : '#b9b09d'}}>Auto-Calculate from Rates</label>
+                             <label htmlFor="autoCalc" style={{ color: autoCalculate ? '#e29d12' : '#b9b09d' }}>Auto-Calculate from Rates</label>
                         </div>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className={styles.financialsList}>
                         {autoCalculate && (
-                            <div style={{marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#b9b09d'}}>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
+                            <div className={styles.calcSummary}>
+                                <div className={styles.summaryRow}>
                                     <span>Metal Cost ({metalWeight || 0}g x ₹{metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : 0)})</span>
-                                    <span>₹{((parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    <span>₹{((Number.parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Wastage ({wastagePercentage || 0}%)</span>
-                                    <span>₹{(((parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))) * ((parseFloat(wastagePercentage)||0)/100)).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    <span>₹{(((Number.parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))) * ((Number.parseFloat(wastagePercentage)||0)/100)).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Making Charges</span>
-                                    <span>₹{(parseFloat(makingCharges)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+                                    <span>₹{(Number.parseFloat(makingCharges)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Stone Charges</span>
-                                    <span>₹{(parseFloat(stoneRate)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+                                    <span>₹{(Number.parseFloat(stoneRate)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{borderTop:'1px dashed rgba(255,255,255,0.1)', marginTop:'0.5rem', paddingTop:'0.5rem', display:'flex', justifyContent:'space-between', fontWeight:600, color:'#fff'}}>
+                                <div className={styles.summaryTotal}>
                                     <span>Estimated Total</span>
                                     <span>₹{totalAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
@@ -542,8 +537,9 @@ const CreateOrder: React.FC = () => {
                         )}
 
                         <div className={styles.financialRow}>
-                            <span className={styles.label}>Estimated Total Amount</span>
+                            <label htmlFor="totalAmountInput" className={styles.label}>Estimated Total Amount</label>
                             <input 
+                                id="totalAmountInput"
                                 type="text" 
                                 className={styles.inputCurrency}
                                 value={'₹' + totalAmountStr}
@@ -554,8 +550,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.financialRow}>
-                            <span className={styles.label}>Initial Advance (Min 30%)</span>
+                            <label htmlFor="advanceInput" className={styles.label}>Initial Advance (Min 30%)</label>
                             <input 
+                                id="advanceInput"
                                 type="text" 
                                 className={styles.inputCurrency}
                                 value={'₹' + advanceStr}
@@ -571,7 +568,7 @@ const CreateOrder: React.FC = () => {
                                 <span className={`${styles.value} ${styles.highlight}`}>₹{cashToPay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className={`${styles.financialRow} ${styles.borderTopBold}`}>
-                                <span className={`${styles.label} ${styles.bold}`} style={{ color: '#e29d12' }}>Remaining Balance</span>
+                                <span className={`${styles.label} ${styles.bold} ${styles.primaryLabel}`}>Remaining Balance</span>
                                 <span className={`${styles.value} ${styles.primary}`}>₹{remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>

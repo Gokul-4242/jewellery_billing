@@ -25,7 +25,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
     // State
     const [metalType, setMetalType] = useState<'gold' | 'silver'>('gold');
-    const [grossWeight, setGrossWeight] = useState<number>(12.50);
+    const [grossWeight, setGrossWeight] = useState<number>(12.5);
     const [wastagePercent, setWastagePercent] = useState<number>(12);
     const [makingCharges, setMakingCharges] = useState<number>(450);
     const [makingChargesType, setMakingChargesType] = useState<'fixed' | 'percent'>('fixed');
@@ -146,7 +146,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                         ref={grossWeightRef}
                                         type="number"
                                         value={grossWeight}
-                                        onChange={(e) => setGrossWeight(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setGrossWeight(Number.parseFloat(e.target.value) || 0)}
                                         className={styles.hasSuffix}
                                         placeholder="0.00"
                                     />
@@ -160,7 +160,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <input
                                         type="number"
                                         value={marketRate}
-                                        onChange={(e) => setMarketRateOverride(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setMarketRateOverride(Number.parseFloat(e.target.value) || 0)}
                                         className={`${styles.hasPrefix} ${styles.hasSuffix}`}
                                         placeholder="0"
                                     />
@@ -175,7 +175,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <input
                                         type="number"
                                         value={wastagePercent}
-                                        onChange={(e) => setWastagePercent(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setWastagePercent(Number.parseFloat(e.target.value) || 0)}
                                         className={styles.hasSuffix}
                                         placeholder="0"
                                     />
@@ -205,7 +205,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <input
                                         type="number"
                                         value={makingCharges}
-                                        onChange={(e) => setMakingCharges(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setMakingCharges(Number.parseFloat(e.target.value) || 0)}
                                         className={`${makingChargesType === 'fixed' ? styles.hasPrefix : ''} ${styles.hasSuffix}`}
                                         placeholder="0"
                                     />
@@ -254,7 +254,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <input
                                         type="number"
                                         value={exchangeValue}
-                                        onChange={(e) => onExchangeValueChange(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => onExchangeValueChange(Number.parseFloat(e.target.value) || 0)}
                                         disabled={!exchangeEnabled}
                                         className={styles.hasPrefix}
                                         style={{ opacity: exchangeEnabled ? 1 : 0.5 }}

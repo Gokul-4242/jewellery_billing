@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as mixins;
 
@@ -154,7 +155,7 @@
         transition: background-color 0.2s;
 
         &:hover {
-            background-color: lighten($surface-dark, 10%);
+            background-color: color.adjust($surface-dark, $lightness: 10%);
         }
     }
 }

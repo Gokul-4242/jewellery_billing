@@ -235,7 +235,7 @@ const Billing: React.FC = () => {
     }), [rates]);
 
     const calculatedExchangeValue = useMemo(() => {
-        const weight = parseFloat(exchangeWeight) || 0;
+        const weight = Number.parseFloat(exchangeWeight) || 0;
         const rate = buyingRates[exchangeType as keyof typeof buyingRates] || 0;
 
         if (!weight) return 0;
@@ -243,7 +243,7 @@ const Billing: React.FC = () => {
         // For Gold, calculations are based on 22k rate (91.6 purity)
         if (exchangeType === 'Old Gold') {
             // Default to 91.6 (Standard 22k) if empty
-            const purity = exchangePurity ? parseFloat(exchangePurity) : 91.6;
+            const purity = exchangePurity ? Number.parseFloat(exchangePurity) : 91.6;
 
             // If purity is 24k (>= 99%), use the 24k rate directly
             if (purity >= 99) {
@@ -254,7 +254,7 @@ const Billing: React.FC = () => {
             return weight * rate * (purity / 91.6);
         } else {
             // For Silver/Other, assume standard percentage calculation (Base 100)
-            const purity = parseFloat(exchangePurity) || 100;
+            const purity = Number.parseFloat(exchangePurity) || 100;
             return weight * rate * (purity / 100);
         }
     }, [exchangeWeight, exchangeType, exchangePurity, buyingRates, rates.gold24k]);
@@ -267,7 +267,7 @@ const Billing: React.FC = () => {
             return;
         }
         
-        if (!exchangeWeight || parseFloat(exchangeWeight) <= 0) {
+        if (!exchangeWeight || Number.parseFloat(exchangeWeight) <= 0) {
             showToast('Please enter a valid Weight', 'error');
             exchangeWeightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => exchangeWeightRef.current?.focus(), 500);
@@ -277,8 +277,8 @@ const Billing: React.FC = () => {
         const newItem: ExchangeItem = {
             id: Math.random().toString(36).substr(2, 9),
             description: `${exchangeName} (${exchangeType})`,
-            weight: parseFloat(exchangeWeight),
-            purity: parseFloat(exchangePurity) || (exchangeType === 'Old Gold' ? 91.6 : 100),
+            weight: Number.parseFloat(exchangeWeight),
+            purity: Number.parseFloat(exchangePurity) || (exchangeType === 'Old Gold' ? 91.6 : 100),
             value: calculatedExchangeValue
         };
 
@@ -314,7 +314,7 @@ const Billing: React.FC = () => {
         const exchangeTotal = exchangeItems.reduce((sum, item) => sum + item.value, 0);
 
         // Tax (GST) calculation based on selected rate
-        const gstPercent = parseFloat(gstRate) || 0;
+        const gstPercent = Number.parseFloat(gstRate) || 0;
         const gst = itemWiseTotals.netAmount * (gstPercent / 100);
 
         const grandTotal = itemWiseTotals.netAmount + gst - exchangeTotal;
@@ -361,7 +361,7 @@ const Billing: React.FC = () => {
             exchangeItems: exchangeItems,
             subtotal: totals.subtotal,
             gst: totals.gst,
-            gstRate: parseFloat(gstRate) || 0,
+            gstRate: Number.parseFloat(gstRate) || 0,
             discount: totals.discount,
             grandTotal: totals.grandTotal,
             goldRate: rates.gold22k,
@@ -388,7 +388,7 @@ const Billing: React.FC = () => {
             })),
             subtotal: totals.subtotal,
             gst: totals.gst,
-            gstRate: parseFloat(gstRate) || 0,
+            gstRate: Number.parseFloat(gstRate) || 0,
             discount: totals.discount,
             exchangeTotal: totals.exchangeTotal,
             exchangeItems: exchangeItems,
@@ -642,7 +642,7 @@ const Billing: React.FC = () => {
                                                     type="number"
                                                     className={styles.tableInput}
                                                     value={item.wastage || 0}
-                                                    onChange={(e) => updateCartItem(item.id, { wastage: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { wastage: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={styles.textRight}>
@@ -650,7 +650,7 @@ const Billing: React.FC = () => {
                                                     type="number"
                                                     className={styles.tableInput}
                                                     value={item.makingCharges}
-                                                    onChange={(e) => updateCartItem(item.id, { makingCharges: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { makingCharges: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={styles.textRight}>
@@ -659,7 +659,7 @@ const Billing: React.FC = () => {
                                                     className={styles.tableInput}
                                                     style={{ color: '#ef4444' }}
                                                     value={item.discount}
-                                                    onChange={(e) => updateCartItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { discount: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={`${styles.textRight} ${styles.textBold} ${styles.textMono}`}>₹{item.total.toFixed(2)}</td>
