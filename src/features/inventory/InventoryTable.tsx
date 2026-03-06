@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
-import styles from '../dashboard/Dashboard.module.scss';
+import styles from './InventoryTable.module.scss';
 import { Button, Badge } from '../../components/common';
 import { useInventory } from '../../context/InventoryContext';
 
@@ -161,22 +161,13 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
 
             {/* Active Filters Display */}
             {statusFilter !== 'All' && (
-                <div style={{ 
-                    margin: '0 0 1.5rem 0', 
-                    padding: '0.75rem 1rem', 
-                    backgroundColor: 'rgba(226, 157, 18, 0.1)', 
-                    border: '1px solid rgba(226, 157, 18, 0.3)', 
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <span style={{ color: '#e29d12', fontSize: '0.875rem', fontWeight: 600 }}>
+                <div className={styles.activeFiltersContainer}>
+                    <span className={styles.activeFiltersText}>
                          Showing: {statusFilter === 'Alerts' ? 'Low Stock & Out of Stock' : statusFilter} items
                     </span>
                     <button 
                         onClick={() => setStatusFilter('All')}
-                        style={{ background: 'none', border: 'none', color: '#e29d12', cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}
+                        className={styles.clearFilterButton}
                     >
                         Clear Filter
                     </button>
@@ -282,7 +273,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th style={{ width: '4rem' }}>
+                            <th className={styles.checkboxColumn}>
                                 <input type="checkbox" />
                             </th>
                             <th>Product</th>
@@ -299,7 +290,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                             <tr 
                                 key={product.id} 
                                 onClick={() => navigate(`/dashboard/inventory/${product.id}`)}
-                                style={{ cursor: 'pointer' }}
+                                className={styles.clickableRow}
                             >
                                 <td onClick={(e) => e.stopPropagation()}>
                                     <input type="checkbox" />
@@ -318,7 +309,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                         </div>
                                     </div>
                                 </td>
-                                <td style={{ color: '#e0e0e0', fontSize: '0.875rem' }}>{product.category}</td>
+                                <td className={styles.categoryCell}>{product.category}</td>
                                 <td>
                                     <Badge variant={getBadgeVariant(product.material)}>
                                         {product.material}
@@ -341,7 +332,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                             className={styles.actionBtn}
                                             onClick={() => setOpenMenuId(openMenuId === product.id ? null : product.id)}
                                         >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
+                                            <span className={`${styles.moreIcon} material-symbols-outlined`}>more_vert</span>
                                         </button>
                                         
                                         {openMenuId === product.id && (
@@ -372,13 +363,13 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_left</span>
+                        <span className={`${styles.navIcon} material-symbols-outlined`}>chevron_left</span>
                     </button>
                     <button 
                         disabled={currentPage === totalPages || totalPages === 0}
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_right</span>
+                        <span className={`${styles.navIcon} material-symbols-outlined`}>chevron_right</span>
                     </button>
                 </div>
             </div>

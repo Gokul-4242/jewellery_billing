@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from './Button';
+import styles from './Common.module.scss';
 
 interface Props {
     children?: ReactNode;
@@ -27,18 +28,9 @@ export class ErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div style={{ 
-                    padding: '2rem', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    minHeight: '100vh',
-                    backgroundColor: '#121212',
-                    color: '#fff'
-                }}>
-                    <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>Something went wrong.</h2>
-                    <p style={{ color: '#b0b0b0', marginBottom: '2rem', maxWidth: '600px', textAlign: 'center' }}>
+                <div className={styles.errorBoundary}>
+                    <h2>Something went wrong.</h2>
+                    <p>
                         {this.state.error?.message || "An unexpected error occurred."}
                     </p>
                     <Button onClick={() => window.location.reload()}>

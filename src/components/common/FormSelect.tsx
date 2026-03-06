@@ -15,6 +15,7 @@ interface FormSelectProps {
     placeholder?: string;
     label?: string; // Optional header inside dropdown
     className?: string;
+    disabled?: boolean;
 }
 
 export const FormSelect: React.FC<FormSelectProps> = ({ 
@@ -24,7 +25,8 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     onChange, 
     placeholder = 'Select...', 
     label,
-    className 
+    className,
+    disabled
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +44,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     }, []);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (disabled) return;
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             setIsOpen(!isOpen);
@@ -51,15 +54,16 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     };
 
     return (
-        <div className={classNames(styles.container, className)} ref={containerRef}>
+        <div className={classNames(styles.container, className, disabled && styles.disabled)} ref={containerRef}>
             <button 
                 id={id}
                 type="button"
-                className={classNames(styles.trigger, isOpen && styles.open)} 
-                onClick={() => setIsOpen(!isOpen)}
+                className={classNames(styles.trigger, 'form-select-trigger', isOpen && styles.open)} 
+                onClick={() => !disabled && setIsOpen(!isOpen)}
                 onKeyDown={handleKeyDown}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
+                disabled={disabled}
             >
                 <span className={classNames(selectedOption ? styles.value : styles.placeholder)}>
                     {selectedOption ? selectedOption.label : placeholder}

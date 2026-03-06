@@ -10,6 +10,9 @@ interface CustomDropdownProps {
     onAddOption?: (newOption: string) => void;
     allowCustom?: boolean;
     label?: string;
+    className?: string;
+    triggerClassName?: string;
+    menuClassName?: string;
 }
 
 export const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -19,8 +22,12 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     placeholder = 'Select an option',
     onAddOption,
     allowCustom = false,
-    label
+    label,
+    className,
+    triggerClassName,
+    menuClassName
 }) => {
+    const dropdownId = React.useId();
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [customValue, setCustomValue] = useState('');
@@ -51,12 +58,17 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     };
 
     return (
-        <div className={styles.container} ref={dropdownRef}>
-            {label && <label className={styles.label}>{label}</label>}
+        <div className={classNames(styles.container, className)} ref={dropdownRef}>
+            {label && <label className={styles.label} htmlFor={dropdownId}>{label}</label>}
             
-            <div 
-                className={classNames(styles.trigger, isOpen && styles.open)}
+            <button 
+                id={dropdownId}
+                type="button"
+                className={classNames(styles.trigger, triggerClassName, isOpen && styles.open)}
                 onClick={() => setIsOpen(!isOpen)}
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
+                aria-label={label || placeholder}
             >
                 <span className={classNames(!value && styles.placeholder)}>
                     {value || placeholder}
@@ -64,10 +76,10 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 <span className={classNames("material-symbols-outlined", styles.arrow)}>
                     expand_more
                 </span>
-            </div>
+            </button>
 
             {isOpen && (
-                <div className={styles.dropdown}>
+                <div className={classNames(styles.dropdown, menuClassName)}>
                     <div className={styles.searchArea}>
                         <input 
                             type="text" 
@@ -80,10 +92,11 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                         />
                     </div>
 
-                    <div className={styles.optionsList}>
+                    <div className={styles.optionsList} role="listbox">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map(opt => (
-                                <div 
+                                <button 
+                                    type="button"
                                     key={opt}
                                     className={classNames(styles.option, value === opt && styles.selected)}
                                     onClick={() => {
@@ -91,6 +104,8 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                         setIsOpen(false);
                                         setSearchTerm('');
                                     }}
+                                    role="option"
+                                    aria-selected={value === opt}
                                 >
                                     {opt}
                                     {value === opt && (
@@ -98,13 +113,14 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                             check
                                         </span>
                                     )}
-                                </div>
+                                </button>
                             ))
                         ) : (
                             <div className={styles.noResults}>
                                 No options found
                                 {allowCustom && searchTerm && (
-                                    <span 
+                                    <button 
+                                        type="button"
                                         className={styles.addPrompt}
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -120,14 +136,14 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                         }}
                                     >
                                         Add "{searchTerm}"?
-                                    </span>
+                                    </button>
                                 )}
                             </div>
                         )}
                     </div>
 
                     {allowCustom && (
-                        <div className={styles.customAdd} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.customAdd}>
                             <input 
                                 type="text"
                                 placeholder="Add custom..."

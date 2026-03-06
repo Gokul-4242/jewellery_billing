@@ -140,9 +140,10 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                         <div className={styles.inputGrid}>
                             <div className={styles.formGroup}>
-                                <label>Gross Weight</label>
+                                <label htmlFor="gross_weight">Gross Weight</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="gross_weight"
                                         ref={grossWeightRef}
                                         type="number"
                                         value={grossWeight}
@@ -155,9 +156,10 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Current Market Rate</label>
+                                <label htmlFor="market_rate">Current Market Rate</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="market_rate"
                                         type="number"
                                         value={marketRate}
                                         onChange={(e) => setMarketRateOverride(Number.parseFloat(e.target.value) || 0)}
@@ -170,9 +172,10 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Wastage (VA)</label>
+                                <label htmlFor="wastage_percent">Wastage (VA)</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="wastage_percent"
                                         type="number"
                                         value={wastagePercent}
                                         onChange={(e) => setWastagePercent(Number.parseFloat(e.target.value) || 0)}
@@ -185,16 +188,18 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                             <div className={styles.formGroup}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <label style={{ marginBottom: 0 }}>Making Charges</label>
+                                    <label htmlFor="making_charges" style={{ marginBottom: 0 }}>Making Charges</label>
                                     <div className={styles.toggleSwitch}>
-                                        <button
-                                            className={makingChargesType === 'fixed' ? styles.active : ''}
+                                        <button 
+                                            type="button"
+                                            className={makingChargesType === 'fixed' ? styles.active : ''} 
                                             onClick={() => setMakingChargesType('fixed')}
                                         >
-                                            FIXED
+                                            ₹
                                         </button>
-                                        <button
-                                            className={makingChargesType === 'percent' ? styles.active : ''}
+                                        <button 
+                                            type="button"
+                                            className={makingChargesType === 'percent' ? styles.active : ''} 
                                             onClick={() => setMakingChargesType('percent')}
                                         >
                                             %
@@ -203,6 +208,7 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                 </div>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="making_charges"
                                         type="number"
                                         value={makingCharges}
                                         onChange={(e) => setMakingCharges(Number.parseFloat(e.target.value) || 0)}
@@ -249,9 +255,10 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                         <div className={styles.inputGrid}>
                             <div className={styles.formGroup}>
-                                <label>Exchange Value</label>
+                                <label htmlFor="exchange_value">Exchange Value</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="exchange_value"
                                         type="number"
                                         value={exchangeValue}
                                         onChange={(e) => onExchangeValueChange(Number.parseFloat(e.target.value) || 0)}

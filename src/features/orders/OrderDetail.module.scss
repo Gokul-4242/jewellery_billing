@@ -85,6 +85,11 @@
                 background-color: rgba($primary, 0.2);
                 color: $primary;
                 margin: 0;
+
+                &.cancelled {
+                    background-color: rgba($danger, 0.2);
+                    color: $danger;
+                }
             }
         }
     }
@@ -164,12 +169,22 @@
         background-color: $sidebar-bg;
     }
 
+    &.noBorder {
+        background: transparent;
+        border: none;
+    }
+
     .cardHeader {
         padding: 1rem 1.5rem;
         border-bottom: $surface-border;
         display: flex;
         justify-content: space-between;
         align-items: center;
+
+        &.noBorder {
+            background: transparent !important;
+            border: none !important;
+        }
 
         h3 {
             font-size: 0.75rem;
@@ -239,6 +254,27 @@
             }
         }
 
+        .imageOverlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top right, rgba(226, 157, 18, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .noImagePlaceholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: $text-muted;
+
+            .placeholderIcon {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+        }
+
         .zoomBtn {
             position: absolute;
             bottom: 1rem;
@@ -254,6 +290,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            z-index: 2;
             
             &:hover {
                 background-color: rgba(0, 0, 0, 0.8);
@@ -403,8 +440,21 @@
             font-size: 0.75rem;
             font-style: italic;
             color: $text-light;
+
+            .reasonTitle {
+                color: $danger;
+                font-weight: 700;
+                margin-bottom: 0.25rem;
+                font-style: normal;
+            }
         }
     }
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
 
 // Special Instructions
@@ -544,6 +594,10 @@
             &.canceled { color: $danger; } // Assuming $danger is the red error color variable
         }
 
+        .cancelledTitle {
+            color: $danger;
+        }
+
         .pulseCircle {
             width: 1.5rem;
             height: 1.5rem;
@@ -616,6 +670,42 @@
 
     &:hover {
         background-color: color.adjust($primary, $lightness: -5%);
+    }
+}
+
+.dropdownWrapper {
+    position: relative;
+}
+
+.statusDropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #221c10;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0;
+    margin-top: 0.5rem;
+    z-index: 10;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.dropdownItem {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: $text-white;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: rgba($text-white, 0.05);
     }
 }
 

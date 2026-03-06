@@ -27,6 +27,11 @@
     z-index: 999;
     backdrop-filter: blur(2px);
     transition: opacity 0.3s ease;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
 
     @media (min-width: 1024px) {
         display: none;
@@ -109,6 +114,87 @@
     height: 100%;
     padding: 1rem;
     justify-content: space-between;
+
+    .mainNavSection {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        flex: 1;
+    }
+}
+
+.ratesWidget {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: rgba($primary, 0.1);
+    border-radius: $radius-md;
+    border: 1px solid lighten($sidebar-bg, 10%);
+    
+    .ratesHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .ratesTitle {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $primary;
+        text-transform: uppercase;
+    }
+
+    .ratesUpdateBtn {
+        @include button-reset;
+        color: $primary;
+        font-size: 0.75rem;
+        text-decoration: underline;
+
+        &:hover {
+            color: lighten($primary, 10%);
+        }
+    }
+
+    .rateItem {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    .rateLabel {
+        color: $text-muted;
+    }
+
+    .rateValueGroup {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .rateValue {
+        color: white;
+        font-weight: 600;
+    }
+
+    .trendIconWrapper {
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+
+        span {
+            font-size: 14px;
+        }
+
+        &.up { color: $success; }
+        &.down { color: $danger; }
+        &.stable { color: $text-muted; }
+    }
 }
 
 .brandWrapper {
@@ -245,6 +331,7 @@
     margin-top: auto;
     padding-top: 1rem;
     border-top: 1px solid $border-dark;
+    position: relative;
 
     .profileCard {
         display: flex;
@@ -258,6 +345,11 @@
         &:hover {
             background-color: $surface-dark;
         }
+    }
+
+    .expandIcon {
+        margin-left: auto;
+        color: $text-muted;
     }
 
     .avatar {
@@ -317,6 +409,28 @@
         @include flex-center;
         border: 1px solid $border-dark;
         z-index: 10;
+
+        span {
+            font-size: 14px;
+            color: $text-muted;
+        }
+    }
+
+    .logoutMenu {
+        position: absolute;
+        top: 100%;
+        bottom: auto;
+        margin-top: 0.25rem;
+        z-index: 100;
+        @extend .actionMenu;
+        width: calc(100% - 3.25rem);
+        left: 3.25rem;
+        right: auto;
+
+        &.collapsedMenu {
+            width: 10rem;
+            left: 100%;
+        }
     }
 }
 
@@ -346,6 +460,27 @@
 
     .brand {
         margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        .brandIcon {
+            color: $primary;
+        }
+
+        .brandName {
+            color: white;
+            font-weight: bold;
+        }
+    }
+
+    .menuButton {
+        color: white;
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
     }
 }
 
@@ -471,6 +606,11 @@
     gap: 0.25rem;
     padding: 1.25rem;
     transition: background-color 0.2s;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: default;
 
     &:hover {
         background-color: $surface-dark;

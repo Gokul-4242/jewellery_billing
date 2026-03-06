@@ -92,8 +92,8 @@ const DashboardHome: React.FC = () => {
                     value={`₹${totalValuation.toLocaleString('en-IN')}`}
                     icon="monetization_on"
                     trend={`₹${rates.gold22k}/g Gold`}
-                    trendLabel={valuationTrend.direction === 'neutral' ? 'Stable Market' : 'Market Value'}
-                    trendDirection={valuationTrend.direction === 'neutral' ? 'flat' : valuationTrend.direction}
+                    trendLabel={valuationTrend.direction === 'stable' ? 'Stable Market' : 'Market Value'}
+                    trendDirection={valuationTrend.direction === 'stable' ? 'flat' : valuationTrend.direction}
                     isHighlight={true}
                 />
             </div>

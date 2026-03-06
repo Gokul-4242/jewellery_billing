@@ -48,7 +48,7 @@ const DailySummary: React.FC = () => {
                     <p className={styles.label}>Total Sales</p>
                     <p className={styles.value}>₹{stats.totalSales.toLocaleString('en-IN')}</p>
                     <div className={`${styles.trend} ${styles.positive}`}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>trending_up</span>
+                        <span className={`material-symbols-outlined ${styles.trendIcon}`}>trending_up</span>
                         <span>Today's Revenue</span>
                     </div>
                 </div>
@@ -56,8 +56,8 @@ const DailySummary: React.FC = () => {
                 <div className={styles.statsCard}>
                     <p className={styles.label}>Total Weight Sold</p>
                     <p className={styles.value}>G: {stats.totalWeightNodes.gold.toFixed(1)}g | S: {stats.totalWeightNodes.silver.toFixed(1)}g</p>
-                    <div className={`${styles.trend} ${styles.neutral}`} style={{ color: '#b9b09d' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>scale</span>
+                    <div className={`${styles.trend} ${styles.mutedText}`}>
+                        <span className={`material-symbols-outlined ${styles.trendIcon}`}>scale</span>
                         <span>Across all items</span>
                     </div>
                 </div>
@@ -66,14 +66,14 @@ const DailySummary: React.FC = () => {
                     <p className={styles.label}>Total Exchange</p>
                     <p className={styles.value}>₹{stats.totalExchange.toLocaleString('en-IN')}</p>
                     <div className={`${styles.trend} ${styles.positive}`}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>currency_exchange</span>
+                        <span className={`material-symbols-outlined ${styles.trendIcon}`}>currency_exchange</span>
                         <span>Value Traded In</span>
                     </div>
                 </div>
                 {/* Card 4 */}
                 <div className={styles.statsCard}>
                     <p className={styles.label}>Transaction Count</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                    <div className={styles.cardFooter}>
                          <p className={styles.value}>{stats.transactionCount}</p>
                     </div>
                     <div className={styles.progressBar}>
@@ -148,7 +148,7 @@ const DailySummary: React.FC = () => {
                                         <tr 
                                             key={tx.id} 
                                             onClick={() => navigate(`/dashboard/invoice/view/${tx.id}`)}
-                                            style={{ cursor: 'pointer' }}
+                                            className={styles.clickable}
                                         >
                                             <td className={styles.id}>#{tx.invoiceNo.split('-')[1]}-{tx.invoiceNo.split('-')[2]}</td>
                                             <td className={styles.customer}>{tx.customerName}</td>
@@ -163,7 +163,7 @@ const DailySummary: React.FC = () => {
                                     ))}
                                     {todaysTransactions.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#b9b09d' }}>
+                                            <td colSpan={5} className={styles.emptyMessage}>
                                                 No transactions found for today.
                                             </td>
                                         </tr>

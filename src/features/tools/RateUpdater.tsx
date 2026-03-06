@@ -58,10 +58,11 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
 
                 <div className={styles.form}>
                     <div className={styles.inputGroup}>
-                        <label>Gold 22k (per gram)</label>
+                        <label htmlFor="gold22k">Gold 22k (per gram)</label>
                         <div className={styles.inputWrapper}>
                             <span className={styles.currency}>₹</span>
                             <input
+                                id="gold22k"
                                 ref={gold22kRef}
                                 type="number"
                                 value={localRates.gold22k}
@@ -71,10 +72,11 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className={styles.inputGroup}>
-                        <label>Gold 24k (per gram)</label>
+                        <label htmlFor="gold24k">Gold 24k (per gram)</label>
                         <div className={styles.inputWrapper}>
                             <span className={styles.currency}>₹</span>
                             <input
+                                id="gold24k"
                                 ref={gold24kRef}
                                 type="number"
                                 value={localRates.gold24k}
@@ -84,10 +86,11 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className={styles.inputGroup}>
-                        <label>Silver (per gram)</label>
+                        <label htmlFor="silver">Silver (per gram)</label>
                         <div className={styles.inputWrapper}>
                             <span className={styles.currency}>₹</span>
                             <input
+                                id="silver"
                                 ref={silverRef}
                                 type="number"
                                 value={localRates.silver}

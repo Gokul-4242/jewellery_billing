@@ -39,7 +39,7 @@ export const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextA
                     </Component>
                 )}
             </div>
-            {error && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{error}</p>}
+            {error && <p className={styles.errorText}>{error}</p>}
         </div>
     );
 });

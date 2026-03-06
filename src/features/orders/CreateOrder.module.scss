@@ -155,6 +155,14 @@
     &.marginTop {
         margin-top: 1rem;
     }
+
+    &.marginTopLg {
+        margin-top: 1.25rem;
+    }
+}
+
+.hidden {
+    display: none;
 }
 
 .imageContainer {
@@ -218,6 +226,10 @@
 
     &:hover {
         background: rgba(220, 38, 38, 0.8); // red hover
+    }
+
+    .closeIcon {
+        font-size: 1.125rem;
     }
 }
 
@@ -390,6 +402,12 @@
 
     label {
         cursor: pointer;
+        color: $text-muted;
+        transition: color 0.2s;
+
+        &.active {
+            color: $primary;
+        }
     }
 }
 

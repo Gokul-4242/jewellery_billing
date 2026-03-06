@@ -12,9 +12,10 @@ const Dashboard: React.FC = () => {
     return (
         <div className={`${styles.dashboardContainer} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
             {isMobileOpen && (
-                <div 
+                <button 
                     className={styles.sidebarOverlay} 
                     onClick={() => setIsMobileOpen(false)} 
+                    aria-label="Close sidebar"
                 />
             )}
             
@@ -29,11 +30,11 @@ const Dashboard: React.FC = () => {
                 {/* Mobile Header */}
                 <header className={styles.mobileHeader}>
                     <div className={styles.brand}>
-                        <span className="material-symbols-outlined" style={{ color: '#e29d12' }}>diamond</span>
-                        <span style={{ color: 'white', fontWeight: 'bold' }}>{settings.name}</span>
+                        <span className={`material-symbols-outlined ${styles.brandIcon}`}>diamond</span>
+                        <span className={styles.brandName}>{settings.name}</span>
                     </div>
                     <button 
-                        style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+                        className={styles.menuButton}
                         onClick={() => setIsMobileOpen(true)}
                     >
                         <span className="material-symbols-outlined">menu</span>

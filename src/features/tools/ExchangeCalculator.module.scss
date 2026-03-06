@@ -53,12 +53,31 @@ $input-bg: #393328;
             color: $text-light;
         }
 
+        .backBtn {
+            background: none;
+            border: none;
+            color: $text-muted;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            transition: color 0.2s;
+
+            &:hover {
+                color: $text-light;
+            }
+        }
+
         .date {
             color: $text-muted;
             font-size: 0.875rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+
+            .icon {
+                font-size: 0.875rem;
+            }
         }
     }
 
@@ -91,6 +110,13 @@ $input-bg: #393328;
                 color: $text-muted;
                 font-size: 0.875rem;
                 font-weight: 500;
+
+                .labelIcon {
+                    font-size: 0.875rem;
+                    
+                    &.gold { color: $primary; }
+                    &.silver { color: #9ca3af; }
+                }
             }
 
             .value {
@@ -98,6 +124,53 @@ $input-bg: #393328;
                 font-size: 1.25rem;
                 font-weight: 700;
                 line-height: 1.25;
+
+                .rateInputWrapper {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+
+                    .currencySymbol {
+                        font-size: 1rem;
+                    }
+
+                    .rateInput {
+                        background: rgba(255, 255, 255, 0.1);
+                        border: 1px solid #544b3b;
+                        color: white;
+                        font-size: 1rem;
+                        width: 80px;
+                        border-radius: 4px;
+                        padding: 2px 4px;
+                        font-family: monospace;
+
+                        &:focus {
+                            border-color: $primary;
+                            outline: none;
+                        }
+                    }
+                }
+
+                .rateDisplay {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+
+                .trendBadge {
+                    font-size: 0.75rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 2px;
+
+                    &.up { color: #22c55e; }
+                    &.down { color: #ef4444; }
+                    &.stable { color: #94a3b8; }
+
+                    .trendIcon {
+                        font-size: 0.875rem;
+                    }
+                }
 
                 .unit {
                     font-size: 0.875rem;
@@ -133,6 +206,15 @@ $input-bg: #393328;
             .text {
                 font-size: 0.75rem;
                 font-weight: 700;
+            }
+
+            &.active {
+                background-color: $primary;
+                color: #000;
+
+                .icon {
+                    color: #000;
+                }
             }
         }
     }
@@ -172,13 +254,26 @@ $input-bg: #393328;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    border: none;
+    padding: 0;
+    margin: 0;
 
-    label {
+    label,
+    legend {
         color: $text-muted;
         font-size: 0.875rem;
         font-weight: 500;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 0;
+        width: 100%;
+
+        .mutedHint {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
     }
 }
 
@@ -204,6 +299,7 @@ $input-bg: #393328;
         font-weight: 700;
         color: $text-muted;
         transition: all 0.2s;
+        position: relative;
 
         &.active {
             background-color: $primary;
@@ -217,8 +313,16 @@ $input-bg: #393328;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        input {
-            display: none;
+        &:focus-within {
+            box-shadow: 0 0 0 2px $text-light;
+        }
+
+        .radioInput {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
         }
     }
 }
@@ -253,8 +357,7 @@ $input-bg: #393328;
         margin-right: 0.75rem;
     }
 
-    input,
-    select {
+    input {
         background: transparent;
         border: none;
         color: $text-light;
@@ -267,37 +370,94 @@ $input-bg: #393328;
         &::placeholder {
             color: #6b604e;
         }
+    }
+}
 
-        // Fix for dropdown visibility in some browsers
-        option {
-            background-color: $bg-dark;
-            color: $text-light;
-            padding: 10px;
+:global(.form-select-trigger) {
+    height: 3rem !important;
+}
+
+.unitSelect {
+    height: 100%;
+}
+
+.purityDropdown {
+    width: 100%;
+
+    :global(.purity-trigger) {
+        height: 3rem !important;
+        background-color: $input-bg !important;
+        border-color: $border-color !important;
+        border-radius: 0.5rem !important;
+        font-size: 1.125rem !important;
+        font-family: inherit;
+        padding: 0 1rem !important;
+        color: $text-light !important;
+
+        &:focus, &.open {
+            border-color: $primary !important;
+            box-shadow: 0 0 0 1px $primary !important;
+        }
+
+        :global(.placeholder) {
+            color: rgba($text-muted, 0.4) !important;
         }
     }
 
-    select {
-        padding-right: 2rem;
-        appearance: none;
-        color: $text-light !important; // Force visibility
+    :global(.purity-menu) {
+        background-color: #262118 !important; // Darker brown to match theme
+        border-color: $border-color !important;
+        margin-top: 0.25rem !important;
+
+        :global(.option) {
+            font-size: 1rem !important;
+            padding: 0.75rem 1rem !important;
+            color: $text-light !important;
+
+            &:hover {
+                background-color: rgba($primary, 0.1) !important;
+                color: $primary !important;
+            }
+
+            &[aria-selected="true"] {
+                background-color: rgba($primary, 0.15) !important;
+                color: $primary !important;
+                font-weight: 600;
+            }
+        }
+
+        :global(.searchInput) {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+            border-color: $border-color !important;
+            font-size: 1rem !important;
+        }
+
+        :global(.customAdd) {
+            background-color: rgba($primary, 0.05) !important;
+            padding: 0.75rem !important;
+            display: flex !important;
+            gap: 0.5rem !important;
+            
+            input {
+                background-color: rgba(0, 0, 0, 0.2) !important;
+                border-color: $border-color !important;
+                flex: 1 !important;
+                min-width: 50% !important;
+            }
+
+            button {
+                background-color: $primary !important;
+                color: $bg-dark !important; // Dark text on gold button
+                padding: 0.5rem 0.75rem !important;
+                font-weight: 700 !important;
+                border-radius: 0.25rem !important;
+                flex-shrink: 0 !important;
+            }
+        }
     }
 }
 
-.selectWrapper {
-    position: relative;
-
-    .dropdownIcon {
-        pointer-events: none;
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        display: flex;
-        align-items: center;
-        padding: 0 1rem;
-        color: $text-muted;
-    }
-}
+// selectWrapper was removed from TSX
 
 .deductionGrid {
     display: grid;
@@ -317,28 +477,6 @@ $input-bg: #393328;
 
         @media (min-width: 768px) {
             grid-column: span 3;
-        }
-
-        select {
-            width: 100%;
-            height: 100%;
-            border-radius: 0.5rem;
-            background-color: $input-bg;
-            border: none;
-            color: $text-light;
-            text-align: center;
-            font-weight: 500;
-            cursor: pointer;
-            outline: none;
-
-            &:focus {
-                box-shadow: 0 0 0 1px $primary;
-            }
-
-            option {
-                background-color: $bg-dark;
-                color: $text-light;
-            }
         }
     }
 }
@@ -563,11 +701,15 @@ $input-bg: #393328;
             color: $text-light;
         }
 
-        a {
+        .linkBtn {
             font-size: 0.875rem;
             color: $primary;
             text-decoration: none;
             transition: color 0.2s;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
 
             &:hover {
                 color: $text-light;
@@ -623,8 +765,50 @@ $input-bg: #393328;
                 td {
                     padding: 1rem 1.5rem;
                     white-space: nowrap;
+
+                    &.textRight {
+                        text-align: right;
+                    }
+                    &.textCenter {
+                        text-align: center;
+                    }
+                    &.fontMedium {
+                        font-weight: 500;
+                        color: $text-light;
+                    }
+                    &.clickable {
+                        cursor: pointer;
+                    }
+
+                    .deleteBtn {
+                        cursor: pointer;
+                        color: $text-muted;
+                        transition: all 0.2s;
+                        font-size: 1.25rem;
+
+                        &:hover {
+                            color: #ef4444; // Red-500
+                            transform: scale(1.1);
+                        }
+                    }
                 }
             }
+        }
+
+        th {
+            &.textRight {
+                text-align: right;
+            }
+            &.textCenter {
+                text-align: center;
+            }
+        }
+
+        .emptyState {
+            text-align: center;
+            padding: 3rem;
+            color: $text-muted;
+            font-style: italic;
         }
     }
 }

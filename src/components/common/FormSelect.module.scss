@@ -46,6 +46,16 @@
     }
 }
 
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    .trigger {
+        pointer-events: none;
+        background-color: rgba($surface-dark, 0.5);
+    }
+}
+
 .dropdownMenu {
     position: absolute;
     top: calc(100% + 0.5rem);

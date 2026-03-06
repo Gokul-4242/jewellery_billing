@@ -324,7 +324,7 @@ const CreateOrder: React.FC = () => {
                                     type="file" 
                                     ref={fileInputRef} 
                                     onChange={handleImageUpload} 
-                                    style={{ display: 'none' }} 
+                                    className={styles.hidden}
                                     accept="image/*"
                                 />
                                 <button 
@@ -349,7 +349,7 @@ const CreateOrder: React.FC = () => {
                                         onClick={handleRemoveImage}
                                         aria-label="Remove image"
                                     >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                                        <span className={`material-symbols-outlined ${styles.closeIcon}`}>close</span>
                                     </button>
                                 )}
                             </div>
@@ -474,7 +474,7 @@ const CreateOrder: React.FC = () => {
                         </div>
                         
                         {/* Exchange Amount Input (Hidden or visible? Mockup had result, assume editable for now) */}
-                         <div className={styles.fieldGroup} style={{ marginTop: '20px' }}>
+                         <div className={`${styles.fieldGroup} ${styles.marginTopLg}`}>
                             <label htmlFor="exchangeValue">Exchange Value Adjustment</label>
                              <input 
                                 id="exchangeValue"
@@ -506,7 +506,7 @@ const CreateOrder: React.FC = () => {
                                 onChange={(e) => setAutoCalculate(e.target.checked)}
                                 id="autoCalc"
                              />
-                             <label htmlFor="autoCalc" style={{ color: autoCalculate ? '#e29d12' : '#b9b09d' }}>Auto-Calculate from Rates</label>
+                             <label htmlFor="autoCalc" className={autoCalculate ? styles.active : ''}>Auto-Calculate from Rates</label>
                         </div>
                     </div>
                     

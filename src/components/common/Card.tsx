@@ -18,21 +18,38 @@ export const Card: React.FC<CardProps> = ({
     className = '',
     onClick
 }) => {
-    return (
-        <div
-            className={`${styles.card} ${onClick ? styles.interactive : ''} ${className}`}
-            onClick={onClick}
-        >
+    const content = (
+        <>
             {(title || extra) && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                <div className={styles.cardHeader}>
                     <div>
-                        {title && <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'white' }}>{title}</h3>}
-                        {description && <p style={{ fontSize: '0.875rem', color: '#b9b09d', marginTop: '0.25rem' }}>{description}</p>}
+                        {title && <h3 className={styles.cardTitle}>{title}</h3>}
+                        {description && <p className={styles.cardDescription}>{description}</p>}
                     </div>
                     {extra && <div>{extra}</div>}
                 </div>
             )}
             {children}
+        </>
+    );
+
+    const fullClassName = `${styles.card} ${onClick ? styles.interactive : ''} ${className}`;
+
+    if (onClick) {
+        return (
+            <button
+                type="button"
+                className={fullClassName}
+                onClick={onClick}
+            >
+                {content}
+            </button>
+        );
+    }
+
+    return (
+        <div className={fullClassName}>
+            {content}
         </div>
     );
 };

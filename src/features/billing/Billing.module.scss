@@ -115,7 +115,7 @@
                     color: $success;
                 }
 
-                &.neutral {
+                &.stable {
                     color: $text-muted;
                 }
             }
@@ -268,7 +268,6 @@
                 .searchResultItem {
                     padding: 0.75rem 1rem;
                     cursor: pointer;
-                    border-bottom: 1px solid $border-dark;
                     display: flex;
 
                     &.disabled {
@@ -292,6 +291,13 @@
                     &:hover {
                         background-color: color.adjust($background-dark, $lightness: 5%);
                     }
+
+                    background: none;
+                    border: none;
+                    border-bottom: 1px solid $border-dark;
+                    text-align: left;
+                    font-family: inherit;
+                    width: 100%;
 
                     img {
                         width: 2.5rem;
@@ -336,12 +342,17 @@
                     font-weight: 700;
                     font-size: 0.875rem;
                     transition: all 0.2s;
-                    border-top: 1px solid $border-dark;
 
                     &:hover {
                         background-color: rgba($primary, 0.15);
                         color: color.adjust($primary, $lightness: 10%);
                     }
+
+                    border: none;
+                    border-top: 1px solid $border-dark;
+                    width: 100%;
+                    font-family: inherit;
+                    text-align: center;
                 }
             }
         }
@@ -755,6 +766,12 @@
                     &:hover {
                         background-color: rgba($primary, 0.1);
                     }
+
+                    background: none;
+                    border: none;
+                    width: 100%;
+                    font-family: inherit;
+                    text-align: center;
                 }
 
                 .noResults {
@@ -1180,4 +1197,288 @@
         opacity: 1;
         transform: scale(1);
     }
+}
+
+// ---------------------------------------------------------
+// NEW CLASSES FROM INLINE STYLES
+// ---------------------------------------------------------
+
+.logoIcon {
+    font-size: 32px !important;
+}
+
+.trendIcon {
+    font-size: 18px !important;
+
+    &.up {
+        color: $success;
+    }
+
+    &.down {
+        color: $danger;
+    }
+
+    &.stable {
+        color: #e29d12;
+    }
+
+    &.stableSilver {
+        color: $text-muted;
+    }
+}
+
+.scanBtn {
+    color: #b9b09d;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.filterIcon {
+    font-size: 20px !important;
+}
+
+.filterBadge {
+    width: 8px;
+    height: 8px;
+    background-color: $primary;
+    border-radius: 50%;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+
+.categoryIcon {
+    font-size: 18px !important;
+}
+
+.purityBadge {
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+
+    &.gold22k {
+        background-color: rgba(234, 179, 8, 0.2);
+        color: #ca8a04;
+        border-color: rgba(234, 179, 8, 0.3);
+    }
+
+    &.silver {
+        background-color: rgba(148, 163, 184, 0.2);
+        color: #94a3b8;
+        border-color: rgba(148, 163, 184, 0.3);
+    }
+}
+
+.colSm {
+    width: 3rem;
+}
+
+.colIcon {
+    width: 2.5rem;
+}
+
+.discountInput {
+    color: $danger !important;
+}
+
+.deleteBtn {
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: $danger;
+    }
+
+    span {
+        font-size: 20px !important;
+    }
+}
+
+.exchangeTableHead {
+    background-color: rgba(44, 36, 23, 0.3) !important;
+
+    th {
+        padding: 0.5rem !important;
+    }
+}
+
+.exchangeRow {
+    background-color: transparent !important;
+
+    td {
+        padding: 0.5rem !important;
+        border: none !important;
+    }
+}
+
+.exchangeItemInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    span {
+        font-size: 18px !important;
+        color: $text-muted;
+    }
+}
+
+.exchangeValue {
+    font-weight: 700;
+    color: $danger;
+}
+
+.closeIcon {
+    font-size: 18px !important;
+}
+
+.viewHistoryBtn {
+    font-size: 0.75rem;
+    color: $primary;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.customerInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.customerEmail {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.editBtn {
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: $primary;
+    }
+}
+
+.summaryTitle {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #b9b09d;
+    margin-bottom: 1rem;
+}
+
+.separator {
+    height: 1px;
+    background-color: #4a4030;
+    margin: 1rem 0;
+}
+
+.summaryLabel {
+    color: #b9b09d;
+}
+
+.summaryLabelWithIcon {
+    color: #b9b09d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.taxSelect {
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #4a4030;
+    background-color: #2c2417;
+    color: $primary;
+    font-size: 0.75rem;
+    width: auto;
+    margin-left: 0.25rem;
+}
+
+.infoIcon {
+    font-size: 14px !important;
+}
+
+.exchangeAdjLabel {
+    color: $primary;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.negativeValue {
+    color: $danger;
+}
+
+.textMuted {
+    color: #94a3b8;
+}
+
+.roundingInfo {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+.paymentGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.paymentOption {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #4a4030;
+    background-color: #2c2417;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &.active {
+        border: 2px solid $primary;
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+    }
+
+    span.material-symbols-outlined {
+        margin-bottom: 0.25rem;
+    }
+
+    .optionLabel {
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+}
+
+.noMargin {
+    margin-bottom: 0 !important;
+}
+
+.inStock {
+    color: $success;
+}
+
+.outStock {
+    color: $danger;
 }

@@ -18,7 +18,7 @@ interface RateContextType {
     rates: MetalRates;
 
     updateRate: (metal: keyof MetalRates | 'all', value: number | MetalRates) => void;
-    getTrend: (current: number, previous?: number) => { percent: string; direction: 'up' | 'down' | 'neutral' };
+    getTrend: (current: number, previous?: number) => { percent: string; direction: 'up' | 'down' | 'stable' };
 }
 
 const DEFAULT_RATES: MetalRates = {
@@ -70,12 +70,12 @@ export const RateProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const getTrend = (current: number, previous?: number) => {
-        if (!previous) return { percent: '0.00', direction: 'neutral' as const };
+        if (!previous) return { percent: '0.00', direction: 'stable' as const };
         const diff = current - previous;
         const percent = (diff / previous) * 100;
         return {
             percent: Math.abs(percent).toFixed(2),
-            direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral'
+            direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable'
         } as const;
     };
 

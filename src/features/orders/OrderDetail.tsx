@@ -100,12 +100,12 @@ const OrderDetail: React.FC = () => {
             <div className={styles.pageHeader}>
                 <div className={styles.titleSection}>
                     <h2>Custom Order Specification</h2>
-                    <div className={styles.metaInfo}>
+                        <div className={styles.metaInfo}>
                         <span>Order ID: #{orderId}</span>
                         <span className={styles.dot}></span>
                         <span>Customer: {order.customerName}</span>
                         {isUrgent && <span className={styles.badge}>Urgent</span>}
-                        {order.status === 'Cancelled' && <span className={styles.badge} style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>Cancelled</span>}
+                        {order.status === 'Cancelled' && <span className={classNames(styles.badge, styles.cancelled)}>Cancelled</span>}
                     </div>
                 </div>
                 <div className={styles.actions}>
@@ -140,23 +140,15 @@ const OrderDetail: React.FC = () => {
                         <div className={styles.cardBody}>
                             <div className={styles.designSection}>
                                 <div className={styles.imageContainer}>
-                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top right, rgba(226, 157, 18, 0.1), transparent)' }}></div>
+                                    <div className={styles.imageOverlay}></div>
                                     {order.imageUrl ? (
                                         <img 
                                             src={order.imageUrl} 
                                             alt="Design Render" 
-                                            style={{ objectFit: 'contain', width: '100%', height: '100%' }}
                                         />
                                     ) : (
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            flexDirection: 'column', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center', 
-                                            height: '100%',
-                                            color: '#b9b09d'
-                                        }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '1rem' }}>image_not_supported</span>
+                                        <div className={styles.noImagePlaceholder}>
+                                            <span className={`material-symbols-outlined ${styles.placeholderIcon}`}>image_not_supported</span>
                                             <p>No design image uploaded</p>
                                         </div>
                                     )}
@@ -191,7 +183,7 @@ const OrderDetail: React.FC = () => {
                     </div>
 
                     {/* Material & Delivery Split */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                    <div className={styles.detailsGrid}>
                         
                         {/* Material Details */}
                         <div className={`${styles.card} ${styles.whiteBg}`}>
@@ -228,7 +220,7 @@ const OrderDetail: React.FC = () => {
                             <div className={styles.bgIcon}>
                                 <span className="material-symbols-outlined">event_upcoming</span>
                             </div>
-                            <div className={styles.cardHeader} style={{ background: 'transparent', border: 'none' }}>
+                            <div className={`${styles.cardHeader} ${styles.noBorder}`}>
                                 <h3>
                                     <span className="material-symbols-outlined icon">schedule</span>
                                     Commitment
@@ -243,7 +235,7 @@ const OrderDetail: React.FC = () => {
                                     <div className={styles.quote}>
                                         {order.status === 'Cancelled' ? (
                                             <>
-                                                <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '0.25rem' }}>Cancellation Reason:</div>
+                                                <div className={styles.reasonTitle}>Cancellation Reason:</div>
                                                 {order.cancellationReason || "No reason provided."}
                                             </>
                                         ) : (
@@ -286,7 +278,7 @@ const OrderDetail: React.FC = () => {
                         <div className={styles.body}>
                             <div className={styles.row}>
                                 <span>Total Order Value</span>
-                                <span className={styles.val}>{formatCurrency(order.grandTotal)}</span>
+                               <span className={styles.val}>{formatCurrency(order.grandTotal)}</span>
                             </div>
                             <div className={styles.row}>
                                 <span>Partial Payment Received</span>
@@ -335,7 +327,7 @@ const OrderDetail: React.FC = () => {
                                             <span className={`material-symbols-outlined icon ${styles.canceled}`}>cancel</span>
                                         </div>
                                         <div className={styles.contentCol}>
-                                            <div className={styles.title} style={{ color: '#ef4444' }}>Order Cancelled</div>
+                                            <div className={`${styles.title} ${styles.cancelledTitle}`}>Order Cancelled</div>
                                             <div className={styles.subtitle}>Process Halted</div>
                                         </div>
                                     </>
@@ -400,7 +392,7 @@ const OrderDetail: React.FC = () => {
                                 )}
                             </div>
 
-                            <div style={{ position: 'relative' }}>
+                            <div className={styles.dropdownWrapper}>
                                 <button 
                                     className={styles.updateStatusBtn}
                                     onClick={() => setShowStatusMenu(!showStatusMenu)}
@@ -408,33 +400,11 @@ const OrderDetail: React.FC = () => {
                                     Update Status ({order.status})
                                 </button>
                                 {showStatusMenu && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        left: 0,
-                                        width: '100%',
-                                        backgroundColor: '#221c10',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '0.5rem',
-                                        marginTop: '0.5rem',
-                                        zIndex: 10,
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                    }}>
+                                    <div className={styles.statusDropdown}>
                                         {['Pending', 'In Production', 'Quality Check', 'Completed', 'Cancelled'].map(status => (
                                             <button
                                                 key={status}
                                                 className={styles.dropdownItem}
-                                                style={{
-                                                    display: 'block',
-                                                    width: '100%',
-                                                    padding: '0.75rem',
-                                                    textAlign: 'left',
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    color: 'white',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.875rem'
-                                                }}
                                                 onClick={() => handleStatusClick(status)}
                                             >
                                                 {status}
@@ -493,7 +463,6 @@ const OrderDetail: React.FC = () => {
                                 className={styles.confirmBtn} 
                                 onClick={confirmCancellation}
                                 disabled={!cancelReason.trim()}
-                                style={{ opacity: !cancelReason.trim() ? 0.5 : 1, cursor: !cancelReason.trim() ? 'not-allowed' : 'pointer' }}
                             >
                                 Confirm Cancellation
                             </button>

@@ -159,6 +159,20 @@
       &.negative {
         color: $danger;
       }
+
+      .trendIcon {
+        font-size: 1rem;
+      }
+
+      &.mutedText {
+        color: $text-muted;
+      }
+    }
+
+    .cardFooter {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
     }
 
     .progressBar {
@@ -366,6 +380,16 @@
           font-size: 0.875rem;
           font-weight: 700;
           color: $text-white;
+        }
+
+        &.clickable {
+          cursor: pointer;
+        }
+
+        .emptyMessage {
+          text-align: center;
+          padding: 2rem;
+          color: $text-muted;
         }
       }
     }
