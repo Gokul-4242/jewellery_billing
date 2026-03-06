@@ -4,6 +4,7 @@ import styles from './Auth.module.scss';
 import type { SignupProps, SignupFormData, UserRole } from './Signup.types';
 import signupImg from '../../assets/signup page.png';
 import { useToast } from '../../context/ToastContext';
+import TermsModal from './TermsModal';
 
 const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
     const [formData, setFormData] = useState<SignupFormData>({
@@ -14,6 +15,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
         confirmPassword: '',
         agreeToTerms: false,
     });
+    const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
     const { showToast } = useToast();
     const fullNameRef = useRef<HTMLInputElement>(null);
@@ -81,6 +83,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
     };
 
     return (
+        <>
         <div className={styles.container}>
             <div className={styles.backgroundWrapper}>
                 <img
@@ -251,13 +254,21 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                 />
                                 <span className={styles.termsText}>
                                     I agree to the{' '}
-                                    <a href="#" onClick={(e) => e.preventDefault()}>
+                                    <button
+                                        type="button"
+                                        className={styles.termsLink}
+                                        onClick={() => setIsTermsModalOpen(true)}
+                                    >
                                         Terms of Service
-                                    </a>{' '}
-                                    and{' '}
-                                    <a href="#" onClick={(e) => e.preventDefault()}>
+                                    </button>
+                                    {' '}and{' '}
+                                    <button
+                                        type="button"
+                                        className={styles.termsLink}
+                                        onClick={() => setIsTermsModalOpen(true)}
+                                    >
                                         Privacy Policy
-                                    </a>
+                                    </button>
                                     .
                                 </span>
                             </label>
@@ -288,6 +299,9 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                 </div>
             </div>
         </div>
+
+        <TermsModal isOpen={isTermsModalOpen} onClose={() => setIsTermsModalOpen(false)} />
+        </>
     );
 };
 

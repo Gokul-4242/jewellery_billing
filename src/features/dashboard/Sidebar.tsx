@@ -194,8 +194,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, isMobileOpen, 
                         ) : (
                             <>
                                 <div className={styles.userInfo}>
-                                    <span className={styles.userName}>{user?.username || 'Venkadesh'}</span>
-                                    <span className={styles.userRole}>Owner</span>
+                                    <span className={styles.userName}>{user?.username || 'Admin'}</span>
+                                    <span className={styles.userRole}>
+                                        {user?.role === 'admin' ? 'Administrator' : user?.role === 'staff' ? 'Sales Staff' : 'Administrator'}
+                                    </span>
                                 </div>
                                 <span className={classNames("material-symbols-outlined", styles.expandIcon)}>
                                     {isProfileDropdownOpen ? 'expand_less' : 'expand_more'}

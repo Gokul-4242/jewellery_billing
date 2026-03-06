@@ -336,39 +336,53 @@
     .profileCard {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
+        gap: 0.875rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
         cursor: pointer;
         transition: background-color 0.2s;
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
 
         &:hover {
             background-color: $surface-dark;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $primary;
+            outline-offset: 2px;
         }
     }
 
     .expandIcon {
         margin-left: auto;
         color: $text-muted;
+        font-size: 1.25rem;
+        flex-shrink: 0;
     }
 
     .avatar {
         position: relative;
+        flex-shrink: 0;
 
         img {
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 3rem;
+            height: 3rem;
             border-radius: 9999px;
             object-fit: cover;
-            border: 1px solid $border-dark;
+            background-color: #d4b896;
+            border: 2px solid rgba($primary, 0.4);
+            box-shadow: 0 0 0 3px rgba($primary, 0.1);
         }
 
         .status {
             position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 0.625rem;
-            height: 0.625rem;
+            bottom: 2px;
+            right: 2px;
+            width: 0.6rem;
+            height: 0.6rem;
             background-color: $success;
             border-radius: 50%;
             border: 2px solid $sidebar-bg;
@@ -378,23 +392,27 @@
     .userInfo {
         display: flex;
         flex-direction: column;
+        gap: 0.125rem;
         overflow: hidden;
+        flex: 1;
 
         .userName {
-            font-size: 0.875rem;
+            font-size: 0.9375rem;
             font-weight: 600;
             color: white;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            letter-spacing: 0.01em;
         }
 
         .userRole {
-            font-size: 0.75rem;
+            font-size: 0.8125rem;
             color: $text-muted;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-weight: 400;
         }
     }
 
