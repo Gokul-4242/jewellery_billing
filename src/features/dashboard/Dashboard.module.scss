@@ -128,7 +128,7 @@
     padding: 1rem;
     background-color: rgba($primary, 0.1);
     border-radius: $radius-md;
-    border: 1px solid lighten($sidebar-bg, 10%);
+    border: 1px solid color.adjust($sidebar-bg, $lightness: 10%);
     
     .ratesHeader {
         display: flex;
@@ -151,7 +151,7 @@
         text-decoration: underline;
 
         &:hover {
-            color: lighten($primary, 10%);
+            color: color.adjust($primary, $lightness: 10%);
         }
     }
 

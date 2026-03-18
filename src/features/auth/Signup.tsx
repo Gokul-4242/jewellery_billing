@@ -16,6 +16,8 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
         agreeToTerms: false,
     });
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { showToast } = useToast();
     const fullNameRef = useRef<HTMLInputElement>(null);
@@ -209,15 +211,25 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         </span>
                                         <input
                                             ref={passwordRef}
-                                            className={styles.input}
+                                            className={`${styles.input} ${styles.passwordInput}`}
                                             id="password"
                                             name="password"
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             placeholder="••••••••"
                                             value={formData.password}
                                             onChange={handleInputChange}
                                             required
                                         />
+                                        <button
+                                            className={styles.togglePasswordButton}
+                                            type="button"
+                                            onClick={() => setShowPassword(prev => !prev)}
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            <span className={`material-symbols-outlined ${styles.icon}`}>
+                                                {showPassword ? 'visibility_off' : 'visibility'}
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -231,15 +243,25 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         </span>
                                         <input
                                             ref={confirmPasswordRef}
-                                            className={styles.input}
+                                            className={`${styles.input} ${styles.passwordInput}`}
                                             id="confirmPassword"
                                             name="confirmPassword"
-                                            type="password"
+                                            type={showConfirmPassword ? 'text' : 'password'}
                                             placeholder="••••••••"
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
                                             required
                                         />
+                                        <button
+                                            className={styles.togglePasswordButton}
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(prev => !prev)}
+                                            aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                                        >
+                                            <span className={`material-symbols-outlined ${styles.icon}`}>
+                                                {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -268,8 +290,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                         onClick={() => setIsTermsModalOpen(true)}
                                     >
                                         Privacy Policy
-                                    </button>
-                                    .
+                                    </button>.
                                 </span>
                             </label>
 
@@ -282,7 +303,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                             </button>
 
                             {/* Footer Link */}
-                            <p className={styles.footer}>
+                            <p className={styles.signupSection}>
                                 Already have an account?{' '}
                                 <Link
                                     to="/login"
@@ -295,7 +316,7 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                 </div>
 
                 <div className={styles.copyright}>
-                    <p>© 2026 VGH &amp; Jewellers. All rights reserved.</p>
+                    <p>© 2026 VGH Jewellers. All rights reserved.</p>
                 </div>
             </div>
         </div>

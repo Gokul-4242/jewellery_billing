@@ -180,16 +180,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                         </form>
                     </div>
 
-                    <div className={styles.footer}>
+                    {/* <div className={styles.footer}>
                         <p>
                             <span className={`material-symbols-outlined ${styles.icon}`}>encrypted</span>
                             256-bit Encrypted Connection
                         </p>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className={styles.copyright}>
-                    <p>© 2026 VGH &amp; Jewellers. All rights reserved.</p>
+                    <p>© 2026 VGH Jewellers. All rights reserved.</p>
                 </div>
             </div>
         </div>

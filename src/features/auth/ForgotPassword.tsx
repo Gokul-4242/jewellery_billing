@@ -129,9 +129,9 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
                     </div>
                 </div>
 
-                <footer className={styles.footer}>
-                    <p>© 2026 VGH &amp; Jewellers. All rights reserved.</p>
-                </footer>
+                <div className={styles.copyright}>
+                    <p>© 2026 VGH Jewellers. All rights reserved.</p>
+                </div>
             </div>
         </div>
     );
