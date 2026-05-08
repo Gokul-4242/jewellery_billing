@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './AddItem.module.scss';
+import api from '../../api/axios';
 import { useInventory } from '../../context/InventoryContext';
 import { useToast } from '../../context/ToastContext';
 import { CustomDropdown } from '../../components/common';
@@ -18,13 +19,17 @@ const AddItem: React.FC = () => {
         category: '',
         material: '',
         weight: '',
-        price: '',
+        makingCharge: '',
+        wastagePercent: '',
+        stoneCost: '0',
         quantity: '1',
         stoneDetails: '',
         supplier: ''
     });
 
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -48,6 +53,8 @@ const AddItem: React.FC = () => {
             }
 
             const processedFiles = filesArray.slice(0, remainingSlots);
+            
+            setSelectedFiles(prev => [...prev, ...processedFiles].slice(0, 3));
 
             processedFiles.forEach(file => {
                 const reader = new FileReader();
@@ -63,41 +70,110 @@ const AddItem: React.FC = () => {
 
     const removeImage = (index: number) => {
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation
-        if (!formData.name || !formData.sku || !formData.category || !formData.material || !formData.weight || !formData.price || !formData.quantity) {
-            showToast('Please fill in all required fields.', 'error');
-            firstInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => firstInputRef.current?.focus(), 500);
+        // Specific validation for each field to provide better feedback
+        if (!formData.name) {
+            showToast('Please enter a product name', 'error');
+            return;
+        }
+        if (!formData.sku) {
+            showToast('Please enter a SKU / Product ID', 'error');
+            return;
+        }
+        if (!formData.category) {
+            showToast('Please select a category', 'error');
+            return;
+        }
+        if (!formData.material) {
+            showToast('Please select a material', 'error');
+            return;
+        }
+        if (!formData.weight || Number.parseFloat(formData.weight) <= 0) {
+            showToast('Please enter a valid weight', 'error');
+            return;
+        }
+        if (!formData.makingCharge || Number.parseFloat(formData.makingCharge) < 0) {
+            showToast('Please enter a making charge', 'error');
+            return;
+        }
+        if (formData.wastagePercent === '' || formData.wastagePercent === undefined) {
+            showToast('Please enter the wastage percentage', 'error');
+            return;
+        }
+        if (!formData.quantity || Number.parseInt(formData.quantity) < 1) {
+            showToast('Please enter a valid quantity', 'error');
             return;
         }
 
-        if (imagePreviews.length === 0) {
+        if (selectedFiles.length === 0) {
             showToast('Please upload at least one product image.', 'error');
             return;
         }
 
-        const newProduct: Product = {
-            id: crypto.randomUUID(),
-            name: formData.name,
-            sku: formData.sku,
-            category: formData.category,
-            material: formData.material,
-            weight: Number.parseFloat(formData.weight),
-            price: Number.parseFloat(formData.price),
-            quantity: parseInt(formData.quantity) || 1,
-            status: 'In Stock' as StockStatus,
-            images: imagePreviews,
-            lastModified: new Date().toISOString()
-        };
+        setIsSubmitting(true);
+        try {
+            // STEP 1: Upload Images
+            const uploadParams = new FormData();
+            selectedFiles.forEach(file => {
+                uploadParams.append('images', file);
+            });
 
-        addProduct(newProduct);
-        showToast('Product added successfully!', 'success');
-        navigate('/dashboard/inventory');
+            const uploadRes = await api.post('/upload', uploadParams, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            const uploadedImageUrls = uploadRes.data.data; // Array of {url, fileId}
+
+            // STEP 2: Create Product Payload matching Backend Model
+            const productPayload = {
+                name: formData.name,
+                sku: formData.sku,
+                category: formData.category,
+                material: formData.material,
+                weight: Number.parseFloat(formData.weight),
+                makingCharge: Number.parseFloat(formData.makingCharge),
+                wastagePercent: Number.parseFloat(formData.wastagePercent),
+                stoneCost: Number.parseFloat(formData.stoneCost) || 0,
+                initialStock: Number.parseInt(formData.quantity),
+                images: uploadedImageUrls
+            };
+
+            const productRes = await api.post('/products', productPayload);
+            const p = productRes.data.data;
+
+            // Map backend model to frontend Product model
+            const newProduct = {
+                id: p._id,
+                name: p.name,
+                sku: p.sku,
+                category: p.category,
+                material: p.material,
+                weight: p.weight,
+                makingCharge: p.makingCharge,
+                wastagePercent: p.wastagePercent,
+                stoneCost: p.stoneCost || 0,
+                price: p.makingCharge,
+                quantity: Number.parseInt(formData.quantity) || 0,
+                status: (Number.parseInt(formData.quantity) || 0) > 10 ? 'In Stock' : (Number.parseInt(formData.quantity) || 0) > 0 ? 'Low Stock' : 'Out of Stock',
+                images: p.images ? p.images.map((img: any) => img.url) : [],
+                lastModified: p.updatedAt || p.createdAt || new Date().toISOString()
+            };
+
+            // Add to Context to avoid refetching
+            addProduct(newProduct);
+            showToast('Product added successfully!', 'success');
+            navigate('/dashboard/inventory');
+        } catch (error: any) {
+            console.error("Failed to add product:", error);
+            showToast(error.response?.data?.message || 'Failed to upload product', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -211,11 +287,32 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Price (₹) <span className={styles.required}>*</span></label>
+                            <label>Making Charge (₹) <span className={styles.required}>*</span></label>
                             <input
                                 type="number"
-                                name="price"
-                                value={formData.price}
+                                name="makingCharge"
+                                value={formData.makingCharge}
+                                onChange={handleInputChange}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Wastage (%) <span className={styles.required}>*</span></label>
+                            <input
+                                type="number"
+                                name="wastagePercent"
+                                value={formData.wastagePercent}
+                                onChange={handleInputChange}
+                                placeholder="0"
+                                step="0.01"
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Stone Cost (₹)</label>
+                            <input
+                                type="number"
+                                name="stoneCost"
+                                value={formData.stoneCost}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
                             />
@@ -305,9 +402,9 @@ const AddItem: React.FC = () => {
                     >
                         Cancel
                     </button>
-                    <button type="submit" className={styles.save}>
+                    <button type="submit" className={styles.save} disabled={isSubmitting}>
                         <span className="material-symbols-outlined">save</span>
-                        Save Product
+                        {isSubmitting ? 'Saving...' : 'Save Product'}
                     </button>
                 </div>
             </form>

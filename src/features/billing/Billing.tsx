@@ -14,6 +14,7 @@ import type { Transaction } from '../../types/Transaction';
 import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
 import avatarImg from '../../assets/billing page.png';
+import api from '../../api/axios';
 
 const Billing: React.FC = () => {
     const navigate = useNavigate();
@@ -332,7 +333,9 @@ const Billing: React.FC = () => {
         };
     }, [cartItems, exchangeItems, gstRate]);
 
-    const handleProcessInvoice = () => {
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleProcessInvoice = async () => {
         if (cartItems.length === 0) {
             showToast('Cart is empty! Add items to process invoice.', 'warning');
             return;
@@ -345,8 +348,26 @@ const Billing: React.FC = () => {
             return;
         }
 
-        const invoiceNo = `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`;
-        const date = new Date().toISOString();
+        setIsProcessing(true);
+        try {
+            // STEP 1: Formulate strictly mapped payload for Backend
+            const backendPayload = {
+                customerId: selectedCustomer?.id,
+                items: cartItems.map(item => ({
+                    productId: item.productId || item.id,
+                    weight: item.weight,
+                    quantity: 1
+                })),
+                gst: totals.gst,
+                discount: totals.discount,
+                exchangeAmount: totals.exchangeTotal
+            };
+
+            const res = await api.post('/transactions', backendPayload);
+            const savedTxn = res.data.data;
+            
+            const invoiceNo = savedTxn.invoiceNo;
+            const date = savedTxn.createdAt;
 
         const invoiceData: InvoiceData = {
             invoiceNo: invoiceNo,
@@ -368,58 +389,51 @@ const Billing: React.FC = () => {
             paymentMethod: selectedPayment
         };
 
-        // Create transaction record
-        const newTransaction: Transaction = {
-            id: Math.random().toString(36).substr(2, 9),
-            invoiceNo: invoiceNo,
-            date: date,
-            customerName: selectedCustomer?.name || 'Guest',
-            customerId: selectedCustomer?.id,
-            items: cartItems.map(item => ({
-                id: item.id,
-                name: item.name,
-                code: item.code,
-                weight: item.weight,
-                purity: item.purity,
-                rate: item.rate,
-                makingCharges: item.makingCharges,
-                wastage: item.wastage,
-                total: item.total
-            })),
-            subtotal: totals.subtotal,
-            gst: totals.gst,
-            gstRate: Number.parseFloat(gstRate) || 0,
-            discount: totals.discount,
-            exchangeTotal: totals.exchangeTotal,
-            exchangeItems: exchangeItems,
-            grandTotal: totals.grandTotal,
-            paymentMethod: selectedPayment,
-            status: 'Completed',
-            goldRate: rates.gold22k
-        };
+            // Create proxy transaction record for Context
+            const newTransaction: Transaction = {
+                id: savedTxn._id,
+                invoiceNo: invoiceNo,
+                date: date,
+                customerName: selectedCustomer?.name || 'Guest',
+                customerId: selectedCustomer?.id,
+                items: cartItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    code: item.code,
+                    weight: item.weight,
+                    purity: item.purity,
+                    rate: item.rate,
+                    makingCharges: item.makingCharges,
+                    wastage: item.wastage,
+                    total: item.total
+                })),
+                subtotal: totals.subtotal,
+                gst: totals.gst,
+                gstRate: Number.parseFloat(gstRate) || 0,
+                discount: totals.discount,
+                exchangeTotal: totals.exchangeTotal,
+                exchangeItems: exchangeItems,
+                grandTotal: savedTxn.totalAmount, // Use backend's source of truth for Final Bill Math
+                paymentMethod: selectedPayment,
+                status: 'Completed',
+                goldRate: rates.gold22k
+            };
 
-        // Update Inventory Stock
-        cartItems.forEach(item => {
-            const product = getProductById(item.productId || item.id); // Fallback for legacy items
-            if (product) {
-                const currentQty = product.quantity ?? 1;
-                const newQuantity = Math.max(0, currentQty - 1);
+            // Inventory stock is dynamically deducted by the Backend Atomic Operation. 
+            // We just need to trigger a contextual reset for frontend cache clearing (optional since it refetches on reload)
 
-                let newStatus: 'In Stock' | 'Out of Stock' | 'Low Stock' = 'In Stock';
-                if (newQuantity === 0) newStatus = 'Out of Stock';
-                else if (newQuantity <= 2) newStatus = 'Low Stock';
-
-                updateProduct(product.id, {
-                    quantity: newQuantity,
-                    status: newStatus,
-                    lastModified: new Date().toISOString()
-                });
-            }
-        });
-
-        addTransaction(newTransaction);
-        showToast('Invoice processed successfully', 'success', 'Billed');
-        navigate(`/dashboard/invoice/view/${newTransaction.id}`, { state: { data: invoiceData } });
+            addTransaction(newTransaction);
+            // Clear cart
+            cartItems.forEach(item => removeFromCart(item.id));
+            
+            showToast('Invoice processed successfully', 'success', 'Billed');
+            navigate(`/dashboard/invoice/view/${newTransaction.id}`, { state: { data: invoiceData } });
+        } catch (error: any) {
+            console.error('Failed to process invoice:', error);
+            showToast(error.response?.data?.message || 'Transaction Failed', 'error', 'Error');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (

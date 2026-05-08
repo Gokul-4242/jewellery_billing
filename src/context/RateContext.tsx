@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import api from '../api/axios';
 
 interface MetalRates {
     gold24k: number;
@@ -16,8 +17,7 @@ interface MetalRates {
 
 interface RateContextType {
     rates: MetalRates;
-
-    updateRate: (metal: keyof MetalRates | 'all', value: number | MetalRates) => void;
+    updateRate: (metal: keyof MetalRates | 'all', value: number | MetalRates) => Promise<void>;
     getTrend: (current: number, previous?: number) => { percent: string; direction: 'up' | 'down' | 'stable' };
 }
 
@@ -30,42 +30,50 @@ const DEFAULT_RATES: MetalRates = {
 const RateContext = createContext<RateContextType | undefined>(undefined);
 
 export const RateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [rates, setRates] = useState<MetalRates>(() => {
-        const stored = localStorage.getItem('metal_rates');
-        return stored ? JSON.parse(stored) : DEFAULT_RATES;
-    });
+    const [rates, setRates] = useState<MetalRates>(DEFAULT_RATES);
 
     useEffect(() => {
-        localStorage.setItem('metal_rates', JSON.stringify(rates));
-    }, [rates]);
-
-    const updateRate = (metal: keyof MetalRates | 'all', value: number | MetalRates) => {
-        if (metal === 'all' && typeof value === 'object') {
-            setRates(prev => ({
-                ...value as MetalRates,
-                previous: {
-                    gold24k: prev.gold24k,
-                    gold22k: prev.gold22k,
-                    silver: prev.silver,
-                    lastUpdated: new Date().toISOString()
+        const fetchRates = async () => {
+            try {
+                const res = await api.get('/rates');
+                if (res.data?.data) {
+                    setRates(prev => ({
+                        ...res.data.data,
+                        previous: prev.previous
+                    }));
                 }
-            }));
-        } else if (typeof metal === 'string' && metal !== 'previous') {
-            setRates(prev => {
-                // Only update history if value actually changes significantly
-                if (prev[metal as keyof MetalRates] === value) return prev;
+            } catch (error) {
+                console.error("Failed to load live rates", error);
+            }
+        };
+        fetchRates();
+    }, []);
 
-                return {
-                    ...prev,
-                    [metal]: value,
-                    previous: {
-                        gold24k: prev.gold24k,
-                        gold22k: prev.gold22k,
-                        silver: prev.silver,
-                        lastUpdated: new Date().toISOString()
-                    }
-                };
-            });
+    const updateRate = async (metal: keyof MetalRates | 'all', value: number | MetalRates) => {
+        try {
+            let payload: Partial<MetalRates> = {};
+            if (metal === 'all' && typeof value === 'object') {
+                payload = value as MetalRates;
+            } else if (typeof metal === 'string' && metal !== 'previous') {
+                payload = { ...rates, [metal]: value };
+            }
+
+            // Sync with DB
+            const res = await api.post('/rates', payload);
+            if (res.data?.data) {
+                 setRates(prev => ({
+                     ...res.data.data,
+                     previous: {
+                         gold24k: prev.gold24k,
+                         gold22k: prev.gold22k,
+                         silver: prev.silver,
+                         lastUpdated: new Date().toISOString()
+                     }
+                 }));
+            }
+        } catch (error) {
+             console.error("Failed to update rate", error);
+             throw error;
         }
     };
 

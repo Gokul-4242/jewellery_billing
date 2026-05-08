@@ -31,7 +31,9 @@ const ItemDetail: React.FC = () => {
         category: (product?.category ?? '') as string,
         material: (product?.material ?? '') as string,
         weight: product?.weight ?? 0,
-        price: product?.price ?? 0,
+        makingCharge: product?.makingCharge ?? 0,
+        wastagePercent: product?.wastagePercent ?? 0,
+        stoneCost: product?.stoneCost ?? 0,
         status: (product?.status ?? '') as StockStatus,
         quantity: product?.quantity ?? 1
     });
@@ -54,13 +56,18 @@ const ItemDetail: React.FC = () => {
         );
     }
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this product?')) {
-            deleteProduct(product.id);
-            showToast('Product deleted successfully', 'success');
-            navigate('/dashboard/inventory');
+            try {
+                await deleteProduct(product.id);
+                showToast('Product deleted successfully', 'success');
+                navigate('/dashboard/inventory');
+            } catch (err) {
+                showToast('Failed to delete product', 'error');
+            }
         }
     };
+
 
     const handleEditToggle = () => {
         if (isEditing) {
@@ -71,7 +78,9 @@ const ItemDetail: React.FC = () => {
                 category: product.category,
                 material: product.material,
                 weight: product.weight,
-                price: product.price,
+                makingCharge: product.makingCharge,
+                wastagePercent: product.wastagePercent,
+                stoneCost: product.stoneCost,
                 status: product.status,
                 quantity: product.quantity ?? 1
             });
@@ -79,7 +88,7 @@ const ItemDetail: React.FC = () => {
         setIsEditing(!isEditing);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!editForm.name) {
             showToast('Please fill in the product name', 'error');
             nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -92,8 +101,8 @@ const ItemDetail: React.FC = () => {
             setTimeout(() => skuInputRef.current?.focus(), 500);
             return;
         }
-        if (!editForm.price || editForm.price <= 0) {
-            showToast('Please enter a valid price', 'error');
+        if (editForm.makingCharge === undefined || editForm.makingCharge === null || editForm.makingCharge < 0) {
+            showToast('Please enter a valid making charge', 'error');
             priceInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => priceInputRef.current?.focus(), 500);
             return;
@@ -105,16 +114,23 @@ const ItemDetail: React.FC = () => {
             return;
         }
 
-        updateProduct(product.id, editForm);
-        setIsEditing(false);
-        showToast('Product updated successfully', 'success');
+        try {
+            await updateProduct(product.id, editForm);
+            setIsEditing(false);
+            showToast('Product updated successfully', 'success');
+        } catch (err) {
+            showToast('Failed to update product', 'error');
+        }
     };
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditForm(prev => ({
             ...prev,
-            [name]: name === 'weight' || name === 'price' || name === 'quantity' ? Number.parseFloat(value) || 0 : value
+            [name]: ['weight', 'makingCharge', 'wastagePercent', 'stoneCost', 'quantity'].includes(name) 
+                ? Number.parseFloat(value) || 0 
+                : value
         }));
     };
 
@@ -314,23 +330,53 @@ const ItemDetail: React.FC = () => {
                     {/* Pricing */}
                     <div className={styles.pricingCard}>
                         <div className={styles.priceBlock}>
-                            <div className={styles.label}>Selling Price</div>
+                            <div className={styles.label}>Making Charge (₹)</div>
                             {isEditing ? (
                                 <input
                                     ref={priceInputRef}
                                     type="number"
-                                    name="price"
-                                    value={editForm.price}
+                                    name="makingCharge"
+                                    value={editForm.makingCharge}
                                     onChange={handleInputChange}
                                     className={styles.input}
                                     placeholder="0.00"
                                 />
                             ) : (
-                                <div className={styles.amount}>₹{product.price.toLocaleString('en-IN')}</div>
+                                <div className={styles.amount}>₹{product.makingCharge.toLocaleString('en-IN')}</div>
                             )}
 
                         </div>
-
+                        <div className={styles.priceBlock}>
+                            <div className={styles.label}>Wastage (%)</div>
+                            {isEditing ? (
+                                <input
+                                    type="number"
+                                    name="wastagePercent"
+                                    value={editForm.wastagePercent}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
+                                    placeholder="0"
+                                    step="0.01"
+                                />
+                            ) : (
+                                <div className={styles.amount}>{product.wastagePercent}%</div>
+                            )}
+                        </div>
+                        <div className={styles.priceBlock}>
+                            <div className={styles.label}>Stone Cost (₹)</div>
+                            {isEditing ? (
+                                <input
+                                    type="number"
+                                    name="stoneCost"
+                                    value={editForm.stoneCost}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
+                                    placeholder="0.00"
+                                />
+                            ) : (
+                                <div className={styles.amount}>₹{product.stoneCost.toLocaleString('en-IN')}</div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Specs */}

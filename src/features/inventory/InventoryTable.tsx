@@ -119,14 +119,19 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
         }
     };
 
-    const handleDelete = (e: React.MouseEvent, id: string) => {
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this item?')) {
-            deleteProduct(id);
-            setOpenMenuId(null);
-            showToast('Product deleted successfully', 'success');
+            try {
+                await deleteProduct(id);
+                setOpenMenuId(null);
+                showToast('Product deleted successfully', 'success');
+            } catch (err) {
+                showToast('Failed to delete product', 'error');
+            }
         }
     };
+
 
     const handleEdit = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -319,7 +324,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                     {product.weight.toFixed(2)}
                                 </td>
                                 <td className={`${styles.textRight} ${styles.textWhite} ${styles.textMono} ${styles.fontSemiBold} ${styles.textSm}`}>
-                                    ₹{product.price.toLocaleString('en-IN')}
+                                    ₹{(product.price || 0).toLocaleString('en-IN')}
                                 </td>
                                 <td className={styles.textCenter}>
                                     <Badge variant={getStatusVariant(product.status)}>

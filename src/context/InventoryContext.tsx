@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Product } from '../types/Dashboard.types';
-import { MOCK_PRODUCTS } from '../data/mockData';
+import api from '../api/axios';
 
 interface InventoryContextType {
     products: Product[];
     categories: string[];
     materials: string[];
     addProduct: (product: Product) => void;
-    updateProduct: (id: string, updates: Partial<Product>) => void;
-    deleteProduct: (id: string) => void;
+    updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+    deleteProduct: (id: string) => Promise<void>;
     getProductById: (id: string) => Product | undefined;
     addCategory: (name: string) => void;
     addMaterial: (name: string) => void;
@@ -17,28 +17,7 @@ interface InventoryContextType {
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [products, setProducts] = useState<Product[]>(() => {
-        const stored = localStorage.getItem('inventory');
-        const initialProducts = stored ? JSON.parse(stored) : MOCK_PRODUCTS;
-
-        return initialProducts.map((p: Partial<Product>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const migrated = { ...p } as any;
-            if (!migrated.images && migrated.image) {
-                migrated.images = [migrated.image];
-                delete migrated.image;
-            }
-            if (!migrated.images || !Array.isArray(migrated.images)) {
-                migrated.images = [];
-            }
-            if (!migrated.category) migrated.category = 'Uncategorized';
-            if (!migrated.material) migrated.material = 'Unknown';
-            if (!migrated.name) migrated.name = 'Unnamed Product';
-            if (!migrated.sku) migrated.sku = 'NO-SKU';
-            if (migrated.quantity === undefined) migrated.quantity = 1;
-            return migrated;
-        });
-    });
+    const [products, setProducts] = useState<Product[]>([]);
 
     const [categories, setCategories] = useState<string[]>(() => {
         const stored = localStorage.getItem('inventory_categories');
@@ -57,12 +36,34 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     useEffect(() => {
-        try {
-            localStorage.setItem('inventory', JSON.stringify(products));
-        } catch (e) {
-            console.error('Failed to save inventory to localStorage', e);
-        }
-    }, [products]);
+        const fetchInventory = async () => {
+             try {
+                 const res = await api.get('/products?limit=500');
+                 if (res.data?.data) {
+                      const dbProducts = res.data.data.map((p: any) => ({
+                          id: p._id,
+                          name: p.name,
+                          sku: p.sku,
+                          category: p.category,
+                          material: p.material,
+                          weight: p.weight,
+                          makingCharge: p.makingCharge,
+                          wastagePercent: p.wastagePercent,
+                          stoneCost: p.stoneCost || 0,
+                          price: p.makingCharge,
+                          quantity: p.stock || 0,
+                          status: p.stock > 10 ? 'In Stock' : p.stock > 0 ? 'Low Stock' : 'Out of Stock',
+                          images: p.images ? p.images.map((img: any) => img.url) : [],
+                          lastModified: p.updatedAt || p.createdAt
+                      }));
+                      setProducts(dbProducts);
+                 }
+             } catch (err) {
+                 console.error('Failed to fetch initial inventory:', err);
+             }
+        };
+        fetchInventory();
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('inventory_categories', JSON.stringify(categories));
@@ -98,12 +99,49 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
         });
     };
 
-    const updateProduct = (id: string, updates: Partial<Product>) => {
-        setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    const updateProduct = async (id: string, updates: Partial<Product>) => {
+        try {
+            // Mapping frontend model to backend model
+            const backendUpdates: any = { ...updates };
+            // Manual field mappings if names differ between frontend/backend
+            if (updates.price !== undefined) backendUpdates.makingCharge = updates.price;
+            if (updates.makingCharge !== undefined) backendUpdates.makingCharge = updates.makingCharge;
+            
+            // Note: If quantity is changing, we still use the stock API for atomic increment
+            const { quantity, id: _, status, ...fields } = backendUpdates;
+            
+            if (Object.keys(fields).length > 0) {
+                await api.put(`/products/${id}`, fields);
+            }
+
+            if (quantity !== undefined) {
+                const product = getProductById(id);
+                if (product) {
+                    const change = quantity - product.quantity;
+                    if (change !== 0) {
+                        await api.put(`/products/${id}/stock`, { 
+                            change, 
+                            reason: 'Manual Adjustment via Admin Panel' 
+                        });
+                    }
+                }
+            }
+
+            setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+        } catch (err) {
+            console.error('Failed to update product:', err);
+            throw err;
+        }
     };
 
-    const deleteProduct = (id: string) => {
-        setProducts(prev => prev.filter(p => p.id !== id));
+    const deleteProduct = async (id: string) => {
+        try {
+            await api.delete(`/products/${id}`);
+            setProducts(prev => prev.filter(p => p.id !== id));
+        } catch (err) {
+            console.error('Failed to delete product:', err);
+            throw err;
+        }
     };
 
     const getProductById = (id: string) => products.find(p => p.id === id);

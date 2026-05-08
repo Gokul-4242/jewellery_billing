@@ -28,7 +28,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
         }));
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         if (!formData.username) {
@@ -45,13 +45,15 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
             return;
         }
 
-        login(formData.username); // Use AuthContext login
-        showToast('Login Successful! Redirecting...', 'success', 'Welcome Back');
+        try {
+            await login(formData.username, formData.password);
+            showToast('Login Successful! Redirecting...', 'success', 'Welcome Back');
 
-        if (onSubmit) {
-            onSubmit(formData);
-        } else {
-            console.log('Form submitted:', formData);
+            if (onSubmit) {
+                onSubmit(formData);
+            }
+        } catch (err: any) {
+            showToast(err.message, 'error', 'Authentication Failed');
         }
     };
 

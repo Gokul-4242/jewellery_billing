@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 interface User {
     id: string;
@@ -10,7 +11,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
-    login: (username: string) => void;
+    login: (email: string, password?: string) => Promise<void>;
     logout: () => void;
 }
 
@@ -18,30 +19,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(() => {
-        return localStorage.getItem('isAuthenticated') === 'true' 
-            ? { id: '1', username: 'Admin', role: 'admin' }
+        return localStorage.getItem('adminToken') 
+            ? { id: 'admin', username: 'Super Admin', role: 'admin' }
             : null;
     });
-    // Initialize from localStorage to check if we have a session
+
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-        return localStorage.getItem('isAuthenticated') === 'true';
+        return !!localStorage.getItem('adminToken');
     });
 
     const navigate = useNavigate();
 
-    const login = (username: string) => {
-        const mockUser: User = { id: '1', username, role: 'admin' };
-        setUser(mockUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('isAuthenticated', 'true');
-        // Navigate to dashboard after login logic is usually handled by the component, 
-        // but updating state here is key.
+    const login = async (email: string, password?: string) => {
+        try {
+            const res = await api.post('/auth/login', { email, password });
+            
+            if (res.data && res.data.token) {
+                localStorage.setItem('adminToken', res.data.token);
+                setUser({ id: 'admin', username: email, role: 'admin' });
+                setIsAuthenticated(true);
+            } else {
+                throw new Error('Invalid authentication payload returned');
+            }
+        } catch (error: any) {
+            console.error("Login Error:", error);
+            throw new Error(error.response?.data?.message || 'Login failed due to server error');
+        }
     };
 
     const logout = () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('adminToken');
         navigate('/login');
     };
 
