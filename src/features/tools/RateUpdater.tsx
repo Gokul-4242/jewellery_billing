@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styles from './RateUpdater.module.scss';
 import { useRates } from '../../context/RateContext';
 import { Button } from '../../components/common';
@@ -13,6 +13,13 @@ const RateUpdater: React.FC<RateUpdaterProps> = ({ isOpen, onClose }) => {
     const { rates, updateRate } = useRates();
     const [localRates, setLocalRates] = useState(rates);
     const { showToast } = useToast();
+
+    // Sync local state with context when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setLocalRates(rates);
+        }
+    }, [isOpen, rates]);
 
     const gold22kRef = useRef<HTMLInputElement>(null);
     const gold24kRef = useRef<HTMLInputElement>(null);

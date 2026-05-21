@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
 import styles from './InventoryTable.module.scss';
-import { Button, Badge } from '../../components/common';
+import { Button, Badge, ConfirmModal } from '../../components/common';
 import { useInventory } from '../../context/InventoryContext';
 
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
+import { useRates } from '../../context/RateContext';
 
 interface InventoryTableProps {
     initialStatusFilter?: 'All' | 'Low Stock' | 'Out of Stock' | 'Alerts';
@@ -14,6 +15,7 @@ interface InventoryTableProps {
 const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = 'All' }) => {
     const navigate = useNavigate();
     const { products, deleteProduct } = useInventory();
+    const { rates } = useRates();
     const { showToast } = useToast();
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'All' | 'Gold' | 'Silver'>('All');
@@ -22,6 +24,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
     const [sortBy, setSortBy] = useState<string>('date-desc');
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, productId: string | null, isDeleting: boolean }>({
+        isOpen: false,
+        productId: null,
+        isDeleting: false
+    });
     const controlsRef = React.useRef<HTMLDivElement>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -119,16 +126,23 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this item?')) {
-            try {
-                await deleteProduct(id);
-                setOpenMenuId(null);
-                showToast('Product deleted successfully', 'success');
-            } catch (err) {
-                showToast('Failed to delete product', 'error');
-            }
+        setDeleteModal({ isOpen: true, productId: id, isDeleting: false });
+        setOpenMenuId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.productId) return;
+        
+        setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+        try {
+            await deleteProduct(deleteModal.productId);
+            showToast('Product deleted successfully', 'success');
+            setDeleteModal({ isOpen: false, productId: null, isDeleting: false });
+        } catch (err) {
+            showToast('Failed to delete product', 'error');
+            setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
     };
 
@@ -324,7 +338,21 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                     {product.weight.toFixed(2)}
                                 </td>
                                 <td className={`${styles.textRight} ${styles.textWhite} ${styles.textMono} ${styles.fontSemiBold} ${styles.textSm}`}>
-                                    ₹{(product.price || 0).toLocaleString('en-IN')}
+                                    {(() => {
+                                        const material = (product.material || '').toLowerCase();
+                                        let rate = 0;
+                                        if (material.includes('gold')) {
+                                            rate = material.includes('24k') ? rates.gold24k : rates.gold22k;
+                                        } else if (material.includes('silver')) {
+                                            rate = rates.silver;
+                                        }
+                                        
+                                        const wastage = product.wastagePercent || 0;
+                                        const effectiveWeight = product.weight * (1 + wastage / 100);
+                                        const totalValue = (effectiveWeight * rate) + ((product.makingCharge || 0) * product.weight) + (product.stoneCost || 0);
+                                        
+                                        return `₹${Math.round(totalValue).toLocaleString('en-IN')}`;
+                                    })()}
                                 </td>
                                 <td className={styles.textCenter}>
                                     <Badge variant={getStatusVariant(product.status)}>
@@ -378,6 +406,15 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={deleteModal.isOpen}
+                title="Delete Product"
+                message="Are you sure you want to delete this product? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteModal({ isOpen: false, productId: null, isDeleting: false })}
+                isLoading={deleteModal.isDeleting}
+            />
         </div>
     );
 };

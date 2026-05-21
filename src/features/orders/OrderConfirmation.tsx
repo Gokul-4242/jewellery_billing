@@ -1,41 +1,72 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './OrderConfirmation.module.scss';
 import { useTransactions } from '../../context/TransactionContext';
 import { useCustomers } from '../../context/CustomerContext';
 import { useSettings } from '../../context/SettingsContext';
+import type { Transaction } from '../../types/Transaction';
 
 // Helper for currency formatting
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: any) => {
+    const val = Number.parseFloat(amount) || 0;
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
         minimumFractionDigits: 2
-    }).format(amount);
+    }).format(val);
 };
+
+// Helper for date formatting
+const formatDate = (dateString: any) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
+
 
 const OrderConfirmation: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { transactions } = useTransactions();
+    const { getTransactionById } = useTransactions();
     const { getCustomerById } = useCustomers();
     const { settings } = useSettings();
 
-    const order = useMemo(() => {
-        return transactions.find(t => t.id === id);
-    }, [transactions, id]);
+    const [order, setOrder] = useState<Transaction | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadOrder = async () => {
+            if (id) {
+                const data = await getTransactionById(id);
+                setOrder(data || null);
+            }
+            setIsLoading(false);
+        };
+        loadOrder();
+    }, [id, getTransactionById]);
 
     // Derived Data
     const customer = order && order.customerId ? getCustomerById(order.customerId) : null;
     
-    // Fallback Customer Data if not found or incomplete
+    // Fallback Customer Data
     const customerData = {
-        name: customer?.name || order?.customerName || "Walk-in Customer",
-        email: customer?.email || "N/A", // We might not have email in our Customer type yet
+        name: customer?.name || order?.customerName || "Customer",
+        email: customer?.email || "N/A",
         phone: customer?.phone || "N/A",
-        // @ts-expect-error - address field may not exist on Customer type yet
+        // @ts-expect-error - address field 
         address: customer?.address || "No address on file"
     };
+
+    if (isLoading) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.successHeader}>
+                    <h1>Loading Order...</h1>
+                </div>
+            </div>
+        );
+    }
 
     if (!order) {
         return (
@@ -89,8 +120,9 @@ const OrderConfirmation: React.FC = () => {
                 </div>
                 <h1>Order Successfully Placed</h1>
                 <p className={styles.orderInfo}>
-                    Order ID: <span className={styles.highlight}>#{order.id}</span> | {new Date(order.date).toLocaleDateString()}
+                    Order ID: <span className={styles.highlight}>#{order.id}</span> | {formatDate(order.date)}
                 </p>
+
                 <div className={styles.paymentBadge}>
                     <span className="material-symbols-outlined icon">
                         {(order.amountPaid || 0) >= order.grandTotal ? 'check_circle' : 'payments'}
@@ -125,11 +157,9 @@ const OrderConfirmation: React.FC = () => {
                                 <div className={styles.content}>
                                     <span className={styles.label}>PROMISED DELIVERY DATE</span>
                                     <span className={styles.date}>
-                                        {order.deliveryDate 
-                                            ? new Date(order.deliveryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                                            : new Date(order.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                                        }
+                                        {formatDate(order.deliveryDate || order.date)}
                                     </span>
+
                                 </div>
                             </div>
                         </div>

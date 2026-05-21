@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Transaction } from '../types/Transaction';
+import api from '../api/axios';
 
 interface TransactionContextType {
     transactions: Transaction[];
-    addTransaction: (transaction: Transaction) => void;
-    updateTransaction: (transaction: Transaction) => void;
+    isLoading: boolean;
+    addTransaction: (transaction: Transaction) => Promise<Transaction | undefined>;
+    addLocalTransaction: (transaction: Transaction) => void;
+    updateTransaction: (transaction: Transaction) => Promise<void>;
+    getTransactionById: (id: string) => Promise<Transaction | undefined>;
+
     getTransactionsByDate: (date: Date) => Transaction[];
     getTodayStats: () => {
         totalSales: number;
@@ -17,44 +22,76 @@ interface TransactionContextType {
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
-// Mock initial data for demonstration if empty
-const MOCK_TRANSACTIONS: Transaction[] = [
-    {
-        id: 'tx_1',
-        invoiceNo: 'INV-2023-001',
-        date: new Date().toISOString(),
-        customerName: 'John Smith',
-        items: [
-            { id: '1', name: 'Gold Ring', code: 'GR001', weight: 8, purity: '22k', rate: 6500, makingCharges: 500, total: 52500 }
-        ],
-        subtotal: 52000,
-        gst: 1560,
-        discount: 0,
-        exchangeTotal: 0,
-        grandTotal: 53560,
-        paymentMethod: 'UPI',
-        status: 'Completed'
-    },
-    // Add more mocks if needed for "wired" feel immediately
-];
-
 export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [transactions, setTransactions] = useState<Transaction[]>(() => {
-        const stored = localStorage.getItem('transactions');
-        return stored ? JSON.parse(stored) : MOCK_TRANSACTIONS;
-    });
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-    }, [transactions]);
+        const fetchTransactions = async () => {
+            try {
+                const res = await api.get('/transactions');
+                if (res.data?.success) {
+                    setTransactions(res.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch transactions", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTransactions();
+    }, []);
 
-    const addTransaction = (transaction: Transaction) => {
+    const addTransaction = async (transactionData: Transaction) => {
+        try {
+            const res = await api.post('/transactions', transactionData);
+            if (res.data?.success) {
+                const newTransaction = { ...res.data.data, id: res.data.data._id };
+                setTransactions(prev => [newTransaction, ...prev]);
+                return newTransaction;
+            }
+        } catch (error) {
+            console.error("Failed to add transaction", error);
+            throw error;
+        }
+    };
+
+    const addLocalTransaction = (transaction: Transaction) => {
         setTransactions(prev => [transaction, ...prev]);
     };
 
-    const updateTransaction = (updatedTransaction: Transaction) => {
-        setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+
+
+    const getTransactionById = async (id: string) => {
+        // Check local state first
+        const local = transactions.find(t => t.id === id || t._id === id);
+        if (local) return local;
+
+        try {
+            const res = await api.get(`/transactions/${id}`);
+            if (res.data?.success) {
+                const fetched = { ...res.data.data, id: res.data.data._id };
+                return fetched;
+            }
+        } catch (error) {
+            console.error("Failed to fetch transaction", error);
+        }
+        return undefined;
     };
+
+    const updateTransaction = async (updatedTransaction: Transaction) => {
+        try {
+            const res = await api.put(`/transactions/${updatedTransaction.id || updatedTransaction._id}`, updatedTransaction);
+            if (res.data?.success) {
+                setTransactions(prev => prev.map(t => (t.id === updatedTransaction.id || t._id === updatedTransaction._id) ? { ...res.data.data, id: res.data.data._id } : t));
+            }
+        } catch (error) {
+            console.error("Failed to update transaction", error);
+            throw error;
+        }
+    };
+
+
 
     const getTransactionsByDate = (date: Date) => {
         const dateString = date.toLocaleDateString();
@@ -95,7 +132,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     };
 
     return (
-        <TransactionContext.Provider value={{ transactions, addTransaction, updateTransaction, getTransactionsByDate, getTodayStats }}>
+        <TransactionContext.Provider value={{ transactions, isLoading, addTransaction, addLocalTransaction, updateTransaction, getTransactionsByDate, getTodayStats }}>
             {children}
         </TransactionContext.Provider>
     );

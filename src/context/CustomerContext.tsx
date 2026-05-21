@@ -1,43 +1,58 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { INITIAL_CUSTOMERS } from '../data/mockData';
+import api from '../api/axios';
 import type { Customer } from '../types/Customer';
 export type { Customer }; // Re-export for convenience if needed, but components should probably import from types directly.
 
 interface CustomerContextType {
     customers: Customer[];
-    addCustomer: (customer: Customer) => void;
-    updateCustomer: (customer: Customer) => void;
-    deleteCustomer: (id: string) => void;
+    isLoading: boolean;
+    addCustomer: (customer: Omit<Customer, 'id'>) => Promise<void>;
+    updateCustomer: (customer: Customer) => Promise<void>;
+    deleteCustomer: (id: string) => Promise<void>;
     getCustomerById: (id: string) => Customer | undefined;
 }
 
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
 
 export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [customers, setCustomers] = useState<Customer[]>(() => {
-        // Initialize from localStorage or fallback to mock data
-        const stored = localStorage.getItem('customers');
-        if (stored) {
-            try {
-                return JSON.parse(stored);
-            } catch (e) {
-                console.error("Failed to parse customers from local storage", e);
-                return INITIAL_CUSTOMERS;
-            }
-        }
-        return INITIAL_CUSTOMERS;
-    });
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Persist to localStorage whenever customers change
     useEffect(() => {
-        localStorage.setItem('customers', JSON.stringify(customers));
-    }, [customers]);
+        const fetchCustomers = async () => {
+            try {
+                const res = await api.get('/customers');
+                if (res.data?.success) {
+                    // Map backend _id to frontend id for compatibility
+                    const mapped = res.data.data.map((c: any) => ({
+                        ...c,
+                        id: c._id || c.id
+                    }));
+                    setCustomers(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch customers", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCustomers();
+    }, []);
 
-    const addCustomer = (customer: Customer) => {
-        setCustomers((prev) => [customer, ...prev]);
+    const addCustomer = async (customerData: Omit<Customer, 'id'>) => {
+        try {
+            const res = await api.post('/customers', customerData);
+            if (res.data?.success) {
+                const newCustomer = { ...res.data.data, id: res.data.data._id };
+                setCustomers(prev => [newCustomer, ...prev]);
+            }
+        } catch (error) {
+            console.error("Failed to add customer", error);
+            throw error;
+        }
     };
 
-    const updateCustomer = (updatedCustomer: Customer) => {
+    const updateCustomer = async (updatedCustomer: Customer) => {
         setCustomers((prev) => 
             prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
         );

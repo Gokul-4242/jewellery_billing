@@ -353,6 +353,7 @@ const Billing: React.FC = () => {
             // STEP 1: Formulate strictly mapped payload for Backend
             const backendPayload = {
                 customerId: selectedCustomer?.id,
+                customerName: selectedCustomer?.name || 'Guest',
                 items: cartItems.map(item => ({
                     productId: item.productId || item.id,
                     weight: item.weight,
@@ -360,10 +361,14 @@ const Billing: React.FC = () => {
                 })),
                 gst: totals.gst,
                 discount: totals.discount,
-                exchangeAmount: totals.exchangeTotal
+                exchangeAmount: totals.exchangeTotal,
+                status: 'Completed',
+                paymentStatus: 'Paid'
             };
 
-            const res = await api.post('/transactions', backendPayload);
+
+            const res = await api.post('/billing/invoice', backendPayload);
+
             const savedTxn = res.data.data;
             
             const invoiceNo = savedTxn.invoiceNo;

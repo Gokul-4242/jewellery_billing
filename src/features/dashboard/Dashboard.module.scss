@@ -602,6 +602,95 @@
     }
 }
 
+.alertBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(90deg, rgba($warning, 0.15), rgba($primary, 0.05));
+    border: 1px solid rgba($warning, 0.3);
+    border-radius: $radius-lg;
+    backdrop-filter: blur(8px);
+    animation: slideDown 0.4s ease-out;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+
+    &.infoAlert {
+        background: linear-gradient(90deg, rgba($info, 0.15), rgba($info, 0.05));
+        border-color: rgba($info, 0.3);
+
+        .alertContent span {
+            color: $info;
+        }
+
+        p strong {
+            color: $info;
+        }
+    }
+
+    @media (max-width: 768px) {
+
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+.alertContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    span {
+        color: $warning;
+        font-size: 1.75rem;
+    }
+
+    p {
+        color: white;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        margin: 0;
+
+        strong {
+            color: $warning;
+            font-weight: 700;
+        }
+    }
+}
+
+.dismissBtn {
+    @include button-reset;
+    @include flex-center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    color: rgba(white, 0.5);
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    span {
+        font-size: 1.25rem;
+    }
+}
+
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
 // Stats Grid
 .statsGrid {
     display: grid;

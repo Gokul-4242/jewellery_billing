@@ -5,3 +5,4 @@ export * from './Badge';
 export * from './ErrorBoundary';
 export * from './CustomDropdown';
 export * from './FormSelect';
+export * from './ConfirmModal';

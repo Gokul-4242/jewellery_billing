@@ -7,13 +7,15 @@ import { useToast } from '../../context/ToastContext';
 import { useRates } from '../../context/RateContext';
 import { FormSelect } from '../../components/common';
 import type { Transaction } from '../../types/Transaction';
+import api from '../../api/axios';
+
 
 const CreateOrder: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const { customers } = useCustomers();
-    const { transactions, addTransaction, updateTransaction } = useTransactions();
+    const { transactions, addLocalTransaction, updateTransaction } = useTransactions();
     const { showToast } = useToast();
     const { rates } = useRates();
 
@@ -153,7 +155,7 @@ const CreateOrder: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (!customerId) {
@@ -175,6 +177,7 @@ const CreateOrder: React.FC = () => {
         }
 
         const orderData = {
+             // ... existing data ...
              id: id || orderId,
              invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : invoiceNo,
              date: id ? (transactions.find(t => t.id === id)?.date || new Date().toISOString()) : new Date().toISOString(), 
@@ -215,18 +218,28 @@ const CreateOrder: React.FC = () => {
              paymentMethod: 'Split', 
              status: id ? (transactions.find(t => t.id === id)?.status || 'Pending') : 'Pending',
              imageUrl: imagePreview || undefined
-        } as Transaction;
+        } as any; // Using any for simplicity with mixed types during migration
 
-        if (id) {
-            updateTransaction(orderData);
-            showToast("Order updated successfully", "success", "Order Updated");
-            navigate(`/dashboard/orders/confirmation/${orderData.id}`);
-        } else {
-            addTransaction(orderData);
-            showToast("Custom order created successfully", "success", "Order Created");
-            navigate(`/dashboard/orders/confirmation/${orderData.id}`);
+        try {
+            if (id) {
+                await updateTransaction(orderData);
+                showToast("Order updated successfully", "success", "Order Updated");
+                navigate(`/dashboard/orders/confirmation/${id}`);
+            } else {
+                const res: any = await api.post('/orders/custom', orderData);
+                if (res.data?.success) {
+                    const savedOrder = { ...res.data.data, id: res.data.data._id };
+                    addLocalTransaction(savedOrder);
+                    showToast("Custom order created successfully", "success", "Order Created");
+                    navigate(`/dashboard/orders/confirmation/${savedOrder.id}`);
+                }
+            }
+        } catch (err) {
+
+            showToast("Failed to save order. Please try again.", "error", "Submission Error");
         }
     };
+
 
     return (
         <div className={styles.container}>

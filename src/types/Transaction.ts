@@ -14,7 +14,9 @@ export interface TransactionItem {
 }
 
 export interface Transaction {
+    _id?: string;
     id: string;
+
     invoiceNo: string;
     date: string; // ISO string
     customerName: string;

@@ -7,6 +7,11 @@ interface ShopSettings {
     gstNo: string;
     email: string;
     contact: string;
+    notifications: {
+        lowStock: boolean;
+        marketAlerts: boolean;
+        dailySummary: boolean;
+    };
 }
 
 interface SettingsContextType {
@@ -20,7 +25,12 @@ const defaultSettings: ShopSettings = {
     address: 'Ammasimadam Street, Meenakshipuram, Nagercoil-629001',
     gstNo: '27AABCU9603R1ZM',
     email: 'vghjewellers@gmail.com',
-    contact: '+91 9876543210'
+    contact: '+91 9876543210',
+    notifications: {
+        lowStock: true,
+        marketAlerts: true,
+        dailySummary: false
+    }
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

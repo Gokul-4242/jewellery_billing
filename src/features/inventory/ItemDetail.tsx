@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ItemDetail.module.scss';
 import { useInventory } from '../../context/InventoryContext';
 import { useToast } from '../../context/ToastContext';
-import { CustomDropdown } from '../../components/common';
+import { CustomDropdown, ConfirmModal } from '../../components/common';
 import { useCart } from '../../context/CartContext';
 import type { StockStatus } from '../../types/Dashboard.types';
 
@@ -37,6 +37,8 @@ const ItemDetail: React.FC = () => {
         status: (product?.status ?? '') as StockStatus,
         quantity: product?.quantity ?? 1
     });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const getStatusClass = (status: string) => {
         switch (status) {
@@ -56,15 +58,20 @@ const ItemDetail: React.FC = () => {
         );
     }
 
-    const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this product?')) {
-            try {
-                await deleteProduct(product.id);
-                showToast('Product deleted successfully', 'success');
-                navigate('/dashboard/inventory');
-            } catch (err) {
-                showToast('Failed to delete product', 'error');
-            }
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteProduct(product.id);
+            showToast('Product deleted successfully', 'success');
+            setIsDeleteModalOpen(false);
+            navigate('/dashboard/inventory');
+        } catch (err) {
+            showToast('Failed to delete product', 'error');
+            setIsDeleting(false);
         }
     };
 
@@ -170,7 +177,7 @@ const ItemDetail: React.FC = () => {
                     </>
                 ) : (
                     <>
-                        <button className={styles.deleteBtn} onClick={handleDelete}>
+                        <button className={styles.deleteBtn} onClick={handleDeleteClick}>
                             <span className="material-symbols-outlined">delete</span>
                             Delete
                         </button>
@@ -422,6 +429,15 @@ const ItemDetail: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                title="Delete Product"
+                message={`Are you sure you want to delete "${product.name}"? This action cannot be undone.`}
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };
