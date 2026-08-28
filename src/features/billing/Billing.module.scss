@@ -234,7 +234,7 @@
                 font-size: 0.875rem;
                 border-radius: 0.5rem;
                 padding: 0.75rem 2.5rem 0.75rem 2.5rem;
-                // text-align: center;
+            
 
                 &:focus {
                     outline: none;
@@ -911,6 +911,23 @@
             align-items: center;
             font-size: 0.875rem;
             margin-bottom: 0.5rem;
+
+            .miniSelect {
+                padding: 0.1rem 0.25rem;
+                border-radius: 0.25rem;
+                border: 1px solid $border-dark;
+                background-color: color.adjust($background-dark, $lightness: 2%);
+                color: $primary;
+                font-size: 0.75rem;
+                width: auto;
+                margin-left: 0.25rem;
+                cursor: pointer;
+
+                &:focus {
+                    outline: none;
+                    border-color: $primary;
+                }
+            }
 
             &.total {
                 margin-top: 1.5rem;

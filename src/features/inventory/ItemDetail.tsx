@@ -70,6 +70,7 @@ const ItemDetail: React.FC = () => {
             setIsDeleteModalOpen(false);
             navigate('/dashboard/inventory');
         } catch (err) {
+            console.error('Failed to delete product:', err);
             showToast('Failed to delete product', 'error');
             setIsDeleting(false);
         }
@@ -85,9 +86,9 @@ const ItemDetail: React.FC = () => {
                 category: product.category,
                 material: product.material,
                 weight: product.weight,
-                makingCharge: product.makingCharge,
-                wastagePercent: product.wastagePercent,
-                stoneCost: product.stoneCost,
+                makingCharge: product.makingCharge ?? 0,
+                wastagePercent: product.wastagePercent ?? 0,
+                stoneCost: product.stoneCost ?? 0,
                 status: product.status,
                 quantity: product.quantity ?? 1
             });
@@ -95,37 +96,43 @@ const ItemDetail: React.FC = () => {
         setIsEditing(!isEditing);
     };
 
-    const handleSave = async () => {
+    const validateEditForm = (): boolean => {
         if (!editForm.name) {
             showToast('Please fill in the product name', 'error');
             nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => nameInputRef.current?.focus(), 500);
-            return;
+            return false;
         }
         if (!editForm.sku) {
             showToast('Please fill in the SKU', 'error');
             skuInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => skuInputRef.current?.focus(), 500);
-            return;
+            return false;
         }
         if (editForm.makingCharge === undefined || editForm.makingCharge === null || editForm.makingCharge < 0) {
             showToast('Please enter a valid making charge', 'error');
             priceInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => priceInputRef.current?.focus(), 500);
-            return;
+            return false;
         }
         if (!editForm.weight || editForm.weight <= 0) {
             showToast('Please enter a valid weight', 'error');
             weightInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setTimeout(() => weightInputRef.current?.focus(), 500);
-            return;
+            return false;
         }
+        return true;
+    };
+
+    const handleSave = async () => {
+        if (!validateEditForm()) return;
 
         try {
             await updateProduct(product.id, editForm);
             setIsEditing(false);
             showToast('Product updated successfully', 'success');
         } catch (err) {
+            console.error('Failed to update product:', err);
             showToast('Failed to update product', 'error');
         }
     };
@@ -149,15 +156,15 @@ const ItemDetail: React.FC = () => {
     };
 
     // Use product image or placeholder
-    const mainImage = selectedImage || (product.images && product.images[0]) || 'https://via.placeholder.com/600';
+    const mainImage = selectedImage || product.images?.[0] || 'https://via.placeholder.com/600';
 
     return (
         <div className={styles.container}>
             {/* Breadcrumbs */}
             <nav className={styles.breadcrumbs}>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>Dashboard</a>
+                <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
                 <span className={`material-symbols-outlined ${styles.icon}`}>chevron_right</span>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/inventory'); }}>Inventory</a>
+                <button type="button" onClick={() => navigate('/dashboard/inventory')}>Inventory</button>
                 <span className={`material-symbols-outlined ${styles.icon}`}>chevron_right</span>
                 <span className={styles.current}>{isEditing ? 'Edit Product' : 'Product Details'}</span>
             </nav>
@@ -168,26 +175,26 @@ const ItemDetail: React.FC = () => {
                     <>
                         <button className={styles.deleteBtn} onClick={handleEditToggle}>
                             <span className="material-symbols-outlined">close</span>
-                            Cancel
+                            <span>Cancel</span>
                         </button>
                         <button className={styles.editBtn} onClick={handleSave}>
                             <span className="material-symbols-outlined">save</span>
-                            Save Changes
+                            <span>Save Changes</span>
                         </button>
                     </>
                 ) : (
                     <>
                         <button className={styles.deleteBtn} onClick={handleDeleteClick}>
                             <span className="material-symbols-outlined">delete</span>
-                            Delete
+                            <span>Delete</span>
                         </button>
                         <button className={styles.editBtn} onClick={handleEditToggle}>
                             <span className="material-symbols-outlined">edit</span>
-                            Edit Product
+                            <span>Edit Product</span>
                         </button>
                         <button className={styles.addToCartBtn} onClick={handleAddToCart}>
                             <span className="material-symbols-outlined">shopping_cart</span>
-                            Add to Cart
+                            <span>Add to Cart</span>
                         </button>
                     </>
                 )}
@@ -212,7 +219,7 @@ const ItemDetail: React.FC = () => {
                     <div className={styles.thumbnails}>
                         {product.images?.map((img, idx) => (
                             <button
-                                key={idx}
+                                key={img}
                                 className={mainImage === img ? styles.active : ''}
                                 onClick={() => setSelectedImage(img)}
                             >
@@ -264,7 +271,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">scale</span>
-                                Gross Wt.
+                                <span>Gross Wt.</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -283,7 +290,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">diamond</span>
-                                Purity
+                                <span>Purity</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -300,7 +307,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">inventory</span>
-                                Stock
+                                <span>Stock</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -318,7 +325,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">category</span>
-                                Type
+                                <span>Type</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -349,7 +356,7 @@ const ItemDetail: React.FC = () => {
                                     placeholder="0.00"
                                 />
                             ) : (
-                                <div className={styles.amount}>₹{product.makingCharge.toLocaleString('en-IN')}</div>
+                                <div className={styles.amount}>₹{(product.makingCharge ?? 0).toLocaleString('en-IN')}</div>
                             )}
 
                         </div>
@@ -366,7 +373,7 @@ const ItemDetail: React.FC = () => {
                                     step="0.01"
                                 />
                             ) : (
-                                <div className={styles.amount}>{product.wastagePercent}%</div>
+                                <div className={styles.amount}>{product.wastagePercent ?? 0}%</div>
                             )}
                         </div>
                         <div className={styles.priceBlock}>
@@ -381,7 +388,7 @@ const ItemDetail: React.FC = () => {
                                     placeholder="0.00"
                                 />
                             ) : (
-                                <div className={styles.amount}>₹{product.stoneCost.toLocaleString('en-IN')}</div>
+                                <div className={styles.amount}>₹{(product.stoneCost ?? 0).toLocaleString('en-IN')}</div>
                             )}
                         </div>
                     </div>
@@ -390,7 +397,7 @@ const ItemDetail: React.FC = () => {
                     <div className={styles.specsCard}>
                         <h3>
                             <span className="material-symbols-outlined">manufacturing</span>
-                            Technical Specifications
+                            <span>Technical Specifications</span>
                         </h3>
                         <div className={styles.specsGrid}>
                             <div className={styles.specItem}>
@@ -405,7 +412,7 @@ const ItemDetail: React.FC = () => {
                                 <span className={styles.label}>Hallmarked</span>
                                 <span className={styles.value}>
                                     <span className={`material-symbols-outlined ${styles.check}`}>check_circle</span>
-                                    Yes (BIS)
+                                    <span>Yes (BIS)</span>
                                 </span>
                             </div>
                             <div className={styles.specItem}>
@@ -423,7 +430,7 @@ const ItemDetail: React.FC = () => {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                             <button className={styles.editBtn} onClick={handleSave} style={{ width: '100%', justifyContent: 'center' }}>
                                 <span className="material-symbols-outlined">save</span>
-                                Save Changes
+                                <span>Save Changes</span>
                             </button>
                         </div>
                     )}

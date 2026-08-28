@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './DailySummary.module.scss';
-import { useTransactions } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/useTransactions';
 import { useRates } from '../../context/RateContext';
 
 import { useNavigate } from 'react-router-dom';

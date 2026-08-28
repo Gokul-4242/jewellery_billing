@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import styles from './CreateOrder.module.scss';
-import { useCustomers } from '../../context/CustomerContext';
-import { useTransactions } from '../../context/TransactionContext';
+import { useCustomers } from '../../context/useCustomers';
+import { useTransactions } from '../../context/useTransactions';
 import { useToast } from '../../context/ToastContext';
 import { useRates } from '../../context/RateContext';
 import { FormSelect } from '../../components/common';
-import type { Transaction } from '../../types/Transaction';
 import api from '../../api/axios';
+import type { Transaction } from '../../types/Transaction';
 
 
 const CreateOrder: React.FC = () => {
@@ -73,12 +73,12 @@ const CreateOrder: React.FC = () => {
     });
 
     // Financials (Strings for input handling)
-    const [totalAmountStr, setTotalAmount] = useState(() => {
+    const [totalAmountStr, setTotalAmountStr] = useState(() => {
         const order = id ? transactions.find(t => t.id === id) : null;
         return order ? order.grandTotal.toString() : '0.00';
     });
-    const [advanceStr, setAdvance] = useState('0.00');
-    const [exchangeCreditStr, setExchangeCredit] = useState(() => {
+    const [advanceStr, setAdvanceStr] = useState('0.00');
+    const [exchangeCreditStr, setExchangeCreditStr] = useState(() => {
         const order = id ? transactions.find(t => t.id === id) : null;
         return order ? order.exchangeTotal.toString() : '0.00';
     });
@@ -94,13 +94,26 @@ const CreateOrder: React.FC = () => {
 
     // Stable IDs for this form session (generated once on mount)
     const [orderId] = useState(() => id ?? `ORD-${Date.now()}`);
-    const [invoiceNo] = useState(() => `INV-${Math.floor(Math.random() * 10000)}`);
+    const [invoiceNo] = useState(() => {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return `INV-${array[0] % 10000}`;
+    });
     const [itemId] = useState(() => `item-${Date.now()}`);
     const [exchangeId] = useState(() => `ex-${Date.now()}`);
 
     // Derived State
     const selectedCustomer = customers.find(c => c.id === customerId);
     
+    // Rate helper function
+    const getEffectiveRate = (type: string): number => {
+        if (type === 'Gold') return rates.gold22k;
+        if (type === 'Gold-18k') return rates.gold22k * (18 / 22);
+        if (type === 'Silver') return rates.silver;
+        return 0;
+    };
+    const currentMetalRate = getEffectiveRate(metalType);
+
     // Auto-Calculate Total (derived, no setState in effect)
     const autoCalculatedTotal = (() => {
         if (!autoCalculate) return null;
@@ -108,10 +121,7 @@ const CreateOrder: React.FC = () => {
         const wastage = Number.parseFloat(wastagePercentage) || 0;
         const making = Number.parseFloat(makingCharges) || 0;
         const stone = Number.parseFloat(stoneRate) || 0;
-        let rate = 0;
-        if (metalType === 'Gold') rate = rates.gold22k;
-        else if (metalType === 'Gold-18k') rate = rates.gold22k * (18/22);
-        else if (metalType === 'Silver') rate = rates.silver;
+        const rate = currentMetalRate;
         if (rate > 0) {
             const metalCost = weight * rate;
             const wastageCost = metalCost * (wastage / 100);
@@ -218,7 +228,7 @@ const CreateOrder: React.FC = () => {
              paymentMethod: 'Split', 
              status: id ? (transactions.find(t => t.id === id)?.status || 'Pending') : 'Pending',
              imageUrl: imagePreview || undefined
-        } as any; // Using any for simplicity with mixed types during migration
+        } as Transaction;
 
         try {
             if (id) {
@@ -226,7 +236,7 @@ const CreateOrder: React.FC = () => {
                 showToast("Order updated successfully", "success", "Order Updated");
                 navigate(`/dashboard/orders/confirmation/${id}`);
             } else {
-                const res: any = await api.post('/orders/custom', orderData);
+                const res = await api.post('/orders/custom', orderData);
                 if (res.data?.success) {
                     const savedOrder = { ...res.data.data, id: res.data.data._id };
                     addLocalTransaction(savedOrder);
@@ -234,8 +244,8 @@ const CreateOrder: React.FC = () => {
                     navigate(`/dashboard/orders/confirmation/${savedOrder.id}`);
                 }
             }
-        } catch (err) {
-
+        } catch (err: unknown) {
+            console.error("Failed to save order", err);
             showToast("Failed to save order. Please try again.", "error", "Submission Error");
         }
     };
@@ -426,7 +436,7 @@ const CreateOrder: React.FC = () => {
                         </div>
                         <div className={styles.fieldGroup}>
                              {/* Placeholder to balance grid if needed, or maybe Total Stone Cost read-only */}
-                             <label className={styles.hiddenLabel} aria-hidden="true">Spacer</label>
+                             <span className={styles.hiddenLabel} aria-hidden="true">Spacer</span>
                         </div>
                     </div>
                      <div className={`${styles.gridTwo} ${styles.gridMargin}`}>
@@ -493,7 +503,7 @@ const CreateOrder: React.FC = () => {
                                 id="exchangeValue"
                                 type="text" 
                                 value={'₹' + exchangeCreditStr} 
-                                onChange={(e) => setExchangeCredit(e.target.value.replace(/[^0-9.]/g, ''))}
+                                onChange={(e) => setExchangeCreditStr(e.target.value.replace(/[^0-9.]/g, ''))}
                             />
                         </div>
 
@@ -527,12 +537,12 @@ const CreateOrder: React.FC = () => {
                         {autoCalculate && (
                             <div className={styles.calcSummary}>
                                 <div className={styles.summaryRow}>
-                                    <span>Metal Cost ({metalWeight || 0}g x ₹{metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : 0)})</span>
-                                    <span>₹{((Number.parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    <span>Metal Cost ({metalWeight || 0}g x ₹{currentMetalRate})</span>
+                                    <span>₹{((Number.parseFloat(metalWeight) || 0) * currentMetalRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className={styles.summaryRow}>
                                     <span>Wastage ({wastagePercentage || 0}%)</span>
-                                    <span>₹{(((Number.parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))) * ((Number.parseFloat(wastagePercentage)||0)/100)).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    <span>₹{(((Number.parseFloat(metalWeight) || 0) * currentMetalRate) * ((Number.parseFloat(wastagePercentage) || 0) / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className={styles.summaryRow}>
                                     <span>Making Charges</span>
@@ -557,7 +567,7 @@ const CreateOrder: React.FC = () => {
                                 className={styles.inputCurrency}
                                 value={'₹' + totalAmountStr}
                                 onChange={(e) => {
-                                    setTotalAmount(e.target.value.replace(/[^0-9.]/g, ''));
+                                    setTotalAmountStr(e.target.value.replace(/[^0-9.]/g, ''));
                                     setAutoCalculate(false);
                                 }}
                             />
@@ -569,7 +579,7 @@ const CreateOrder: React.FC = () => {
                                 type="text" 
                                 className={styles.inputCurrency}
                                 value={'₹' + advanceStr}
-                                onChange={(e) => setAdvance(e.target.value.replace(/[^0-9.]/g, ''))}
+                                onChange={(e) => setAdvanceStr(e.target.value.replace(/[^0-9.]/g, ''))}
                             />
                         </div>
                             <div className={`${styles.financialRow} ${styles.borderTop}`}>

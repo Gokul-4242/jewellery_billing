@@ -1,7 +1,7 @@
 import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
-import forgotPassImg from '../../assets/signup page.png';
+import forgotPassImg from '../../assets/signupPage.png';
 import type { ForgotPasswordProps, ForgotPasswordFormData } from './ForgotPassword.types';
 import { useToast } from '../../context/ToastContext';
 
@@ -103,7 +103,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
                                     <span className={`material-symbols-outlined ${styles.backIcon}`}>
                                         arrow_back
                                     </span>
-                                    Back to Login
+                                    <span>Back to Login</span>
                                 </Link>
                             </>
                         ) : (
@@ -122,7 +122,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSubmit }) => {
                                     <span className={`material-symbols-outlined ${styles.backIcon}`}>
                                         arrow_back
                                     </span>
-                                    Back to Login
+                                    <span>Back to Login</span>
                                 </Link>
                             </div>
                         )}

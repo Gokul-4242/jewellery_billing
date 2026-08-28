@@ -25,9 +25,10 @@ import OrderDetail from './features/orders/OrderDetail';
 import OrderConfirmation from './features/orders/OrderConfirmation';
 import DailySummary from './features/reports/DailySummary';
 import Settings from './features/settings/Settings';
-import { CustomerProvider, useCustomers } from './context/CustomerContext';
+import CustomerProvider from './context/CustomerContext';
+import { useCustomers } from './context/useCustomers';
 
-import { TransactionProvider } from './context/TransactionContext';
+import TransactionProvider from './context/TransactionContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { RateProvider } from './context/RateContext';
 import { SettingsProvider } from './context/SettingsContext';

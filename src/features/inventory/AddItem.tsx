@@ -5,7 +5,7 @@ import api from '../../api/axios';
 import { useInventory } from '../../context/InventoryContext';
 import { useToast } from '../../context/ToastContext';
 import { CustomDropdown } from '../../components/common';
-import type { Product, StockStatus } from '../../types/Dashboard.types';
+import type { StockStatus } from '../../types/Dashboard.types';
 
 const AddItem: React.FC = () => {
     const navigate = useNavigate();
@@ -40,32 +40,31 @@ const AddItem: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const readFileAsDataUrl = (file: File) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (reader.result) {
+                const result = reader.result as string;
+                setImagePreviews(prev => [...prev, result].slice(0, 3));
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (files) {
-            const filesArray = Array.from(files);
+        if (!files) return;
 
-            // Limit to 3 images total
-            const remainingSlots = 3 - imagePreviews.length;
-            if (remainingSlots <= 0) {
-                showToast('You can only upload up to 3 images.', 'error');
-                return;
-            }
-
-            const processedFiles = filesArray.slice(0, remainingSlots);
-            
-            setSelectedFiles(prev => [...prev, ...processedFiles].slice(0, 3));
-
-            processedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    if (reader.result) {
-                        setImagePreviews(prev => [...prev, reader.result as string].slice(0, 3));
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
+        const filesArray = Array.from(files);
+        const remainingSlots = 3 - imagePreviews.length;
+        if (remainingSlots <= 0) {
+            showToast('You can only upload up to 3 images.', 'error');
+            return;
         }
+
+        const processedFiles = filesArray.slice(0, remainingSlots);
+        setSelectedFiles(prev => [...prev, ...processedFiles].slice(0, 3));
+        processedFiles.forEach(readFileAsDataUrl);
     };
 
     const removeImage = (index: number) => {
@@ -146,6 +145,13 @@ const AddItem: React.FC = () => {
             const productRes = await api.post('/products', productPayload);
             const p = productRes.data.data;
 
+            const qty = Number.parseInt(formData.quantity) || 0;
+            const getStockStatus = (quantity: number): StockStatus => {
+                if (quantity > 10) return 'In Stock';
+                if (quantity > 0) return 'Low Stock';
+                return 'Out of Stock';
+            };
+
             // Map backend model to frontend Product model
             const newProduct = {
                 id: p._id,
@@ -158,9 +164,9 @@ const AddItem: React.FC = () => {
                 wastagePercent: p.wastagePercent,
                 stoneCost: p.stoneCost || 0,
                 price: p.makingCharge,
-                quantity: Number.parseInt(formData.quantity) || 0,
-                status: (Number.parseInt(formData.quantity) || 0) > 10 ? 'In Stock' : (Number.parseInt(formData.quantity) || 0) > 0 ? 'Low Stock' : 'Out of Stock',
-                images: p.images ? p.images.map((img: any) => img.url) : [],
+                quantity: qty,
+                status: getStockStatus(qty),
+                images: p.images ? p.images.map((img: { url: string }) => img.url) : [],
                 lastModified: p.updatedAt || p.createdAt || new Date().toISOString()
             };
 
@@ -168,9 +174,10 @@ const AddItem: React.FC = () => {
             addProduct(newProduct);
             showToast('Product added successfully!', 'success');
             navigate('/dashboard/inventory');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to add product:", error);
-            showToast(error.response?.data?.message || 'Failed to upload product', 'error');
+            const err = error as { response?: { data?: { message?: string } } };
+            showToast(err.response?.data?.message || 'Failed to upload product', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -180,9 +187,9 @@ const AddItem: React.FC = () => {
         <div className={styles.container}>
             {/* Breadcrumbs */}
             <nav className={styles.breadcrumbs}>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>Home</a>
+                <button type="button" onClick={() => navigate('/dashboard')}>Home</button>
                 <span>/</span>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/inventory'); }}>Inventory</a>
+                <button type="button" onClick={() => navigate('/dashboard/inventory')}>Inventory</button>
                 <span>/</span>
                 <span className={styles.current}>Add New Item</span>
             </nav>
@@ -198,12 +205,13 @@ const AddItem: React.FC = () => {
                 <div className={styles.formSection}>
                     <h2>
                         <span className={`material-symbols-outlined ${styles.icon}`}>info</span>
-                        Basic Information
+                        <span>Basic Information</span>
                     </h2>
                     <div className={styles.grid}>
                         <div className={styles.formGroup}>
-                            <label>Product Name <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-name">Product Name <span className={styles.required}>*</span></label>
                             <input
+                                id="item-name"
                                 ref={firstInputRef}
                                 type="text"
                                 name="name"
@@ -213,8 +221,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>SKU / Product ID <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-sku">SKU / Product ID <span className={styles.required}>*</span></label>
                             <input
+                                id="item-sku"
                                 type="text"
                                 name="sku"
                                 value={formData.sku}
@@ -223,7 +232,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Category <span className={styles.required}>*</span></label>
+                            <span className={styles.label}>Category <span className={styles.required}>*</span></span>
                             <CustomDropdown
                                 options={categories}
                                 value={formData.category}
@@ -234,7 +243,7 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Material & Purity <span className={styles.required}>*</span></label>
+                            <span className={styles.label}>Material & Purity <span className={styles.required}>*</span></span>
                             <CustomDropdown
                                 options={materials}
                                 value={formData.material}
@@ -251,12 +260,13 @@ const AddItem: React.FC = () => {
                 <div className={styles.formSection}>
                     <h2>
                         <span className={`material-symbols-outlined ${styles.icon}`}>measuring_tape</span>
-                        Specifications & Quality
+                        <span>Specifications & Quality</span>
                     </h2>
                     <div className={`${styles.grid} ${styles.cols4}`}>
                         <div className={styles.formGroup}>
-                            <label>Weight (Grams) <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-weight">Weight (Grams) <span className={styles.required}>*</span></label>
                             <input
+                                id="item-weight"
                                 type="number"
                                 name="weight"
                                 value={formData.weight}
@@ -266,8 +276,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Quantity <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-quantity">Quantity <span className={styles.required}>*</span></label>
                             <input
+                                id="item-quantity"
                                 type="number"
                                 name="quantity"
                                 value={formData.quantity}
@@ -277,8 +288,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Stone Details</label>
+                            <label htmlFor="item-stone-details">Stone Details</label>
                             <input
+                                id="item-stone-details"
                                 type="text"
                                 name="stoneDetails"
                                 value={formData.stoneDetails}
@@ -287,8 +299,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Making Charge (₹) <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-making-charge">Making Charge (₹) <span className={styles.required}>*</span></label>
                             <input
+                                id="item-making-charge"
                                 type="number"
                                 name="makingCharge"
                                 value={formData.makingCharge}
@@ -297,8 +310,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Wastage (%) <span className={styles.required}>*</span></label>
+                            <label htmlFor="item-wastage-percent">Wastage (%) <span className={styles.required}>*</span></label>
                             <input
+                                id="item-wastage-percent"
                                 type="number"
                                 name="wastagePercent"
                                 value={formData.wastagePercent}
@@ -308,8 +322,9 @@ const AddItem: React.FC = () => {
                             />
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Stone Cost (₹)</label>
+                            <label htmlFor="item-stone-cost">Stone Cost (₹)</label>
                             <input
+                                id="item-stone-cost"
                                 type="number"
                                 name="stoneCost"
                                 value={formData.stoneCost}
@@ -324,12 +339,13 @@ const AddItem: React.FC = () => {
                 <div className={styles.formSection}>
                     <h2>
                         <span className={`material-symbols-outlined ${styles.icon}`}>payments</span>
-                        Supplier Info
+                        <span>Supplier Info</span>
                     </h2>
                     <div className={styles.grid}>
                         <div className={styles.formGroup}>
-                            <label>Supplier Name</label>
+                            <label htmlFor="item-supplier">Supplier Name</label>
                             <input
+                                id="item-supplier"
                                 type="text"
                                 name="supplier"
                                 value={formData.supplier}
@@ -344,7 +360,7 @@ const AddItem: React.FC = () => {
                 <div className={styles.formSection}>
                     <h2>
                         <span className={`material-symbols-outlined ${styles.icon}`}>image</span>
-                        Product Images (Up to 3) <span className={styles.required}>*</span>
+                        <span>Product Images (Up to 3)</span> <span className={styles.required}>*</span>
                     </h2>
 
                     <div className={styles.uploadArea}>
@@ -364,7 +380,7 @@ const AddItem: React.FC = () => {
                         ) : (
                             <div className={styles.previewGrid}>
                                 {imagePreviews.map((preview, index) => (
-                                    <div key={index} className={styles.imagePreview}>
+                                    <div key={preview} className={styles.imagePreview}>
                                         <img src={preview} alt={`Preview ${index + 1}`} />
                                         <button
                                             type="button"

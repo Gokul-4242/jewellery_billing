@@ -52,7 +52,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose }
                 `"${p.name}"`,
                 p.category,
                 p.material,
-                p.purity,
+                p.purity || '',
                 p.weight,
                 p.quantity,
                 p.status,
@@ -83,7 +83,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose }
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
         
         setTimeout(() => {
             setIsExporting(false);
@@ -92,11 +92,21 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose }
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.overlay}>
+            <button 
+                type="button" 
+                className={styles.backdrop} 
+                onClick={onClose} 
+                aria-label="Close modal backdrop" 
+            />
+            <div 
+                className={styles.modal} 
+                aria-modal="true"
+                aria-labelledby="modal-title"
+            >
                 <div className={styles.header}>
-                    <h2>Export Inventory Report</h2>
-                    <button onClick={onClose} className={styles.closeBtn}>
+                    <h2 id="modal-title">Export Inventory Report</h2>
+                    <button type="button" onClick={onClose} className={styles.closeBtn}>
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -147,7 +157,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose }
                     <Button 
                         variant="primary" 
                         onClick={generateCSV}
-                        isLoading={isExporting}
+                        loading={isExporting}
                         icon="file_download"
                     >
                         {isExporting ? 'Generating...' : 'Download Report'}

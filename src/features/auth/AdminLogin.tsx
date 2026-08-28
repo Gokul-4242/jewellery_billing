@@ -2,7 +2,7 @@ import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { AdminLoginProps, LoginFormData } from './AdminLogin.types';
-import signInImg from '../../assets/signup page.png';
+import signInImg from '../../assets/signupPage.png';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -52,8 +52,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
             if (onSubmit) {
                 onSubmit(formData);
             }
-        } catch (err: any) {
-            showToast(err.message, 'error', 'Authentication Failed');
+        } catch (err: unknown) {
+            const error = err as Error;
+            showToast(error.message || 'Authentication Failed', 'error', 'Authentication Failed');
         }
     };
 
@@ -162,7 +163,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
 
                             <button className={styles.submitButton} type="submit">
                                 <span className={`material-symbols-outlined ${styles.icon}`}>login</span>
-                                Secure Login
+                                <span>Secure Login</span>
                             </button>
 
                             <div className={styles.signupSection}>
@@ -172,7 +173,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         className={styles.signupLink}
                                         to="/signup"
                                     >
-                                        Sign Up
+                                        <span>Sign Up</span>
                                         <span className={`material-symbols-outlined ${styles.icon}`}>
                                             arrow_forward
                                         </span>

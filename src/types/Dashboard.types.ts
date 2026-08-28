@@ -17,12 +17,13 @@ export interface Product {
     name: string;
     sku: string;
     images: string[];
-    category: ProductType | string;
-    material: MaterialType | string;
+    category: ProductType | (string & {});
+    material: MaterialType | (string & {});
+    purity?: string;
     weight: number;
-    makingCharge: number;
-    wastagePercent: number;
-    stoneCost: number;
+    makingCharge?: number;
+    wastagePercent?: number;
+    stoneCost?: number;
     price: number;
     status: StockStatus;
     quantity: number;

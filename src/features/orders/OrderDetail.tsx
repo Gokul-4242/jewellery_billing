@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './OrderDetail.module.scss';
-import { useTransactions } from '../../context/TransactionContext'; // Using context instead of prop drilling
+import { useTransactions } from '../../context/useTransactions'; // Using context instead of prop drilling
 
 // Helper to format currency
 const formatCurrency = (amount: number) => {

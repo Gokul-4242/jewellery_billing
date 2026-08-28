@@ -3,9 +3,9 @@ import styles from './Billing.module.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FormSelect } from '../../components/common';
 import type { ExchangeItem, InvoiceData } from './types';
-import { useCustomers } from '../../context/CustomerContext';
+import { useCustomers } from '../../context/useCustomers';
 import { useInventory } from '../../context/InventoryContext';
-import { useTransactions } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/useTransactions';
 import { useRates } from '../../context/RateContext';
 import { useSettings } from '../../context/SettingsContext';
 import type { Customer } from '../../types/Customer';
@@ -15,6 +15,8 @@ import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
 import avatarImg from '../../assets/billing page.png';
 import api from '../../api/axios';
+
+type TrendDirection = 'up' | 'down' | 'stable';
 
 const Billing: React.FC = () => {
     const navigate = useNavigate();
@@ -28,13 +30,21 @@ const Billing: React.FC = () => {
     const { rates } = useRates();
 
     // Calculate trends
-    const getTrend = (current: number, previous?: number) => {
-        if (!previous) return { percent: 0, direction: 'stable' };
+    const getTrend = (current: number, previous?: number): { percent: string; direction: TrendDirection } => {
+        if (!previous) return { percent: '0', direction: 'stable' };
         const diff = current - previous;
         const percent = (diff / previous) * 100;
+        
+        let direction: TrendDirection = 'stable';
+        if (diff > 0) {
+            direction = 'up';
+        } else if (diff < 0) {
+            direction = 'down';
+        }
+
         return {
             percent: Math.abs(percent).toFixed(2),
-            direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable'
+            direction
         };
     };
 
@@ -43,7 +53,7 @@ const Billing: React.FC = () => {
 
 
     const { settings } = useSettings();
-    const { products, updateProduct, getProductById } = useInventory(); // Dynamic products
+    const { products } = useInventory(); // Dynamic products
     const { showToast } = useToast();
     const { cartItems, addToCart, removeFromCart, updateCartItem } = useCart();
 
@@ -229,6 +239,14 @@ const Billing: React.FC = () => {
     const [exchangeWeight, setExchangeWeight] = useState<string>('');
     const [exchangePurity, setExchangePurity] = useState<string>('');
 
+    const addMaterial = (mat: string) => {
+        setSelectedMaterials(prev => [...prev, mat]);
+    };
+
+    const removeMaterial = (mat: string) => {
+        setSelectedMaterials(prev => prev.filter(m => m !== mat));
+    };
+
     // Dynamic Exchange Rates
     const buyingRates = useMemo(() => ({
         'Old Gold': rates.gold22k, // Base rate is 22k
@@ -276,7 +294,7 @@ const Billing: React.FC = () => {
         }
 
         const newItem: ExchangeItem = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             description: `${exchangeName} (${exchangeType})`,
             weight: Number.parseFloat(exchangeWeight),
             purity: Number.parseFloat(exchangePurity) || (exchangeType === 'Old Gold' ? 91.6 : 100),
@@ -433,12 +451,31 @@ const Billing: React.FC = () => {
             
             showToast('Invoice processed successfully', 'success', 'Billed');
             navigate(`/dashboard/invoice/view/${newTransaction.id}`, { state: { data: invoiceData } });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to process invoice:', error);
-            showToast(error.response?.data?.message || 'Transaction Failed', 'error', 'Error');
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Transaction Failed';
+            showToast(message, 'error', 'Error');
         } finally {
             setIsProcessing(false);
         }
+    };
+
+    const getTrendIcon = (direction: TrendDirection) => {
+        if (direction === 'up') return 'trending_up';
+        if (direction === 'down') return 'trending_down';
+        return 'trending_flat';
+    };
+
+    const getTrendStyle = (direction: TrendDirection) => {
+        if (direction === 'up') return styles.positive;
+        if (direction === 'down') return styles.negative;
+        return styles.stable;
+    };
+
+    const getTrendPrefix = (direction: TrendDirection) => {
+        if (direction === 'up') return '+';
+        if (direction === 'down') return '-';
+        return '';
     };
 
     return (
@@ -461,14 +498,14 @@ const Billing: React.FC = () => {
                             <span
                                 className={`material-symbols-outlined ${styles.trendIcon} ${styles[goldTrend.direction]}`}
                             >
-                                {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'trending_flat'}
+                                {getTrendIcon(goldTrend.direction)}
                             </span>
                             <div>
                                 <p className={styles.label}>Gold (22k)</p>
                                 <p className={styles.value}>
                                     ₹{rates.gold22k}
-                                    <span className={`${styles.change} ${goldTrend.direction === 'up' ? styles.positive : goldTrend.direction === 'down' ? styles.negative : styles.stable}`}>
-                                        {goldTrend.direction === 'up' ? '+' : goldTrend.direction === 'down' ? '-' : ''}{goldTrend.percent}%
+                                    <span className={`${styles.change} ${getTrendStyle(goldTrend.direction)}`}>
+                                        {getTrendPrefix(goldTrend.direction)}{goldTrend.percent}%
                                     </span>
                                 </p>
                             </div>
@@ -477,14 +514,14 @@ const Billing: React.FC = () => {
                             <span
                                 className={`material-symbols-outlined ${styles.trendIcon} ${silverTrend.direction === 'stable' ? styles.stableSilver : styles[silverTrend.direction]}`}
                             >
-                                {silverTrend.direction === 'up' ? 'trending_up' : silverTrend.direction === 'down' ? 'trending_down' : 'trending_flat'}
+                                {getTrendIcon(silverTrend.direction)}
                             </span>
                             <div>
                                 <p className={styles.label}>Silver</p>
                                 <p className={styles.value}>
                                     ₹{rates.silver}
-                                    <span className={`${styles.change} ${silverTrend.direction === 'up' ? styles.positive : silverTrend.direction === 'down' ? styles.negative : styles.stable}`}>
-                                        {silverTrend.direction === 'up' ? '+' : silverTrend.direction === 'down' ? '-' : ''}{silverTrend.percent}%
+                                    <span className={`${styles.change} ${getTrendStyle(silverTrend.direction)}`}>
+                                        {getTrendPrefix(silverTrend.direction)}{silverTrend.percent}%
                                     </span>
                                 </p>
                             </div>
@@ -535,7 +572,7 @@ const Billing: React.FC = () => {
                                                     className={`${styles.searchResultItem} ${(product.quantity === 0) ? styles.disabled : ''}`}
                                                 >
                                                     <img
-                                                        src={(product.images && product.images[0]) || (product as Product & { image?: string }).image || 'https://via.placeholder.com/50'}
+                                                        src={product.images?.[0] || (product as Product & { image?: string }).image || 'https://via.placeholder.com/50'}
                                                         alt={product.name}
                                                     />
                                                     <div className={styles.info}>
@@ -678,8 +715,9 @@ const Billing: React.FC = () => {
 
                             <div className={styles.exchangeForm}>
                                 <div className={`${styles.fieldGroup} ${styles.large}`}>
-                                    <label>Item Name</label>
+                                    <label htmlFor="exchangeItemName">Item Name</label>
                                     <input
+                                        id="exchangeItemName"
                                         ref={exchangeNameRef}
                                         type="text"
                                         placeholder="e.g. Gold Chain"
@@ -688,8 +726,9 @@ const Billing: React.FC = () => {
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Metal Type</label>
+                                    <label htmlFor="exchangeMetalType">Metal Type</label>
                                     <FormSelect
+                                        id="exchangeMetalType"
                                         value={exchangeType}
                                         onChange={(val) => setExchangeType(val)}
                                         options={[
@@ -700,8 +739,9 @@ const Billing: React.FC = () => {
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Weight (g)</label>
+                                    <label htmlFor="exchangeWeight">Weight (g)</label>
                                     <input
+                                        id="exchangeWeight"
                                         ref={exchangeWeightRef}
                                         type="number"
                                         placeholder="0.00"
@@ -710,8 +750,9 @@ const Billing: React.FC = () => {
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Purity (%)</label>
+                                    <label htmlFor="exchangePurity">Purity (%)</label>
                                     <input
+                                        id="exchangePurity"
                                         type="number"
                                         placeholder="e.g 91.6"
                                         value={exchangePurity}
@@ -719,8 +760,9 @@ const Billing: React.FC = () => {
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Calculated Value</label>
+                                    <label htmlFor="exchangeCalculatedValue">Calculated Value</label>
                                     <input
+                                        id="exchangeCalculatedValue"
                                         type="text"
                                         value={`₹${calculatedExchangeValue.toFixed(2)}`}
                                         readOnly
@@ -840,70 +882,72 @@ const Billing: React.FC = () => {
                             )}
                         </div>
 
-                        {selectedCustomer ? (
-                            isEditingCustomer && editForm ? (
-                                <div className={`${styles.customerCard} ${styles.editing}`}>
-                                    <div className={styles.cardHeader}>
-                                        <span className={styles.textBold}>Edit Customer</span>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, name: e.target.value } : null)}
-                                        placeholder="Name"
-                                        className={styles.editInput}
-                                    />
-                                    <input
-                                        type="text"
-                                        value={editForm.phone}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                                        placeholder="Phone"
-                                        className={styles.editInput}
-                                    />
-                                    <input
-                                        type="email"
-                                        value={editForm.email}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
-                                        placeholder="Email"
-                                        className={styles.editInput}
-                                    />
-                                    <div className={styles.editActions}>
-                                        <button
-                                            onClick={handleSaveCustomer}
-                                            className={styles.saveBtn}
-                                        >
-                                            Save
-                                        </button>
-                                        <button
-                                            onClick={handleCancelEdit}
-                                            className={styles.cancelBtn}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className={styles.customerCard}>
-                                    <div className={styles.avatarInitials}>
-                                        {selectedCustomer?.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                                    </div>
-                                     <div className={styles.customerInfo}>
-                                         <p className={styles.textBold}>{selectedCustomer?.name}</p>
-                                         <p className={styles.textSm}>{selectedCustomer?.totalSpend ? `₹${selectedCustomer.totalSpend}` : '₹0'} spent</p>
-                                         <p className={styles.customerEmail}>{selectedCustomer?.email}</p>
-                                     </div>
-                                     <button
-                                         onClick={handleEditClick}
-                                         className={styles.editBtn}
-                                         title="Edit Customer"
-                                     >
-                                         <span className="material-symbols-outlined">edit</span>
-                                     </button>
-                                </div>
-                            )
-                        ) : (
+                        {!selectedCustomer && (
                              <div className={`${styles.customerCard} ${styles.empty}`}>
                                 <span className="material-symbols-outlined">person_off</span> <span>No customer selected</span>
+                            </div>
+                        )}
+
+                        {selectedCustomer && isEditingCustomer && editForm && (
+                            <div className={`${styles.customerCard} ${styles.editing}`}>
+                                <div className={styles.cardHeader}>
+                                    <span className={styles.textBold}>Edit Customer</span>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={editForm.name}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                    placeholder="Name"
+                                    className={styles.editInput}
+                                />
+                                <input
+                                    type="text"
+                                    value={editForm.phone}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                                    placeholder="Phone"
+                                    className={styles.editInput}
+                                />
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
+                                    placeholder="Email"
+                                    className={styles.editInput}
+                                />
+                                <div className={styles.editActions}>
+                                    <button
+                                        onClick={handleSaveCustomer}
+                                        className={styles.saveBtn}
+                                    >
+                                        Save
+                                    </button>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className={styles.cancelBtn}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedCustomer && (!isEditingCustomer || !editForm) && (
+                            <div className={styles.customerCard}>
+                                <div className={styles.avatarInitials}>
+                                    {selectedCustomer?.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                                </div>
+                                 <div className={styles.customerInfo}>
+                                     <p className={styles.textBold}>{selectedCustomer?.name}</p>
+                                     <p className={styles.textSm}>{selectedCustomer?.totalSpend ? `₹${selectedCustomer.totalSpend}` : '₹0'} spent</p>
+                                     <p className={styles.customerEmail}>{selectedCustomer?.email}</p>
+                                 </div>
+                                 <button
+                                     onClick={handleEditClick}
+                                     className={styles.editBtn}
+                                     title="Edit Customer"
+                                 >
+                                     <span className="material-symbols-outlined">edit</span>
+                                 </button>
                             </div>
                         )}
                     </div>
@@ -936,21 +980,11 @@ const Billing: React.FC = () => {
                         </div>
                         <div className={styles.row} style={{ alignItems: 'center' }}>
                             <span className={styles.summaryLabelWithIcon}>
-                                Tax (GST)
+                                <span>Tax (GST) </span>
                                 <select
                                     className={styles.miniSelect}
                                     value={gstRate}
                                     onChange={(e) => setGstRate(e.target.value)}
-                                    style={{
-                                        padding: '0.1rem 0.25rem',
-                                        borderRadius: '0.25rem',
-                                        border: '1px solid #4a4030',
-                                        backgroundColor: '#2c2417',
-                                        color: '#e29d12',
-                                        fontSize: '0.75rem',
-                                        width: 'auto',
-                                        marginLeft: '0.25rem'
-                                    }}
                                 >
                                     <option value="3">3%</option>
                                     <option value="0">None</option>
@@ -996,10 +1030,11 @@ const Billing: React.FC = () => {
                              </button>
                         </div>
                         <button
-                            className={styles.processBtn}
+                            className={styles.checkoutBtn}
                             onClick={handleProcessInvoice}
+                            disabled={isProcessing}
                         >
-                            Process Invoice ({selectedPayment}) <span className="material-symbols-outlined">arrow_forward</span>
+                            {isProcessing ? 'Processing...' : `Process Invoice (${selectedPayment})`} <span className="material-symbols-outlined">arrow_forward</span>
                         </button>
                         {/* <p className={styles.textCenter} style={{ fontSize: '0.625rem', color: '#64748b', marginTop: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Shortcut: F10 to Checkout</p> */}
                     </div>
@@ -1019,20 +1054,14 @@ const Billing: React.FC = () => {
 
                             {/* Materials */}
                             <div className={styles.filterGroup}>
-                                <label>Material</label>
+                                <span className={styles.filterLabel}>Material</span>
                                 <div className={styles.optionsGrid}>
                                     {['22k Gold', '18k Gold', '925 Silver', 'Platinum'].map(mat => (
                                         <label key={mat} className={styles.checkboxLabel}>
                                             <input
                                                 type="checkbox"
                                                 checked={selectedMaterials.includes(mat)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedMaterials(prev => [...prev, mat]);
-                                                    } else {
-                                                        setSelectedMaterials(prev => prev.filter(m => m !== mat));
-                                                    }
-                                                }}
+                                                onChange={(e) => (e.target.checked ? addMaterial(mat) : removeMaterial(mat))}
                                             />
                                             {mat}
                                         </label>
@@ -1042,18 +1071,22 @@ const Billing: React.FC = () => {
 
                             {/* Price Range */}
                             <div className={styles.filterGroup}>
-                                <label>Price Range (₹)</label>
+                                <span className={styles.filterLabel}>Price Range (₹)</span>
                                 <div className={styles.rangeInputs}>
                                     <input
+                                        id="priceRangeMin"
                                         type="number"
                                         placeholder="Min"
+                                        aria-label="Minimum price"
                                         value={priceRange.min}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
                                     />
                                     <span>to</span>
                                     <input
+                                        id="priceRangeMax"
                                         type="number"
                                         placeholder="Max"
+                                        aria-label="Maximum price"
                                         value={priceRange.max}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
                                     />
@@ -1062,18 +1095,22 @@ const Billing: React.FC = () => {
 
                             {/* Weight Range */}
                             <div className={styles.filterGroup}>
-                                <label>Weight Range (g)</label>
+                                <span className={styles.filterLabel}>Weight Range (g)</span>
                                 <div className={styles.rangeInputs}>
                                     <input
+                                        id="weightRangeMin"
                                         type="number"
                                         placeholder="Min"
+                                        aria-label="Minimum weight"
                                         value={weightRange.min}
                                         onChange={(e) => setWeightRange(prev => ({ ...prev, min: Number(e.target.value) }))}
                                     />
                                     <span>to</span>
                                     <input
+                                        id="weightRangeMax"
                                         type="number"
                                         placeholder="Max"
+                                        aria-label="Maximum weight"
                                         value={weightRange.max}
                                         onChange={(e) => setWeightRange(prev => ({ ...prev, max: Number(e.target.value) }))}
                                     />

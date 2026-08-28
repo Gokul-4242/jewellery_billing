@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styles from './CustomerManagement.module.scss';
 import { Button } from '../../components/common';
-import { useCustomers } from '../../context/CustomerContext';
+import { useCustomers } from '../../context/useCustomers';
 import type { Customer } from '../../types/Customer';
 
 interface CustomerManagementProps {

@@ -2,7 +2,7 @@ import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { SignupProps, SignupFormData, UserRole } from './Signup.types';
-import signupImg from '../../assets/signup page.png';
+import signupImg from '../../assets/signupPage.png';
 import { useToast } from '../../context/ToastContext';
 import TermsModal from './TermsModal';
 
@@ -161,14 +161,16 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
 
                             {/* Role Selection */}
                             <div className={styles.formGroup}>
-                                <label className={styles.label}>Select Role</label>
+                                <span className={styles.label}>Select Role</span>
                                 <div className={styles.roleGrid}>
                                     {/* Admin Option */}
-                                    <label className={styles.roleOption}>
+                                    <label className={styles.roleOption} htmlFor="role-admin">
                                         <input
+                                            id="role-admin"
                                             type="radio"
                                             name="role"
                                             value="admin"
+                                            aria-label="Administrator"
                                             checked={formData.role === 'admin'}
                                             onChange={() => handleRoleChange('admin')}
                                         />
@@ -181,11 +183,13 @@ const Signup: React.FC<SignupProps> = ({ onSubmit }) => {
                                     </label>
 
                                     {/* Sales Staff Option */}
-                                    <label className={styles.roleOption}>
+                                    <label className={styles.roleOption} htmlFor="role-staff">
                                         <input
+                                            id="role-staff"
                                             type="radio"
                                             name="role"
                                             value="staff"
+                                            aria-label="Sales Staff"
                                             checked={formData.role === 'staff'}
                                             onChange={() => handleRoleChange('staff')}
                                         />

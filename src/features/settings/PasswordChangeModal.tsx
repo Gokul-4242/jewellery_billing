@@ -60,10 +60,19 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClo
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <>
+            <div
+                className={styles.overlay}
+                onClick={onClose}
+                aria-hidden="true"
+            />
+            <div
+                className={styles.modal}
+                aria-modal="true"
+                aria-labelledby="modal-title"
+            >
                 <div className={styles.header}>
-                    <h2>Change Password</h2>
+                    <h2 id="modal-title">Change Password</h2>
                     <button onClick={onClose} className={styles.closeBtn}>
                         <span className="material-symbols-outlined">close</span>
                     </button>
@@ -114,7 +123,7 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClo
                     </Button>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

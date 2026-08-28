@@ -1,26 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import type { Transaction } from '../types/Transaction';
 import api from '../api/axios';
-
-interface TransactionContextType {
-    transactions: Transaction[];
-    isLoading: boolean;
-    addTransaction: (transaction: Transaction) => Promise<Transaction | undefined>;
-    addLocalTransaction: (transaction: Transaction) => void;
-    updateTransaction: (transaction: Transaction) => Promise<void>;
-    getTransactionById: (id: string) => Promise<Transaction | undefined>;
-
-    getTransactionsByDate: (date: Date) => Transaction[];
-    getTodayStats: () => {
-        totalSales: number;
-        totalWeightNodes: { gold: number; silver: number };
-        totalExchange: number;
-        transactionCount: number;
-        paymentBreakdown: { Cash: number; Card: number; UPI: number };
-    };
-}
-
-const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
+import { TransactionContext } from './useTransactions';
 
 export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -42,7 +23,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         fetchTransactions();
     }, []);
 
-    const addTransaction = async (transactionData: Transaction) => {
+    const addTransaction = useCallback(async (transactionData: Transaction) => {
         try {
             const res = await api.post('/transactions', transactionData);
             if (res.data?.success) {
@@ -54,15 +35,13 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
             console.error("Failed to add transaction", error);
             throw error;
         }
-    };
+    }, []);
 
-    const addLocalTransaction = (transaction: Transaction) => {
+    const addLocalTransaction = useCallback((transaction: Transaction) => {
         setTransactions(prev => [transaction, ...prev]);
-    };
+    }, []);
 
-
-
-    const getTransactionById = async (id: string) => {
+    const getTransactionById = useCallback(async (id: string) => {
         // Check local state first
         const local = transactions.find(t => t.id === id || t._id === id);
         if (local) return local;
@@ -77,9 +56,9 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
             console.error("Failed to fetch transaction", error);
         }
         return undefined;
-    };
+    }, [transactions]);
 
-    const updateTransaction = async (updatedTransaction: Transaction) => {
+    const updateTransaction = useCallback(async (updatedTransaction: Transaction) => {
         try {
             const res = await api.put(`/transactions/${updatedTransaction.id || updatedTransaction._id}`, updatedTransaction);
             if (res.data?.success) {
@@ -89,16 +68,14 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
             console.error("Failed to update transaction", error);
             throw error;
         }
-    };
+    }, []);
 
-
-
-    const getTransactionsByDate = (date: Date) => {
+    const getTransactionsByDate = useCallback((date: Date) => {
         const dateString = date.toLocaleDateString();
         return transactions.filter(t => new Date(t.date).toLocaleDateString() === dateString);
-    };
+    }, [transactions]);
 
-    const getTodayStats = () => {
+    const getTodayStats = useCallback(() => {
         const today = new Date().toLocaleDateString();
         const todaysTransactions = transactions.filter(t => new Date(t.date).toLocaleDateString() === today);
 
@@ -129,19 +106,24 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
                 UPI: todaysTransactions.filter(t => t.paymentMethod === 'UPI').reduce((acc, t) => acc + t.grandTotal, 0)
             }
         };
-    };
+    }, [transactions]);
+
+    const contextValue = useMemo(() => ({
+        transactions,
+        isLoading,
+        addTransaction,
+        addLocalTransaction,
+        updateTransaction,
+        getTransactionById,
+        getTransactionsByDate,
+        getTodayStats
+    }), [transactions, isLoading, addTransaction, addLocalTransaction, updateTransaction, getTransactionById, getTransactionsByDate, getTodayStats]);
 
     return (
-        <TransactionContext.Provider value={{ transactions, isLoading, addTransaction, addLocalTransaction, updateTransaction, getTransactionsByDate, getTodayStats }}>
+        <TransactionContext.Provider value={contextValue}>
             {children}
         </TransactionContext.Provider>
     );
 };
 
-export const useTransactions = () => {
-    const context = useContext(TransactionContext);
-    if (!context) {
-        throw new Error('useTransactions must be used within a TransactionProvider');
-    }
-    return context;
-};
+export default TransactionProvider;

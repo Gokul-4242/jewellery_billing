@@ -1,18 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import api from '../api/axios';
 import type { Customer } from '../types/Customer';
-export type { Customer }; // Re-export for convenience if needed, but components should probably import from types directly.
-
-interface CustomerContextType {
-    customers: Customer[];
-    isLoading: boolean;
-    addCustomer: (customer: Omit<Customer, 'id'>) => Promise<void>;
-    updateCustomer: (customer: Customer) => Promise<void>;
-    deleteCustomer: (id: string) => Promise<void>;
-    getCustomerById: (id: string) => Customer | undefined;
-}
-
-const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
+import { CustomerContext } from './useCustomers';
 
 export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -24,7 +13,7 @@ export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }
                 const res = await api.get('/customers');
                 if (res.data?.success) {
                     // Map backend _id to frontend id for compatibility
-                    const mapped = res.data.data.map((c: any) => ({
+                    const mapped = res.data.data.map((c: Omit<Customer, 'id'> & { _id?: string; id?: string }) => ({
                         ...c,
                         id: c._id || c.id
                     }));
@@ -39,7 +28,7 @@ export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }
         fetchCustomers();
     }, []);
 
-    const addCustomer = async (customerData: Omit<Customer, 'id'>) => {
+    const addCustomer = useCallback(async (customerData: Omit<Customer, 'id'>) => {
         try {
             const res = await api.post('/customers', customerData);
             if (res.data?.success) {
@@ -50,33 +39,36 @@ export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }
             console.error("Failed to add customer", error);
             throw error;
         }
-    };
+    }, []);
 
-    const updateCustomer = async (updatedCustomer: Customer) => {
+    const updateCustomer = useCallback(async (updatedCustomer: Customer) => {
         setCustomers((prev) => 
             prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
         );
-    };
+    }, []);
 
-    const deleteCustomer = (id: string) => {
+    const deleteCustomer = useCallback(async (id: string) => {
         setCustomers((prev) => prev.filter((c) => c.id !== id));
-    };
+    }, []);
 
-    const getCustomerById = (id: string) => {
+    const getCustomerById = useCallback((id: string) => {
         return customers.find(c => c.id === id);
-    };
+    }, [customers]);
+
+    const contextValue = useMemo(() => ({
+        customers,
+        isLoading,
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
+        getCustomerById
+    }), [customers, isLoading, addCustomer, updateCustomer, deleteCustomer, getCustomerById]);
 
     return (
-        <CustomerContext.Provider value={{ customers, addCustomer, updateCustomer, deleteCustomer, getCustomerById }}>
+        <CustomerContext.Provider value={contextValue}>
             {children}
         </CustomerContext.Provider>
     );
 };
 
-export const useCustomers = (): CustomerContextType => {
-    const context = useContext(CustomerContext);
-    if (!context) {
-        throw new Error('useCustomers must be used within a CustomerProvider');
-    }
-    return context;
-};
+export default CustomerProvider;

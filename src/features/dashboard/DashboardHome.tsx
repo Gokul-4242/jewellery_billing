@@ -8,7 +8,9 @@ import { useInventory } from '../../context/InventoryContext';
 import { useRates } from '../../context/RateContext';
 import { useSettings } from '../../context/SettingsContext';
 import ExportReportModal from './ExportReportModal';
-import { useTransactions } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/useTransactions';
+
+import type { Transaction } from '../../types/Transaction';
 
 const DashboardHome: React.FC = () => {
     const { products } = useInventory();
@@ -24,11 +26,11 @@ const DashboardHome: React.FC = () => {
 
     // Calculate Market Fluctuation
     const goldTrend = getTrend(rates.gold22k, rates.previous?.gold22k);
-    const hasSignificantFluctuation = parseFloat(goldTrend.percent) >= 2;
+    const hasSignificantFluctuation = Number.parseFloat(goldTrend.percent) >= 2;
     const showMarketAlert = settings.notifications.marketAlerts && hasSignificantFluctuation && !isAlertDismissed;
 
     // Calculate Order Reminders
-    const upcomingOrders = transactions.filter(t => {
+    const upcomingOrders = transactions.filter((t: Transaction) => {
         if (!t.deliveryDate || t.status === 'Completed' || t.status === 'Cancelled') return false;
         const deadline = new Date(t.deliveryDate);
         const now = new Date();
@@ -36,7 +38,7 @@ const DashboardHome: React.FC = () => {
         return diffHours > 0 && diffHours <= 48; // Due within 48 hours
     });
 
-    const newOrdersCount = transactions.filter(t => {
+    const newOrdersCount = transactions.filter((t: Transaction) => {
         const orderDate = new Date(t.date);
         const today = new Date();
         return orderDate.toDateString() === today.toDateString();
@@ -119,7 +121,7 @@ const DashboardHome: React.FC = () => {
                         </p>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <Button variant="secondary" size="small" onClick={() => window.location.href = '/dashboard/orders'}>
+                        <Button variant="secondary" onClick={() => window.location.href = '/dashboard/orders'}>
                             View Orders
                         </Button>
                         <button className={styles.dismissBtn} onClick={() => setIsOrderAlertDismissed(true)}>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './OrderConfirmation.module.scss';
-import { useTransactions } from '../../context/TransactionContext';
-import { useCustomers } from '../../context/CustomerContext';
+import { useTransactions } from '../../context/useTransactions';
+import { useCustomers } from '../../context/useCustomers';
 import { useSettings } from '../../context/SettingsContext';
 import type { Transaction } from '../../types/Transaction';
 
