@@ -1,67 +1,74 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { INITIAL_CUSTOMERS } from '../data/mockData';
+import React, { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
+import api from '../api/axios';
 import type { Customer } from '../types/Customer';
-export type { Customer }; // Re-export for convenience if needed, but components should probably import from types directly.
-
-interface CustomerContextType {
-    customers: Customer[];
-    addCustomer: (customer: Customer) => void;
-    updateCustomer: (customer: Customer) => void;
-    deleteCustomer: (id: string) => void;
-    getCustomerById: (id: string) => Customer | undefined;
-}
-
-const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
+import { CustomerContext } from './useCustomers';
 
 export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [customers, setCustomers] = useState<Customer[]>(() => {
-        // Initialize from localStorage or fallback to mock data
-        const stored = localStorage.getItem('customers');
-        if (stored) {
-            try {
-                return JSON.parse(stored);
-            } catch (e) {
-                console.error("Failed to parse customers from local storage", e);
-                return INITIAL_CUSTOMERS;
-            }
-        }
-        return INITIAL_CUSTOMERS;
-    });
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Persist to localStorage whenever customers change
     useEffect(() => {
-        localStorage.setItem('customers', JSON.stringify(customers));
-    }, [customers]);
+        const fetchCustomers = async () => {
+            try {
+                const res = await api.get('/customers');
+                if (res.data?.success) {
+                    // Map backend _id to frontend id for compatibility
+                    const mapped = res.data.data.map((c: Omit<Customer, 'id'> & { _id?: string; id?: string }) => ({
+                        ...c,
+                        id: c._id || c.id
+                    }));
+                    setCustomers(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch customers", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCustomers();
+    }, []);
 
-    const addCustomer = (customer: Customer) => {
-        setCustomers((prev) => [customer, ...prev]);
-    };
+    const addCustomer = useCallback(async (customerData: Omit<Customer, 'id'>) => {
+        try {
+            const res = await api.post('/customers', customerData);
+            if (res.data?.success) {
+                const newCustomer = { ...res.data.data, id: res.data.data._id };
+                setCustomers(prev => [newCustomer, ...prev]);
+            }
+        } catch (error) {
+            console.error("Failed to add customer", error);
+            throw error;
+        }
+    }, []);
 
-    const updateCustomer = (updatedCustomer: Customer) => {
+    const updateCustomer = useCallback(async (updatedCustomer: Customer) => {
         setCustomers((prev) => 
             prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
         );
-    };
+    }, []);
 
-    const deleteCustomer = (id: string) => {
+    const deleteCustomer = useCallback(async (id: string) => {
         setCustomers((prev) => prev.filter((c) => c.id !== id));
-    };
+    }, []);
 
-    const getCustomerById = (id: string) => {
+    const getCustomerById = useCallback((id: string) => {
         return customers.find(c => c.id === id);
-    };
+    }, [customers]);
+
+    const contextValue = useMemo(() => ({
+        customers,
+        isLoading,
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
+        getCustomerById
+    }), [customers, isLoading, addCustomer, updateCustomer, deleteCustomer, getCustomerById]);
 
     return (
-        <CustomerContext.Provider value={{ customers, addCustomer, updateCustomer, deleteCustomer, getCustomerById }}>
+        <CustomerContext.Provider value={contextValue}>
             {children}
         </CustomerContext.Provider>
     );
 };
 
-export const useCustomers = (): CustomerContextType => {
-    const context = useContext(CustomerContext);
-    if (!context) {
-        throw new Error('useCustomers must be used within a CustomerProvider');
-    }
-    return context;
-};
+export default CustomerProvider;

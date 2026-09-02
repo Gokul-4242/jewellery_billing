@@ -1,4 +1,4 @@
-@import '../../styles/variables';
+@use '../../styles/variables' as *;
 
 .container {
     position: relative;
@@ -43,6 +43,16 @@
     .icon {
         color: $text-muted;
         font-size: 1.25rem;
+    }
+}
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    .trigger {
+        pointer-events: none;
+        background-color: rgba($surface-dark, 0.5);
     }
 }
 

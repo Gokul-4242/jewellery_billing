@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ItemDetail.module.scss';
 import { useInventory } from '../../context/InventoryContext';
 import { useToast } from '../../context/ToastContext';
-import { CustomDropdown } from '../../components/common';
+import { CustomDropdown, ConfirmModal } from '../../components/common';
 import { useCart } from '../../context/CartContext';
 import type { StockStatus } from '../../types/Dashboard.types';
 
@@ -16,32 +17,37 @@ const ItemDetail: React.FC = () => {
     const { addToCart } = useCart();
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
-    const [editForm, setEditForm] = useState({
-        name: '',
-        sku: '',
-        category: '' as string,
-        material: '' as string,
-        weight: 0,
-        price: 0,
-        status: '' as StockStatus
-    });
-
     const product = id ? getProductById(id) : undefined;
 
-    useEffect(() => {
-        if (product) {
-            setEditForm({
-                name: product.name,
-                sku: product.sku,
-                category: product.category,
-                material: product.material,
-                weight: product.weight,
-                price: product.price,
-                status: product.status
-            });
+    const nameInputRef = useRef<HTMLInputElement>(null);
+    const skuInputRef = useRef<HTMLInputElement>(null);
+    const priceInputRef = useRef<HTMLInputElement>(null);
+    const weightInputRef = useRef<HTMLInputElement>(null);
+
+    const [isEditing, setIsEditing] = useState<boolean>(location.state?.edit || false);
+    const [editForm, setEditForm] = useState({
+        name: product?.name ?? '',
+        sku: product?.sku ?? '',
+        category: (product?.category ?? '') as string,
+        material: (product?.material ?? '') as string,
+        weight: product?.weight ?? 0,
+        makingCharge: product?.makingCharge ?? 0,
+        wastagePercent: product?.wastagePercent ?? 0,
+        stoneCost: product?.stoneCost ?? 0,
+        status: (product?.status ?? '') as StockStatus,
+        quantity: product?.quantity ?? 1
+    });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const getStatusClass = (status: string) => {
+        switch (status) {
+            case 'In Stock': return styles.inStock;
+            case 'Low Stock': return styles.lowStock;
+            case 'Out of Stock': return styles.outOfStock;
+            default: return '';
         }
-    }, [product]);
+    };
 
     if (!product) {
         return (
@@ -52,13 +58,24 @@ const ItemDetail: React.FC = () => {
         );
     }
 
-    const handleDelete = () => {
-        if (window.confirm('Are you sure you want to delete this product?')) {
-            deleteProduct(product.id);
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteProduct(product.id);
             showToast('Product deleted successfully', 'success');
+            setIsDeleteModalOpen(false);
             navigate('/dashboard/inventory');
+        } catch (err) {
+            console.error('Failed to delete product:', err);
+            showToast('Failed to delete product', 'error');
+            setIsDeleting(false);
         }
     };
+
 
     const handleEditToggle = () => {
         if (isEditing) {
@@ -69,29 +86,65 @@ const ItemDetail: React.FC = () => {
                 category: product.category,
                 material: product.material,
                 weight: product.weight,
-                price: product.price,
-                status: product.status
+                makingCharge: product.makingCharge ?? 0,
+                wastagePercent: product.wastagePercent ?? 0,
+                stoneCost: product.stoneCost ?? 0,
+                status: product.status,
+                quantity: product.quantity ?? 1
             });
         }
         setIsEditing(!isEditing);
     };
 
-    const handleSave = () => {
-        if (!editForm.name || !editForm.sku || !editForm.price || !editForm.weight) {
-            showToast('Please fill in all required fields', 'error');
-            return;
+    const validateEditForm = (): boolean => {
+        if (!editForm.name) {
+            showToast('Please fill in the product name', 'error');
+            nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => nameInputRef.current?.focus(), 500);
+            return false;
         }
-
-        updateProduct(product.id, editForm);
-        setIsEditing(false);
-        showToast('Product updated successfully', 'success');
+        if (!editForm.sku) {
+            showToast('Please fill in the SKU', 'error');
+            skuInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => skuInputRef.current?.focus(), 500);
+            return false;
+        }
+        if (editForm.makingCharge === undefined || editForm.makingCharge === null || editForm.makingCharge < 0) {
+            showToast('Please enter a valid making charge', 'error');
+            priceInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => priceInputRef.current?.focus(), 500);
+            return false;
+        }
+        if (!editForm.weight || editForm.weight <= 0) {
+            showToast('Please enter a valid weight', 'error');
+            weightInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => weightInputRef.current?.focus(), 500);
+            return false;
+        }
+        return true;
     };
+
+    const handleSave = async () => {
+        if (!validateEditForm()) return;
+
+        try {
+            await updateProduct(product.id, editForm);
+            setIsEditing(false);
+            showToast('Product updated successfully', 'success');
+        } catch (err) {
+            console.error('Failed to update product:', err);
+            showToast('Failed to update product', 'error');
+        }
+    };
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditForm(prev => ({
             ...prev,
-            [name]: name === 'weight' || name === 'price' ? parseFloat(value) || 0 : value
+            [name]: ['weight', 'makingCharge', 'wastagePercent', 'stoneCost', 'quantity'].includes(name) 
+                ? Number.parseFloat(value) || 0 
+                : value
         }));
     };
 
@@ -103,15 +156,15 @@ const ItemDetail: React.FC = () => {
     };
 
     // Use product image or placeholder
-    const mainImage = selectedImage || (product.images && product.images[0]) || 'https://via.placeholder.com/600';
+    const mainImage = selectedImage || product.images?.[0] || 'https://via.placeholder.com/600';
 
     return (
         <div className={styles.container}>
             {/* Breadcrumbs */}
             <nav className={styles.breadcrumbs}>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>Dashboard</a>
+                <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
                 <span className={`material-symbols-outlined ${styles.icon}`}>chevron_right</span>
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/inventory'); }}>Inventory</a>
+                <button type="button" onClick={() => navigate('/dashboard/inventory')}>Inventory</button>
                 <span className={`material-symbols-outlined ${styles.icon}`}>chevron_right</span>
                 <span className={styles.current}>{isEditing ? 'Edit Product' : 'Product Details'}</span>
             </nav>
@@ -122,26 +175,26 @@ const ItemDetail: React.FC = () => {
                     <>
                         <button className={styles.deleteBtn} onClick={handleEditToggle}>
                             <span className="material-symbols-outlined">close</span>
-                            Cancel
+                            <span>Cancel</span>
                         </button>
                         <button className={styles.editBtn} onClick={handleSave}>
                             <span className="material-symbols-outlined">save</span>
-                            Save Changes
+                            <span>Save Changes</span>
                         </button>
                     </>
                 ) : (
                     <>
-                        <button className={styles.deleteBtn} onClick={handleDelete}>
+                        <button className={styles.deleteBtn} onClick={handleDeleteClick}>
                             <span className="material-symbols-outlined">delete</span>
-                            Delete
+                            <span>Delete</span>
                         </button>
                         <button className={styles.editBtn} onClick={handleEditToggle}>
                             <span className="material-symbols-outlined">edit</span>
-                            Edit Product
+                            <span>Edit Product</span>
                         </button>
                         <button className={styles.addToCartBtn} onClick={handleAddToCart}>
                             <span className="material-symbols-outlined">shopping_cart</span>
-                            Add to Cart
+                            <span>Add to Cart</span>
                         </button>
                     </>
                 )}
@@ -152,7 +205,7 @@ const ItemDetail: React.FC = () => {
                 {/* Left Column: Gallery */}
                 <div className={styles.gallerySection}>
                     <div className={styles.mainImage}>
-                        <div className={styles.stockFiles}>
+                        <div className={`${styles.stockFiles} ${!isEditing ? getStatusClass(product.status) : ''}`}>
                             {isEditing ? (
                                 <CustomDropdown
                                     options={['In Stock', 'Low Stock', 'Out of Stock']}
@@ -166,7 +219,7 @@ const ItemDetail: React.FC = () => {
                     <div className={styles.thumbnails}>
                         {product.images?.map((img, idx) => (
                             <button
-                                key={idx}
+                                key={img}
                                 className={mainImage === img ? styles.active : ''}
                                 onClick={() => setSelectedImage(img)}
                             >
@@ -183,6 +236,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.meta}>
                             {isEditing ? (
                                 <input
+                                    ref={skuInputRef}
                                     type="text"
                                     name="sku"
                                     value={editForm.sku}
@@ -198,6 +252,7 @@ const ItemDetail: React.FC = () => {
                         </div>
                         {isEditing ? (
                             <input
+                                ref={nameInputRef}
                                 type="text"
                                 name="name"
                                 value={editForm.name}
@@ -216,11 +271,12 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">scale</span>
-                                Gross Wt.
+                                <span>Gross Wt.</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
                                     <input
+                                        ref={weightInputRef}
                                         type="number"
                                         name="weight"
                                         value={editForm.weight}
@@ -234,7 +290,7 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">diamond</span>
-                                Purity
+                                <span>Purity</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -251,14 +307,25 @@ const ItemDetail: React.FC = () => {
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">inventory</span>
-                                Stock
+                                <span>Stock</span>
                             </div>
-                            <div className={styles.value}>1 Unit</div>
+                            <div className={styles.value}>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        value={editForm.quantity}
+                                        onChange={handleInputChange}
+                                        className={styles.input}
+                                        step="1"
+                                    />
+                                ) : `${product.quantity ?? 1} Units`}
+                            </div>
                         </div>
                         <div className={styles.statItem}>
                             <div className={styles.label}>
                                 <span className="material-symbols-outlined">category</span>
-                                Type
+                                <span>Type</span>
                             </div>
                             <div className={styles.value}>
                                 {isEditing ? (
@@ -277,29 +344,60 @@ const ItemDetail: React.FC = () => {
                     {/* Pricing */}
                     <div className={styles.pricingCard}>
                         <div className={styles.priceBlock}>
-                            <div className={styles.label}>Selling Price</div>
+                            <div className={styles.label}>Making Charge (₹)</div>
                             {isEditing ? (
                                 <input
+                                    ref={priceInputRef}
                                     type="number"
-                                    name="price"
-                                    value={editForm.price}
+                                    name="makingCharge"
+                                    value={editForm.makingCharge}
                                     onChange={handleInputChange}
                                     className={styles.input}
                                     placeholder="0.00"
                                 />
                             ) : (
-                                <div className={styles.amount}>₹{product.price.toLocaleString('en-IN')}</div>
+                                <div className={styles.amount}>₹{(product.makingCharge ?? 0).toLocaleString('en-IN')}</div>
                             )}
 
                         </div>
-
+                        <div className={styles.priceBlock}>
+                            <div className={styles.label}>Wastage (%)</div>
+                            {isEditing ? (
+                                <input
+                                    type="number"
+                                    name="wastagePercent"
+                                    value={editForm.wastagePercent}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
+                                    placeholder="0"
+                                    step="0.01"
+                                />
+                            ) : (
+                                <div className={styles.amount}>{product.wastagePercent ?? 0}%</div>
+                            )}
+                        </div>
+                        <div className={styles.priceBlock}>
+                            <div className={styles.label}>Stone Cost (₹)</div>
+                            {isEditing ? (
+                                <input
+                                    type="number"
+                                    name="stoneCost"
+                                    value={editForm.stoneCost}
+                                    onChange={handleInputChange}
+                                    className={styles.input}
+                                    placeholder="0.00"
+                                />
+                            ) : (
+                                <div className={styles.amount}>₹{(product.stoneCost ?? 0).toLocaleString('en-IN')}</div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Specs */}
                     <div className={styles.specsCard}>
                         <h3>
                             <span className="material-symbols-outlined">manufacturing</span>
-                            Technical Specifications
+                            <span>Technical Specifications</span>
                         </h3>
                         <div className={styles.specsGrid}>
                             <div className={styles.specItem}>
@@ -314,7 +412,7 @@ const ItemDetail: React.FC = () => {
                                 <span className={styles.label}>Hallmarked</span>
                                 <span className={styles.value}>
                                     <span className={`material-symbols-outlined ${styles.check}`}>check_circle</span>
-                                    Yes (BIS)
+                                    <span>Yes (BIS)</span>
                                 </span>
                             </div>
                             <div className={styles.specItem}>
@@ -332,12 +430,21 @@ const ItemDetail: React.FC = () => {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                             <button className={styles.editBtn} onClick={handleSave} style={{ width: '100%', justifyContent: 'center' }}>
                                 <span className="material-symbols-outlined">save</span>
-                                Save Changes
+                                <span>Save Changes</span>
                             </button>
                         </div>
                     )}
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                title="Delete Product"
+                message={`Are you sure you want to delete "${product.name}"? This action cannot be undone.`}
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };

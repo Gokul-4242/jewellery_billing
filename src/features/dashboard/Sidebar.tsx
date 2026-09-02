@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
+import classNames from 'classnames';
 import styles from './Dashboard.module.scss';
 import { useRates } from '../../context/RateContext';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import RateUpdater from '../tools/RateUpdater';
+import adminImg from '../../assets/adminimg.png';
 
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
+    isMobileOpen?: boolean;
+    onMobileClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, isMobileOpen, onMobileClose }) => {
     const { rates, getTrend } = useRates();
     const { settings } = useSettings();
     const { user, logout } = useAuth();
     const [isRateModalOpen, setIsRateModalOpen] = useState(false);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const sidebarRef = useRef<HTMLElement>(null);
+
+    const handleProfileClick = () => {
+        const newState = !isProfileDropdownOpen;
+        setIsProfileDropdownOpen(newState);
+        
+        if (newState) {
+            // Give it a tiny delay to allow the dropdown to start rendering
+            setTimeout(() => {
+                if (sidebarRef.current) {
+                    sidebarRef.current.scrollTo({
+                        top: sidebarRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 50);
+        }
+    };
 
     const goldTrend = getTrend(rates.gold22k, rates.previous?.gold22k);
     const silverTrend = getTrend(rates.silver, rates.previous?.silver);
@@ -37,10 +59,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     ];
 
     return (
-        <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+        <aside 
+            ref={sidebarRef}
+            className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''} ${isMobileOpen ? styles.mobileOpen : ''}`}
+        >
             <div className={styles.sidebarContent}>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1 }}>
+                <div className={styles.mainNavSection}>
                     {/* Brand */}
                     <div className={styles.brandWrapper}>
                         <div className={styles.brand}>
@@ -54,9 +79,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                                 </div>
                             )}
                         </div>
-                        <button className={styles.toggleBtn} onClick={onToggle}>
+                        <button 
+                            className={styles.toggleBtn} 
+                            onClick={isMobileOpen && onMobileClose ? onMobileClose : onToggle}
+                        >
                             <span className="material-symbols-outlined">
-                                {isCollapsed ? 'menu' : 'menu_open'}
+                                {isMobileOpen ? 'close' : (isCollapsed ? 'menu' : 'menu_open')}
                             </span>
                         </button>
                     </div>
@@ -68,6 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                                 key={item.name}
                                 to={item.path}
                                 end={item.end}
+                                onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}
                                 className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }
@@ -88,6 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             <NavLink
                                 key={item.name}
                                 to={item.path}
+                                onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}
                                 className={({ isActive }) =>
                                     `${styles.navLink} ${isActive ? styles.active : ''}`
                                 }
@@ -102,49 +132,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 {/* Live Rates Widget */}
-                <div className={styles.ratesWidget} style={{
-                    marginBottom: '1rem',
-                    padding: '1rem',
-                    backgroundColor: 'rgba(226, 157, 18, 0.1)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid #4a4030'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e29d12', textTransform: 'uppercase' }}>Today's Rates</span>
+                <div className={styles.ratesWidget}>
+                    <div className={styles.ratesHeader}>
+                        <span className={styles.ratesTitle}>Today's Rates</span>
                         <button
                             onClick={() => setIsRateModalOpen(true)}
-                            style={{ background: 'none', border: 'none', color: '#e29d12', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}
+                            className={styles.ratesUpdateBtn}
                         >
                             Update
                         </button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-                        <span style={{ color: '#b9b09d' }}>Gold (22k)</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.gold22k.toLocaleString('en-IN')}</span>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                color: goldTrend.direction === 'up' ? '#22c55e' : goldTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                    <div className={styles.rateItem}>
+                        <span className={styles.rateLabel}>Gold (22k)</span>
+                        <div className={styles.rateValueGroup}>
+                            <span className={styles.rateValue}>₹{rates.gold22k.toLocaleString('en-IN')}</span>
+                            <span className={classNames(
+                                styles.trendIconWrapper,
+                                goldTrend.direction === 'up' ? styles.up : goldTrend.direction === 'down' ? styles.down : styles.stable
+                            )}>
+                                <span className="material-symbols-outlined">
                                     {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'remove'}
                                 </span>
                             </span>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                        <span style={{ color: '#b9b09d' }}>Silver</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <span style={{ color: 'white', fontWeight: 600 }}>₹{rates.silver.toLocaleString('en-IN')}</span>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                color: silverTrend.direction === 'up' ? '#22c55e' : silverTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                    <div className={styles.rateItem}>
+                        <span className={styles.rateLabel}>Silver</span>
+                        <div className={styles.rateValueGroup}>
+                            <span className={styles.rateValue}>₹{rates.silver.toLocaleString('en-IN')}</span>
+                            <span className={classNames(
+                                styles.trendIconWrapper,
+                                silverTrend.direction === 'up' ? styles.up : silverTrend.direction === 'down' ? styles.down : styles.stable
+                            )}>
+                                <span className="material-symbols-outlined">
                                     {silverTrend.direction === 'up' ? 'trending_up' : silverTrend.direction === 'down' ? 'trending_down' : 'remove'}
                                 </span>
                             </span>
@@ -153,45 +173,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 {/* User Profile */}
-                <div className={styles.userProfile} style={{ position: 'relative' }}>
-                    <div
+                <div className={styles.userProfile}>
+                    <button
                         className={styles.profileCard}
-                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                        onClick={handleProfileClick}
+                        aria-expanded={isProfileDropdownOpen}
+                        aria-haspopup="true"
                     >
                         <div className={styles.avatar}>
                             <img
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzQYHy0QnIT1t3iXevWaMdHkHWqMfgh9IR37AuoQ8TA6VI7PbVmUa61-W4Yc9p6Ugc7froH_YIGcsgsXdrEP2Q-GME5s-XypdkX0iQZjzFTIsuW-clLYTIirVw6aDzs3syfpYCx4hDRlF7WV8ZUJJX5W1KoZ_CYqLzXlJqwPuAs22-jr6q6AKGD3gieWG_HaheSkW-XrE-jGGcxBW3JnlrK4UWAWREb2uVIDfSVhiFNQHukm0011G8id5SDcHrrOM2FVF-GoidlMlL"
+                                src={adminImg}
                                 alt="Admin User"
                             />
                             <div className={styles.status}></div>
                         </div>
-                        {!isCollapsed ? (
+                        {isCollapsed ? (
+                            <div className={styles.avatarOverlay}>
+                                <span className="material-symbols-outlined">expand_less</span>
+                            </div>
+                        ) : (
                             <>
                                 <div className={styles.userInfo}>
-                                    <span className={styles.userName}>{user?.username || 'Venkadesh'}</span>
-                                    <span className={styles.userRole}>Owner</span>
+                                    <span className={styles.userName}>{user?.username || 'Admin'}</span>
+                                    <span className={styles.userRole}>
+                                        {user?.role === 'admin' ? 'Administrator' : user?.role === 'staff' ? 'Sales Staff' : 'Administrator'}
+                                    </span>
                                 </div>
-                                <span className="material-symbols-outlined" style={{ marginLeft: 'auto', color: '#b9b09d' }}>
+                                <span className={classNames("material-symbols-outlined", styles.expandIcon)}>
                                     {isProfileDropdownOpen ? 'expand_less' : 'expand_more'}
                                 </span>
                             </>
-                        ) : (
-                            <div className={styles.avatarOverlay}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#b9b09d' }}>expand_less</span>
-                            </div>
                         )}
-                    </div>
+                    </button>
 
                     {/* Logout Dropdown */}
                     {isProfileDropdownOpen && (
-                        <div className={styles.actionMenu} style={{
-                            top: '100%',
-                            bottom: 'auto',
-                            marginTop: '0.25rem',
-                            width: isCollapsed ? '10rem' : 'calc(100% - 3.25rem)',
-                            left: isCollapsed ? '100%' : '3.25rem',
-                            zIndex: 100
-                        }}>
+                        <div className={classNames(styles.logoutMenu, isCollapsed && styles.collapsedMenu)}>
                             <button className={`${styles.actionItem} ${styles.deleteAction}`} onClick={logout}>
                                 <span className="material-symbols-outlined">logout</span>
                                 Logout

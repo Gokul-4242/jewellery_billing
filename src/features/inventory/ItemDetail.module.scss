@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
@@ -14,11 +15,17 @@
     align-items: center;
     margin-bottom: 2rem;
 
-    a {
+    a,
+    button {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
         color: $text-muted;
         font-size: 0.875rem;
         font-weight: 500;
         text-decoration: none;
+        font-family: inherit;
 
         &:hover {
             color: $primary;
@@ -71,7 +78,7 @@
             color: $text-white;
 
             &:hover {
-                background-color: darken($primary, 5%);
+                background-color: color.adjust($primary, $lightness: -5%);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba($primary, 0.3);
             }
@@ -133,14 +140,30 @@
             z-index: 10;
 
             &:not(:has(.container)) {
-                background-color: rgba($success, 0.1);
-                color: $success;
-                border: 1px solid rgba($success, 0.2);
                 padding: 0.25rem 0.75rem;
                 border-radius: 9999px;
                 font-size: 0.75rem;
                 font-weight: 700;
                 text-transform: uppercase;
+                border: 1px solid transparent;
+
+                &.inStock {
+                    background-color: rgba($success, 0.1);
+                    color: $success;
+                    border-color: rgba($success, 0.2);
+                }
+
+                &.lowStock {
+                    background-color: rgba($warning, 0.1);
+                    color: $warning;
+                    border-color: rgba($warning, 0.2);
+                }
+
+                &.outOfStock {
+                    background-color: rgba($danger, 0.1);
+                    color: $danger;
+                    border-color: rgba($danger, 0.2);
+                }
             }
 
             .container {
@@ -268,7 +291,7 @@
     }
 
     .pricingCard {
-        background-color: lighten($surface-dark, 2%);
+        background-color: color.adjust($surface-dark, $lightness: 2%);
         border: 1px solid $border-dark;
         border-radius: $radius-xl;
         padding: 1.25rem;

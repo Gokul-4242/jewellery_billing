@@ -43,16 +43,17 @@ const StatsCard: React.FC<StatsCardProps> = ({
         }
     };
 
+    const Component = onClick ? 'button' : 'div';
+
     return (
-        <div 
+        <Component 
             className={classNames(
                 styles.statsCard, 
-                isHighlight && styles.statsCardHighlight,
+                isHighlight && styles.highlight,
                 onClick && styles.clickable
             )}
             onClick={onClick}
-            role={onClick ? "button" : undefined}
-            tabIndex={onClick ? 0 : undefined}
+            type={onClick ? "button" : undefined}
         >
             {isHighlight && <div className={styles.glow}></div>}
 
@@ -75,7 +76,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
                     <span className={styles.trendLabel}>{trendLabel}</span>
                 </div>
             )}
-        </div>
+        </Component>
     );
 };
 

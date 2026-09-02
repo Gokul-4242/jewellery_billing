@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
-import styles from '../dashboard/Dashboard.module.scss';
-import { Button, Badge } from '../../components/common';
+import styles from './InventoryTable.module.scss';
+import { Button, Badge, ConfirmModal } from '../../components/common';
 import { useInventory } from '../../context/InventoryContext';
 
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
+import { useRates } from '../../context/RateContext';
 
 interface InventoryTableProps {
     initialStatusFilter?: 'All' | 'Low Stock' | 'Out of Stock' | 'Alerts';
@@ -14,6 +15,7 @@ interface InventoryTableProps {
 const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = 'All' }) => {
     const navigate = useNavigate();
     const { products, deleteProduct } = useInventory();
+    const { rates } = useRates();
     const { showToast } = useToast();
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'All' | 'Gold' | 'Silver'>('All');
@@ -22,6 +24,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
     const [sortBy, setSortBy] = useState<string>('date-desc');
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, productId: string | null, isDeleting: boolean }>({
+        isOpen: false,
+        productId: null,
+        isDeleting: false
+    });
     const controlsRef = React.useRef<HTMLDivElement>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -121,12 +128,24 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this item?')) {
-            deleteProduct(id);
-            setOpenMenuId(null);
+        setDeleteModal({ isOpen: true, productId: id, isDeleting: false });
+        setOpenMenuId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.productId) return;
+        
+        setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+        try {
+            await deleteProduct(deleteModal.productId);
             showToast('Product deleted successfully', 'success');
+            setDeleteModal({ isOpen: false, productId: null, isDeleting: false });
+        } catch (err) {
+            showToast('Failed to delete product', 'error');
+            setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
     };
+
 
     const handleEdit = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -161,22 +180,13 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
 
             {/* Active Filters Display */}
             {statusFilter !== 'All' && (
-                <div style={{ 
-                    margin: '0 0 1.5rem 0', 
-                    padding: '0.75rem 1rem', 
-                    backgroundColor: 'rgba(226, 157, 18, 0.1)', 
-                    border: '1px solid rgba(226, 157, 18, 0.3)', 
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <span style={{ color: '#e29d12', fontSize: '0.875rem', fontWeight: 600 }}>
+                <div className={styles.activeFiltersContainer}>
+                    <span className={styles.activeFiltersText}>
                          Showing: {statusFilter === 'Alerts' ? 'Low Stock & Out of Stock' : statusFilter} items
                     </span>
                     <button 
                         onClick={() => setStatusFilter('All')}
-                        style={{ background: 'none', border: 'none', color: '#e29d12', cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}
+                        className={styles.clearFilterButton}
                     >
                         Clear Filter
                     </button>
@@ -282,7 +292,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th style={{ width: '4rem' }}>
+                            <th className={styles.checkboxColumn}>
                                 <input type="checkbox" />
                             </th>
                             <th>Product</th>
@@ -299,7 +309,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                             <tr 
                                 key={product.id} 
                                 onClick={() => navigate(`/dashboard/inventory/${product.id}`)}
-                                style={{ cursor: 'pointer' }}
+                                className={styles.clickableRow}
                             >
                                 <td onClick={(e) => e.stopPropagation()}>
                                     <input type="checkbox" />
@@ -309,7 +319,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                         <div
                                             className={styles.productImage}
                                             style={{ 
-                                                backgroundImage: `url("${(product.images && product.images.length > 0) ? product.images[0] : 'https://via.placeholder.com/150'}")` 
+                                                backgroundImage: (product.images && product.images.length > 0) ? `url("${product.images[0]}")` : 'none'
                                             }}
                                         ></div>
                                         <div className={styles.productInfo}>
@@ -318,7 +328,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                         </div>
                                     </div>
                                 </td>
-                                <td style={{ color: '#e0e0e0', fontSize: '0.875rem' }}>{product.category}</td>
+                                <td className={styles.categoryCell}>{product.category}</td>
                                 <td>
                                     <Badge variant={getBadgeVariant(product.material)}>
                                         {product.material}
@@ -328,7 +338,21 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                     {product.weight.toFixed(2)}
                                 </td>
                                 <td className={`${styles.textRight} ${styles.textWhite} ${styles.textMono} ${styles.fontSemiBold} ${styles.textSm}`}>
-                                    ₹{product.price.toLocaleString('en-IN')}
+                                    {(() => {
+                                        const material = (product.material || '').toLowerCase();
+                                        let rate = 0;
+                                        if (material.includes('gold')) {
+                                            rate = material.includes('24k') ? rates.gold24k : rates.gold22k;
+                                        } else if (material.includes('silver')) {
+                                            rate = rates.silver;
+                                        }
+                                        
+                                        const wastage = product.wastagePercent || 0;
+                                        const effectiveWeight = product.weight * (1 + wastage / 100);
+                                        const totalValue = (effectiveWeight * rate) + ((product.makingCharge || 0) * product.weight) + (product.stoneCost || 0);
+                                        
+                                        return `₹${Math.round(totalValue).toLocaleString('en-IN')}`;
+                                    })()}
                                 </td>
                                 <td className={styles.textCenter}>
                                     <Badge variant={getStatusVariant(product.status)}>
@@ -341,7 +365,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                                             className={styles.actionBtn}
                                             onClick={() => setOpenMenuId(openMenuId === product.id ? null : product.id)}
                                         >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
+                                            <span className={`${styles.moreIcon} material-symbols-outlined`}>more_vert</span>
                                         </button>
                                         
                                         {openMenuId === product.id && (
@@ -372,16 +396,25 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ initialStatusFilter = '
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_left</span>
+                        <span className={`${styles.navIcon} material-symbols-outlined`}>chevron_left</span>
                     </button>
                     <button 
                         disabled={currentPage === totalPages || totalPages === 0}
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_right</span>
+                        <span className={`${styles.navIcon} material-symbols-outlined`}>chevron_right</span>
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={deleteModal.isOpen}
+                title="Delete Product"
+                message="Are you sure you want to delete this product? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteModal({ isOpen: false, productId: null, isDeleting: false })}
+                isLoading={deleteModal.isDeleting}
+            />
         </div>
     );
 };

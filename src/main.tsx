@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
-import { CustomerProvider } from './context/CustomerContext'
+import CustomerProvider from './context/CustomerContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import './styles/main.scss'
 import App from './App.tsx'

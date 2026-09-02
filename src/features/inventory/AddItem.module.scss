@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
@@ -13,11 +14,17 @@
     gap: 0.5rem;
     margin-bottom: 2rem;
     
-    a {
+    a,
+    button {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
         color: $text-muted;
         font-size: 0.875rem;
         font-weight: 500;
         text-decoration: none;
+        font-family: inherit;
         
         &:hover {
             color: $primary;
@@ -70,6 +77,11 @@
         .icon {
             color: $primary;
         }
+        
+        .required {
+            color: $danger;
+            margin-left: 0.25rem;
+        }
     }
 }
 
@@ -98,6 +110,11 @@
         font-size: 0.875rem;
         font-weight: 600;
         color: $text-muted;
+        
+        .required {
+            color: $danger;
+            margin-left: 0.25rem;
+        }
     }
     
     input {
@@ -296,7 +313,7 @@
             box-shadow: 0 4px 6px -1px rgba($primary, 0.2);
             
             &:hover {
-                background-color: lighten($primary, 5%);
+                background-color: color.adjust($primary, $lightness: 5%);
                 transform: translateY(-1px);
             }
             

@@ -8,8 +8,8 @@ export interface DashboardStats {
     valuationTrend: number;
 }
 
-export type ProductType = 'Ring' | 'Necklace' | 'Pendant' | 'Earrings' | 'Bracelet';
-export type MaterialType = '22k Gold' | '24k Gold' | '925 Silver';
+export type ProductType = 'Ring' | 'Necklace' | 'Pendant' | 'Earrings' | 'Bracelet' | 'Bangle';
+export type MaterialType = '22k Gold' | '24k Gold' | '18k Gold' | '925 Silver' | 'Platinum' | 'Rose Gold';
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
 export interface Product {
@@ -17,9 +17,13 @@ export interface Product {
     name: string;
     sku: string;
     images: string[];
-    category: ProductType | string;
-    material: MaterialType | string;
+    category: ProductType | (string & {});
+    material: MaterialType | (string & {});
+    purity?: string;
     weight: number;
+    makingCharge?: number;
+    wastagePercent?: number;
+    stoneCost?: number;
     price: number;
     status: StockStatus;
     quantity: number;

@@ -1,133 +1,145 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import styles from './CreateOrder.module.scss';
-import { useCustomers } from '../../context/CustomerContext';
-import { useTransactions } from '../../context/TransactionContext';
+import { useCustomers } from '../../context/useCustomers';
+import { useTransactions } from '../../context/useTransactions';
 import { useToast } from '../../context/ToastContext';
 import { useRates } from '../../context/RateContext';
 import { FormSelect } from '../../components/common';
+import api from '../../api/axios';
+import type { Transaction } from '../../types/Transaction';
+
 
 const CreateOrder: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const { customers } = useCustomers();
-    const { transactions, addTransaction, updateTransaction } = useTransactions();
+    const { transactions, addLocalTransaction, updateTransaction } = useTransactions();
     const { showToast } = useToast();
     const { rates } = useRates();
 
-    // Form State
-    const [customerId, setCustomerId] = useState('');
-    const [description, setDescription] = useState('');
-    const [deliveryDate, setDeliveryDate] = useState('');
+    // Form State (lazy initializers populate from existing order on mount, avoiding setState in useEffect)
+    const [customerId, setCustomerId] = useState(() => {
+        if (id) return transactions.find(t => t.id === id)?.customerId || '';
+        return (location.state as { customerId?: string })?.customerId || '';
+    });
+    const [description, setDescription] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item ? item.name.replace('Custom Order: ', '').replace('...', '') : '';
+    });
+    const [deliveryDate, setDeliveryDate] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        const dateSource = order?.deliveryDate || order?.date;
+        return dateSource ? new Date(dateSource).toISOString().split('T')[0] : '';
+    });
     const [urgency, setUrgency] = useState('normal');
-    const [valuationRef, setValuationRef] = useState('');
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [valuationRef, setValuationRef] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.exchangeItems?.[0]?.name || '';
+    });
+    const [imagePreview, setImagePreview] = useState<string | null>(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.imageUrl || null;
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const customerDivRef = useRef<HTMLDivElement>(null);
+    const descriptionRef = useRef<HTMLTextAreaElement>(null);
+    const deliveryDateRef = useRef<HTMLInputElement>(null);
     // Item Details State
-    const [metalType, setMetalType] = useState('Gold');
-    const [metalWeight, setMetalWeight] = useState('');
-    const [stoneWeight, setStoneWeight] = useState('');
-    const [stoneRate, setStoneRate] = useState('');
-    const [makingCharges, setMakingCharges] = useState('');
-    const [wastagePercentage, setWastagePercentage] = useState('');
+    const [metalType, setMetalType] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.metalType || 'Gold';
+    });
+    const [metalWeight, setMetalWeight] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.weight ? item.weight.toString() : '';
+    });
+    const [stoneWeight, setStoneWeight] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.stoneWeight ? item.stoneWeight.toString() : '';
+    });
+    const [stoneRate, setStoneRate] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.stoneRate ? item.stoneRate.toString() : '';
+    });
+    const [makingCharges, setMakingCharges] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.makingCharges ? item.makingCharges.toString() : '';
+    });
+    const [wastagePercentage, setWastagePercentage] = useState(() => {
+        const item = id ? transactions.find(t => t.id === id)?.items[0] : null;
+        return item?.wastage ? item.wastage.toString() : '';
+    });
 
     // Financials (Strings for input handling)
-    const [totalAmountStr, setTotalAmount] = useState('0.00');
-    const [advanceStr, setAdvance] = useState('0.00');
-    const [exchangeCreditStr, setExchangeCredit] = useState('0.00');
-    const [exchangeWeight, setExchangeWeight] = useState('');
+    const [totalAmountStr, setTotalAmountStr] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order ? order.grandTotal.toString() : '0.00';
+    });
+    const [advanceStr, setAdvanceStr] = useState('0.00');
+    const [exchangeCreditStr, setExchangeCreditStr] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order ? order.exchangeTotal.toString() : '0.00';
+    });
+    const [exchangeWeight, setExchangeWeight] = useState(() => {
+        const order = id ? transactions.find(t => t.id === id) : null;
+        return order?.exchangeItems?.[0]?.weight?.toString() || '';
+    });
     
     // Auto-calculate state - default to true for new orders, false for edits
     const [autoCalculate, setAutoCalculate] = useState(!id);
 
-    // Reset auto-calculate when switching between create/edit
-    useEffect(() => {
-        setAutoCalculate(!id);
-    }, [id]);
+
+
+    // Stable IDs for this form session (generated once on mount)
+    const [orderId] = useState(() => id ?? `ORD-${Date.now()}`);
+    const [invoiceNo] = useState(() => {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return `INV-${array[0] % 10000}`;
+    });
+    const [itemId] = useState(() => `item-${Date.now()}`);
+    const [exchangeId] = useState(() => `ex-${Date.now()}`);
 
     // Derived State
-    const selectedCustomer = customers.find((c: any) => c.id === customerId);
+    const selectedCustomer = customers.find(c => c.id === customerId);
+    
+    // Rate helper function
+    const getEffectiveRate = (type: string): number => {
+        if (type === 'Gold') return rates.gold22k;
+        if (type === 'Gold-18k') return rates.gold22k * (18 / 22);
+        if (type === 'Silver') return rates.silver;
+        return 0;
+    };
+    const currentMetalRate = getEffectiveRate(metalType);
+
+    // Auto-Calculate Total (derived, no setState in effect)
+    const autoCalculatedTotal = (() => {
+        if (!autoCalculate) return null;
+        const weight = Number.parseFloat(metalWeight) || 0;
+        const wastage = Number.parseFloat(wastagePercentage) || 0;
+        const making = Number.parseFloat(makingCharges) || 0;
+        const stone = Number.parseFloat(stoneRate) || 0;
+        const rate = currentMetalRate;
+        if (rate > 0) {
+            const metalCost = weight * rate;
+            const wastageCost = metalCost * (wastage / 100);
+            return (metalCost + wastageCost + making + stone).toFixed(2);
+        }
+        return null;
+    })();
+    const effectiveTotalAmountStr = (autoCalculate && autoCalculatedTotal) ? autoCalculatedTotal : totalAmountStr;
     
     // Parsing Helpers
-    const parseCurrency = (str: string) => parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
-    const totalAmount = parseCurrency(totalAmountStr);
+    const parseCurrency = (str: string) => Number.parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+    const totalAmount = parseCurrency(effectiveTotalAmountStr);
     const advance = parseCurrency(advanceStr);
     const exchangeCredit = parseCurrency(exchangeCreditStr);
     
     const cashToPay = Math.max(0, advance - exchangeCredit);
     const remaining = Math.max(0, totalAmount - advance); 
-    
-    // Auto-Calculate Total
-    useEffect(() => {
-        if (autoCalculate) { 
-            const weight = parseFloat(metalWeight) || 0;
-            const wastage = parseFloat(wastagePercentage) || 0;
-            const making = parseFloat(makingCharges) || 0;
-            const stone = parseFloat(stoneRate) || 0;
-            
-            let rate = 0;
-            if (metalType === 'Gold') rate = rates.gold22k;
-            else if (metalType === 'Gold-18k') rate = rates.gold22k * (18/22);
-            else if (metalType === 'Silver') rate = rates.silver;
-            
-            if (rate > 0) {
-                const metalCost = weight * rate;
-                const wastageCost = metalCost * (wastage / 100);
-                const total = metalCost + wastageCost + making + stone;
-                // Round to 2 decimal places? or nearest integer? usually currency is 2 decimals
-                setTotalAmount(total.toFixed(2));
-                
-                // Also update advance if it was previously default? 
-                // Maybe set default advance as 30%?
-                // setAdvance((total * 0.3).toFixed(2));
-            }
-        }
-    }, [autoCalculate, metalWeight, wastagePercentage, makingCharges, stoneRate, metalType, rates, id]);
 
-    // Effect to populate form if editing
-    useEffect(() => {
-        if (id) {
-            const existingOrder = transactions.find(t => t.id === id);
-            if (existingOrder) {
-                setCustomerId(existingOrder.customerId || '');
-                
-                const item = existingOrder.items[0];
-                if (item) {
-                    const desc = item.name.replace('Custom Order: ', '').replace('...', '') || '';
-                    setDescription(desc);
-                    setMetalType(item.metalType || 'Gold');
-                    setMetalWeight(item.weight ? item.weight.toString() : '');
-                    setStoneWeight(item.stoneWeight ? item.stoneWeight.toString() : '');
-                    setStoneRate(item.stoneRate ? item.stoneRate.toString() : '');
-                    setMakingCharges(item.makingCharges ? item.makingCharges.toString() : '');
-                    setWastagePercentage(item.wastage ? item.wastage.toString() : '');
-                }
-                
-                // Date: Parse ISO to YYYY-MM-DD
-                // Prefer explicit deliveryDate column, fallback to date for legacy records
-                const dateSource = existingOrder.deliveryDate || existingOrder.date;
-                const date = dateSource ? new Date(dateSource).toISOString().split('T')[0] : '';
-                setDeliveryDate(date);
-                
-                if (existingOrder.imageUrl) {
-                    setImagePreview(existingOrder.imageUrl);
-                }
-
-                // Financials
-                setTotalAmount(existingOrder.grandTotal.toString());
-                setExchangeCredit(existingOrder.exchangeTotal.toString());
-                
-                if (existingOrder.exchangeItems && existingOrder.exchangeItems.length > 0) {
-                     setValuationRef(existingOrder.exchangeItems[0].name || '');
-                     setExchangeWeight(existingOrder.exchangeItems[0].weight?.toString() || '');
-                }
-            }
-        } else if (location.state && (location.state as any).customerId) {
-            // If new order and customer ID passed in state
-            setCustomerId((location.state as any).customerId);
-        }
-    }, [id, transactions, location.state]);
 
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -153,42 +165,48 @@ const CreateOrder: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (!customerId) {
             showToast("Please select a customer to proceed", "error", "Missing Information");
+            customerDivRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
         if (!description.trim()) {
             showToast("Please provide a detailed description for the order", "error", "Missing Information");
+            descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => descriptionRef.current?.focus(), 500);
             return;
         }
         if (!deliveryDate) {
             showToast("Please select a target delivery date", "error", "Missing Information");
+            deliveryDateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => deliveryDateRef.current?.focus(), 500);
             return;
         }
 
-        const orderData: any = {
-             id: id || `ORD-${Date.now()}`,
-             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : `INV-${Math.floor(Math.random() * 10000)}`,
+        const orderData = {
+             // ... existing data ...
+             id: id || orderId,
+             invoiceNo: id ? (transactions.find(t => t.id === id)?.invoiceNo || '') : invoiceNo,
              date: id ? (transactions.find(t => t.id === id)?.date || new Date().toISOString()) : new Date().toISOString(), 
              deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined,
              customerName: selectedCustomer?.name || 'Unknown',
              customerId: customerId,
              items: [
                  {
-                     id: `item-${Date.now()}`,
+                     id: itemId,
                      name: `Custom Order: ${description}`,
                      code: 'CUST-BESPOKE',
-                     weight: parseFloat(metalWeight) || 0,
-                     purity: 'N/A', // Could infer from metalType but leaving as N/A or user specified in description
+                     weight: Number.parseFloat(metalWeight) || 0,
+                     purity: 'N/A',
                      metalType: metalType,
-                     stoneWeight: parseFloat(stoneWeight) || 0,
-                     stoneRate: parseFloat(stoneRate) || 0,
-                     makingCharges: parseFloat(makingCharges) || 0,
-                     wastage: parseFloat(wastagePercentage) || 0,
-                     rate: 0, // Base rate not explicitly asked for, could be per gram
+                     stoneWeight: Number.parseFloat(stoneWeight) || 0,
+                     stoneRate: Number.parseFloat(stoneRate) || 0,
+                     makingCharges: Number.parseFloat(makingCharges) || 0,
+                     wastage: Number.parseFloat(wastagePercentage) || 0,
+                     rate: 0,
                      total: totalAmount 
                  }
              ],
@@ -198,11 +216,11 @@ const CreateOrder: React.FC = () => {
              exchangeTotal: exchangeCredit,
              exchangeItems: exchangeCredit > 0 || valuationRef ? [
                  {
-                     id: `ex-${Date.now()}`,
+                     id: exchangeId,
                      name: valuationRef,
-                     weight: parseFloat(exchangeWeight) || 0,
+                     weight: Number.parseFloat(exchangeWeight) || 0,
                      value: exchangeCredit,
-                     purity: 'N/A' // Default
+                     purity: 'N/A'
                  }
              ] : [],
              grandTotal: totalAmount,
@@ -210,24 +228,34 @@ const CreateOrder: React.FC = () => {
              paymentMethod: 'Split', 
              status: id ? (transactions.find(t => t.id === id)?.status || 'Pending') : 'Pending',
              imageUrl: imagePreview || undefined
-        };
+        } as Transaction;
 
-        if (id) {
-            updateTransaction(orderData);
-            showToast("Order updated successfully", "success", "Order Updated");
-            navigate(`/dashboard/orders/confirmation/${orderData.id}`);
-        } else {
-            addTransaction(orderData);
-            showToast("Custom order created successfully", "success", "Order Created");
-            navigate(`/dashboard/orders/confirmation/${orderData.id}`);
+        try {
+            if (id) {
+                await updateTransaction(orderData);
+                showToast("Order updated successfully", "success", "Order Updated");
+                navigate(`/dashboard/orders/confirmation/${id}`);
+            } else {
+                const res = await api.post('/orders/custom', orderData);
+                if (res.data?.success) {
+                    const savedOrder = { ...res.data.data, id: res.data.data._id };
+                    addLocalTransaction(savedOrder);
+                    showToast("Custom order created successfully", "success", "Order Created");
+                    navigate(`/dashboard/orders/confirmation/${savedOrder.id}`);
+                }
+            }
+        } catch (err: unknown) {
+            console.error("Failed to save order", err);
+            showToast("Failed to save order. Please try again.", "error", "Submission Error");
         }
     };
+
 
     return (
         <div className={styles.container}>
             {/* Breadcrumbs */}
             <nav className={styles.breadcrumbs}>
-                <a href="#" onClick={handleBack} className={styles.link}>Orders</a>
+                <button type="button" onClick={handleBack} className={styles.link}>Orders</button>
                 <span className={styles.divider}>/</span>
                 <span className={styles.current}>New Custom Order</span>
             </nav>
@@ -242,17 +270,17 @@ const CreateOrder: React.FC = () => {
                 {/* Customer Information */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">person</span>
-                        Customer Information
+                        <span className="material-symbols-outlined icon">person</span> Customer Information
                     </h2>
                     <div className={styles.gridTwo}>
-                        <div className={styles.fieldGroup}>
-                            <label>Select Customer</label>
+                        <div className={styles.fieldGroup} ref={customerDivRef}>
+                            <label htmlFor="customerSelect">Select Customer <span className={styles.required}>*</span></label>
                             <FormSelect 
+                                id="customerSelect"
                                 value={customerId} 
                                 onChange={(val) => setCustomerId(val)}
                                 options={[
-                                    ...customers.map((c: any) => ({ value: c.id, label: `${c.name} - ${c.phone}` })),
+                                    ...customers.map(c => ({ value: c.id, label: `${c.name} - ${c.phone}` })),
                                     { value: 'new', label: '+ Add New Customer (Not implemented)' }
                                 ]}
                                 placeholder="Select existing customer..."
@@ -260,8 +288,8 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Contact Number</label>
-                            <input type="text" value={selectedCustomer?.phone || ''} readOnly placeholder="Auto-filled" />
+                            <label htmlFor="contactPhone">Contact Number</label>
+                            <input id="contactPhone" type="text" value={selectedCustomer?.phone || ''} readOnly placeholder="Auto-filled" />
                         </div>
                     </div>
                 </div>
@@ -269,14 +297,15 @@ const CreateOrder: React.FC = () => {
                 {/* Order Specifications */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">draw</span>
-                        Order Specifications
+                        <span className="material-symbols-outlined icon">draw</span> Order Specifications
                     </h2>
                     <div className={styles.gridThree}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className={styles.specsControls}>
                             <div className={styles.fieldGroup}>
-                                <label>Detailed Description</label>
+                                <label htmlFor="orderDescription">Detailed Description <span className={styles.required}>*</span></label>
                                 <textarea 
+                                    id="orderDescription"
+                                    ref={descriptionRef}
                                     placeholder="Specify metal type (18k Gold, Sterling Silver), stone details, engravings, sizing, and design nuances..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -284,16 +313,19 @@ const CreateOrder: React.FC = () => {
                             </div>
                             <div className={styles.gridTwo}>
                                 <div className={styles.fieldGroup}>
-                                    <label>Target Delivery Date</label>
+                                    <label htmlFor="deliveryDate">Target Delivery Date <span className={styles.required}>*</span></label>
                                     <input 
+                                        id="deliveryDate"
+                                        ref={deliveryDateRef}
                                         type="date" 
                                         value={deliveryDate}
                                         onChange={(e) => setDeliveryDate(e.target.value)}
                                     />
                                 </div>
                                 <div className={styles.fieldGroup}>
-                                    <label>Urgency Level</label>
+                                    <label htmlFor="urgencyLevel">Urgency Level</label>
                                     <FormSelect 
+                                        id="urgencyLevel"
                                         value={urgency} 
                                         onChange={(val) => setUrgency(val)}
                                         options={[
@@ -307,52 +339,40 @@ const CreateOrder: React.FC = () => {
                         </div>
                         
                         {/* Image Upload */}
-                        <div className={styles.fieldGroup} style={{ height: '100%' }}>
-                            <label>Item Model Image / Sketch</label>
-                            <div 
-                                className={styles.imageUpload} 
-                                onClick={() => fileInputRef.current?.click()}
-                                style={{ 
-                                    backgroundImage: imagePreview ? `url(${imagePreview})` : 'none',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    position: 'relative'
-                                }}
-                            >
+                        <div className={`${styles.fieldGroup} ${styles.fullHeight}`}>
+                            <label htmlFor="modelImage">Item Model Image / Sketch</label>
+                            <div className={styles.imageContainer}>
                                 <input 
+                                    id="modelImage"
                                     type="file" 
                                     ref={fileInputRef} 
                                     onChange={handleImageUpload} 
-                                    style={{ display: 'none' }} 
+                                    className={styles.hidden}
                                     accept="image/*"
                                 />
-                                {!imagePreview ? (
-                                    <>
-                                        <span className="material-symbols-outlined uploadIcon">add_a_photo</span>
-                                        <p>Upload sketch or reference photo (JPG, PNG)</p>
-                                    </>
-                                ) : (
+                                <button 
+                                    type="button"
+                                    className={styles.imageUpload} 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    aria-label={imagePreview ? "Change image" : "Upload sketch or reference photo"}
+                                    style={{ 
+                                        backgroundImage: imagePreview ? `url(${imagePreview})` : 'none'
+                                    }}
+                                >
+                                    {!imagePreview && (
+                                        <>
+                                            <span className="material-symbols-outlined uploadIcon">add_a_photo</span> <p>Upload sketch or reference photo (JPG, PNG)</p>
+                                        </>
+                                    )}
+                                </button>
+                                {imagePreview && (
                                     <button 
                                         type="button"
                                         className={styles.removeImageBtn}
                                         onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '10px',
-                                            right: '10px',
-                                            background: 'rgba(0,0,0,0.6)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '30px',
-                                            height: '30px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            cursor: 'pointer'
-                                        }}
+                                        aria-label="Remove image"
                                     >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                                        <span className={`material-symbols-outlined ${styles.closeIcon}`}>close</span>
                                     </button>
                                 )}
                             </div>
@@ -363,13 +383,13 @@ const CreateOrder: React.FC = () => {
                 {/* Metal & Cost Details */}
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>
-                        <span className="material-symbols-outlined icon">diamond</span>
-                        Metal & Cost Details
+                        <span className="material-symbols-outlined icon">diamond</span> Metal & Cost Details
                     </h2>
                     <div className={styles.gridTwo}>
                          <div className={styles.fieldGroup}>
-                            <label>Metal Type</label>
+                            <label htmlFor="metalType">Metal Type</label>
                             <FormSelect 
+                                id="metalType"
                                 value={metalType} 
                                 onChange={(val) => setMetalType(val)}
                                 options={[
@@ -381,8 +401,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Metal Weight (g)</label>
+                            <label htmlFor="metalWeight">Metal Weight (g)</label>
                             <input 
+                                id="metalWeight"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={metalWeight}
@@ -391,10 +412,11 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                     </div>
-                    <div className={styles.gridThree} style={{ marginTop: '1.5rem' }}>
+                    <div className={`${styles.gridThree} ${styles.gridMargin}`}>
                          <div className={styles.fieldGroup}>
-                            <label>Stone Weight (cts/g)</label>
+                            <label htmlFor="stoneWeight">Stone Weight (cts/g)</label>
                             <input 
+                                id="stoneWeight"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={stoneWeight}
@@ -403,8 +425,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Stone Rate</label>
+                            <label htmlFor="stoneRate">Stone Rate</label>
                             <input 
+                                id="stoneRate"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={stoneRate}
@@ -413,13 +436,14 @@ const CreateOrder: React.FC = () => {
                         </div>
                         <div className={styles.fieldGroup}>
                              {/* Placeholder to balance grid if needed, or maybe Total Stone Cost read-only */}
-                             <label style={{ visibility: 'hidden' }}>Spacer</label>
+                             <span className={styles.hiddenLabel} aria-hidden="true">Spacer</span>
                         </div>
                     </div>
-                     <div className={styles.gridTwo} style={{ marginTop: '1.5rem' }}>
+                     <div className={`${styles.gridTwo} ${styles.gridMargin}`}>
                         <div className={styles.fieldGroup}>
-                            <label>Making Charges (Fixed)</label>
+                            <label htmlFor="makingCharges">Making Charges (Fixed)</label>
                             <input 
+                                id="makingCharges"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={makingCharges}
@@ -427,8 +451,9 @@ const CreateOrder: React.FC = () => {
                             />
                         </div>
                         <div className={styles.fieldGroup}>
-                            <label>Wastage Percentage (%)</label>
+                            <label htmlFor="wastagePercentage">Wastage Percentage (%)</label>
                             <input 
+                                id="wastagePercentage"
                                 type="number" 
                                 placeholder="0.00" 
                                 value={wastagePercentage}
@@ -444,21 +469,21 @@ const CreateOrder: React.FC = () => {
                     {/* Exchange Item */}
                     <div className={styles.formSection}>
                         <h2 className={styles.sectionTitle}>
-                            <span className="material-symbols-outlined icon">autorenew</span>
-                            Exchange Item
+                            <span className="material-symbols-outlined icon">autorenew</span> Exchange Item
                         </h2>
-                        <p style={{ color: '#b9b09d', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                        <p className={styles.sectionDescription}>
                             Link an old gold/silver valuation as part of the initial payment.
                         </p>
                         <div className={styles.fieldGroup}>
-                            <label>Exchange Item Name</label>
+                            <label htmlFor="exchangeItemName">Exchange Item Name & Weight</label>
                             <div className={styles.exchangeInputGroup}>
                                 <input 
+                                    id="exchangeItemName"
                                     type="text" 
                                     placeholder="e.g. Old Gold Chain, Silver Ring" 
                                     value={valuationRef}
                                     onChange={(e) => setValuationRef(e.target.value)}
-                                    style={{ flex: 2 }}
+                                    className={styles.large}
                                 />
                                 <input 
                                     type="number" 
@@ -466,18 +491,19 @@ const CreateOrder: React.FC = () => {
                                     value={exchangeWeight}
                                     onChange={(e) => setExchangeWeight(e.target.value)}
                                     step="0.01"
-                                    style={{ flex: 1 }}
+                                    aria-label="Exchange Item Weight"
                                 />
                             </div>
                         </div>
                         
                         {/* Exchange Amount Input (Hidden or visible? Mockup had result, assume editable for now) */}
-                         <div className={styles.fieldGroup} style={{ marginTop: '1rem' }}>
-                            <label>Exchange Value Adjustment</label>
+                         <div className={`${styles.fieldGroup} ${styles.marginTopLg}`}>
+                            <label htmlFor="exchangeValue">Exchange Value Adjustment</label>
                              <input 
+                                id="exchangeValue"
                                 type="text" 
                                 value={'₹' + exchangeCreditStr} 
-                                onChange={(e) => setExchangeCredit(e.target.value.replace(/[^0-9.]/g, ''))}
+                                onChange={(e) => setExchangeCreditStr(e.target.value.replace(/[^0-9.]/g, ''))}
                             />
                         </div>
 
@@ -492,42 +518,41 @@ const CreateOrder: React.FC = () => {
 
                     {/* Financials */}
                 <div className={`${styles.formSection} ${styles.financialsSection}`}>
-                    <div className={styles.sectionTitle} style={{justifyContent: 'space-between'}}>
-                        <div style={{display:'flex', alignItems:'center', gap:'0.75rem'}}>
-                            <span className="material-symbols-outlined icon">calculate</span>
-                            Order Financials
+                    <div className={`${styles.sectionTitle} ${styles.summaryRow}`}>
+                        <div className={styles.titleMain}>
+                            <span className="material-symbols-outlined icon">calculate</span> Order Financials
                         </div>
-                        <div style={{display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.875rem', fontWeight:400}}>
+                        <div className={styles.titleAction}>
                              <input 
                                 type="checkbox" 
                                 checked={autoCalculate} 
                                 onChange={(e) => setAutoCalculate(e.target.checked)}
                                 id="autoCalc"
                              />
-                             <label htmlFor="autoCalc" style={{cursor:'pointer', color: autoCalculate ? '#e29d12' : '#b9b09d'}}>Auto-Calculate from Rates</label>
+                             <label htmlFor="autoCalc" className={autoCalculate ? styles.active : ''}>Auto-Calculate from Rates</label>
                         </div>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className={styles.financialsList}>
                         {autoCalculate && (
-                            <div style={{marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#b9b09d'}}>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
-                                    <span>Metal Cost ({metalWeight || 0}g x ₹{metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : 0)})</span>
-                                    <span>₹{((parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                            <div className={styles.calcSummary}>
+                                <div className={styles.summaryRow}>
+                                    <span>Metal Cost ({metalWeight || 0}g x ₹{currentMetalRate})</span>
+                                    <span>₹{((Number.parseFloat(metalWeight) || 0) * currentMetalRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Wastage ({wastagePercentage || 0}%)</span>
-                                    <span>₹{(((parseFloat(metalWeight)||0) * (metalType === 'Gold' ? rates.gold22k : (metalType === 'Silver' ? rates.silver : rates.gold22k*(18/22)))) * ((parseFloat(wastagePercentage)||0)/100)).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    <span>₹{(((Number.parseFloat(metalWeight) || 0) * currentMetalRate) * ((Number.parseFloat(wastagePercentage) || 0) / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'0.25rem'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Making Charges</span>
-                                    <span>₹{(parseFloat(makingCharges)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+                                    <span>₹{(Number.parseFloat(makingCharges)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{display:'flex', justifyContent:'space-between'}}>
+                                <div className={styles.summaryRow}>
                                     <span>Stone Charges</span>
-                                    <span>₹{(parseFloat(stoneRate)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+                                    <span>₹{(Number.parseFloat(stoneRate)||0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
-                                <div style={{borderTop:'1px dashed rgba(255,255,255,0.1)', marginTop:'0.5rem', paddingTop:'0.5rem', display:'flex', justifyContent:'space-between', fontWeight:600, color:'#fff'}}>
+                                <div className={styles.summaryTotal}>
                                     <span>Estimated Total</span>
                                     <span>₹{totalAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
                                 </div>
@@ -535,24 +560,26 @@ const CreateOrder: React.FC = () => {
                         )}
 
                         <div className={styles.financialRow}>
-                            <span className={styles.label}>Estimated Total Amount</span>
+                            <label htmlFor="totalAmountInput" className={styles.label}>Estimated Total Amount</label>
                             <input 
+                                id="totalAmountInput"
                                 type="text" 
                                 className={styles.inputCurrency}
                                 value={'₹' + totalAmountStr}
                                 onChange={(e) => {
-                                    setTotalAmount(e.target.value.replace(/[^0-9.]/g, ''));
+                                    setTotalAmountStr(e.target.value.replace(/[^0-9.]/g, ''));
                                     setAutoCalculate(false);
                                 }}
                             />
                         </div>
                         <div className={styles.financialRow}>
-                            <span className={styles.label}>Initial Advance (Min 30%)</span>
+                            <label htmlFor="advanceInput" className={styles.label}>Initial Advance (Min 30%)</label>
                             <input 
+                                id="advanceInput"
                                 type="text" 
                                 className={styles.inputCurrency}
                                 value={'₹' + advanceStr}
-                                onChange={(e) => setAdvance(e.target.value.replace(/[^0-9.]/g, ''))}
+                                onChange={(e) => setAdvanceStr(e.target.value.replace(/[^0-9.]/g, ''))}
                             />
                         </div>
                             <div className={`${styles.financialRow} ${styles.borderTop}`}>
@@ -564,7 +591,7 @@ const CreateOrder: React.FC = () => {
                                 <span className={`${styles.value} ${styles.highlight}`}>₹{cashToPay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className={`${styles.financialRow} ${styles.borderTopBold}`}>
-                                <span className={`${styles.label} ${styles.bold}`} style={{ color: '#e29d12' }}>Remaining Balance</span>
+                                <span className={`${styles.label} ${styles.bold} ${styles.primaryLabel}`}>Remaining Balance</span>
                                 <span className={`${styles.value} ${styles.primary}`}>₹{remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>

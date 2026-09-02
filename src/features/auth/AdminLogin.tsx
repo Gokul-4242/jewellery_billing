@@ -1,7 +1,8 @@
-import React, { useState, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Auth.module.scss';
 import type { AdminLoginProps, LoginFormData } from './AdminLogin.types';
+import signInImg from '../../assets/signupPage.png';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,6 +15,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
         rememberMe: false,
     });
 
+    const usernameInputRef = useRef<HTMLInputElement>(null);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
+
     const [showPassword, setShowPassword] = useState<boolean>(false);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -24,21 +28,33 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
         }));
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        if (!formData.username || !formData.password) {
-            showToast('Please enter both username and password.', 'warning');
+        if (!formData.username) {
+            showToast('Please enter your username.', 'warning');
+            usernameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => usernameInputRef.current?.focus(), 500);
             return;
         }
 
-        login(formData.username); // Use AuthContext login
-        showToast('Login Successful! Redirecting...', 'success', 'Welcome Back');
+        if (!formData.password) {
+            showToast('Please enter your password.', 'warning');
+            passwordInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => passwordInputRef.current?.focus(), 500);
+            return;
+        }
 
-        if (onSubmit) {
-            onSubmit(formData);
-        } else {
-            console.log('Form submitted:', formData);
+        try {
+            await login(formData.username, formData.password);
+            showToast('Login Successful! Redirecting...', 'success', 'Welcome Back');
+
+            if (onSubmit) {
+                onSubmit(formData);
+            }
+        } catch (err: unknown) {
+            const error = err as Error;
+            showToast(error.message || 'Authentication Failed', 'error', 'Authentication Failed');
         }
     };
 
@@ -51,7 +67,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
             <div className={styles.backgroundWrapper}>
                 <img
                     alt="Abstract dark luxury gold texture background"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz5mQymnDRLIHn6sWy-u2avdBS2-OIatlheYFrRDZB_pDnculQ4tqQ1oy1Zgb7t91Uu4nRjngQbgtMYFE0RcksIdglNZ9tV_Odn40Pys9E9iNMW_lzyipvXUCr5hsvV1VyqsSiw-daLcQFacfEhpzJKoSeo1J06rFfxRHe3n7r8yG4xdoskAucES-KSJz--c2rv1N1Tbaq8gTtHjNGjnfu1qnh81BcR6cS_kCP5L9UUmsZY1TJPvRwptnbUwoILd3f7EC5BWNnIkHF"
+                    src={signInImg}
                 />
                 <div className={styles.backgroundOverlay}></div>
             </div>
@@ -81,6 +97,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         <span className="material-symbols-outlined">person</span>
                                     </div>
                                     <input
+                                        ref={usernameInputRef}
                                         className={styles.input}
                                         id="username"
                                         name="username"
@@ -101,6 +118,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         <span className="material-symbols-outlined">lock</span>
                                     </div>
                                     <input
+                                        ref={passwordInputRef}
                                         className={`${styles.input} ${styles.passwordInput}`}
                                         id="password"
                                         name="password"
@@ -145,7 +163,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
 
                             <button className={styles.submitButton} type="submit">
                                 <span className={`material-symbols-outlined ${styles.icon}`}>login</span>
-                                Secure Login
+                                <span>Secure Login</span>
                             </button>
 
                             <div className={styles.signupSection}>
@@ -155,7 +173,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                                         className={styles.signupLink}
                                         to="/signup"
                                     >
-                                        Sign Up
+                                        <span>Sign Up</span>
                                         <span className={`material-symbols-outlined ${styles.icon}`}>
                                             arrow_forward
                                         </span>
@@ -165,16 +183,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onSubmit }) => {
                         </form>
                     </div>
 
-                    <div className={styles.footer}>
+                    {/* <div className={styles.footer}>
                         <p>
                             <span className={`material-symbols-outlined ${styles.icon}`}>encrypted</span>
                             256-bit Encrypted Connection
                         </p>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className={styles.copyright}>
-                    <p>© 2026 VGH &amp; Jewellers. All rights reserved.</p>
+                    <p>© 2026 VGH Jewellers. All rights reserved.</p>
                 </div>
             </div>
         </div>

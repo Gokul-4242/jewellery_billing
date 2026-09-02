@@ -1,6 +1,6 @@
 // Variables
-@import '../../styles/variables';
-@import '../../styles/mixins';
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 $primary: #e29d12;
 $primary-hover: #c78a0f;
 $bg-dark: #1f1d16; // Card bg from HTML

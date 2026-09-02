@@ -1,5 +1,6 @@
-@import '../../styles/variables';
-@import '../../styles/mixins';
+@use "sass:color";
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .button {
     display: flex;
@@ -38,7 +39,7 @@
         border: $surface-border;
 
         &:hover:not(:disabled) {
-            background-color: lighten($surface-dark, 5%);
+            background-color: color.adjust($surface-dark, $lightness: 5%);
         }
     }
 
@@ -67,7 +68,12 @@
 
 .card {
     @include card-base;
+    @include button-reset;
+    display: block;
+    width: 100%;
+    text-align: left;
     padding: 1.5rem;
+    cursor: default;
 
     &.interactive {
         cursor: pointer;
@@ -77,6 +83,31 @@
             background-color: $surface-dark;
             transform: translateY(-2px);
         }
+
+        &:focus-visible {
+            outline: 2px solid $primary;
+            outline-offset: 4px;
+            background-color: $surface-dark;
+        }
+    }
+
+    .cardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+
+    .cardTitle {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .cardDescription {
+        font-size: 0.875rem;
+        color: $text-muted;
+        margin-top: 0.25rem;
     }
 }
 
@@ -166,5 +197,34 @@
         &.hasIcon input {
             padding-left: 2.5rem;
         }
+    }
+
+    .errorText {
+        color: $danger;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+}
+
+.errorBoundary {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: $background-dark;
+    color: $text-white;
+
+    h2 {
+        color: $danger;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: $text-muted;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        text-align: center;
     }
 }

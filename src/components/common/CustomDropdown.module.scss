@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 
 .container {
@@ -21,6 +22,9 @@
     border-radius: $radius-lg;
     color: $text-white;
     font-size: 0.875rem;
+    font-family: inherit;
+    text-align: left;
+    appearance: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -110,6 +114,11 @@
 }
 
 .option {
+    width: 100%;
+    background: none;
+    border: none;
+    font-family: inherit;
+    text-align: left;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -126,7 +135,7 @@
     }
 
     &.selected {
-        background-color: rgba($primary, 0.15);
+        background-color: rgba($primary, 0.155);
         color: $primary;
         font-weight: 600;
     }
@@ -145,12 +154,19 @@
     .addPrompt {
         display: block;
         margin-top: 0.5rem;
+        width: 100%;
+        background: none;
+        border: none;
+        font-family: inherit;
         color: $primary;
         font-weight: 600;
         cursor: pointer;
+        padding: 0.5rem;
+        border-radius: $radius-md;
 
         &:hover {
             text-decoration: underline;
+            background-color: rgba($primary, 0.1);
         }
     }
 }
@@ -164,6 +180,7 @@
 
     input {
         flex: 1;
+        min-width: 0; // Allow input to shrink to prevent pushing out button
         padding: 0.5rem 0.75rem;
         background-color: rgba(0, 0, 0, 0.2);
         border: 1px solid $border-dark;
@@ -178,6 +195,8 @@
     }
 
     button {
+        flex-shrink: 0; // Prevent button from squashing
+        white-space: nowrap; // Keep text on one line
         padding: 0.5rem 1rem;
         background-color: $primary;
         color: $text-white;
@@ -188,7 +207,7 @@
         cursor: pointer;
 
         &:hover {
-            background-color: lighten($primary, 5%);
+            background-color: color.adjust($primary, $lightness: 5%);
         }
     }
 }

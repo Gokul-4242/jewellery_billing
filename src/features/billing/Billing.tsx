@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import styles from './Billing.module.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FormSelect } from '../../components/common';
 import type { ExchangeItem, InvoiceData } from './types';
-import { useCustomers } from '../../context/CustomerContext';
+import { useCustomers } from '../../context/useCustomers';
 import { useInventory } from '../../context/InventoryContext';
-import { useTransactions } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/useTransactions';
 import { useRates } from '../../context/RateContext';
 import { useSettings } from '../../context/SettingsContext';
 import type { Customer } from '../../types/Customer';
@@ -13,6 +13,10 @@ import type { Product } from '../../types/Dashboard.types';
 import type { Transaction } from '../../types/Transaction';
 import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
+import avatarImg from '../../assets/billing page.png';
+import api from '../../api/axios';
+
+type TrendDirection = 'up' | 'down' | 'stable';
 
 const Billing: React.FC = () => {
     const navigate = useNavigate();
@@ -26,13 +30,21 @@ const Billing: React.FC = () => {
     const { rates } = useRates();
 
     // Calculate trends
-    const getTrend = (current: number, previous?: number) => {
-        if (!previous) return { percent: 0, direction: 'neutral' };
+    const getTrend = (current: number, previous?: number): { percent: string; direction: TrendDirection } => {
+        if (!previous) return { percent: '0', direction: 'stable' };
         const diff = current - previous;
         const percent = (diff / previous) * 100;
+        
+        let direction: TrendDirection = 'stable';
+        if (diff > 0) {
+            direction = 'up';
+        } else if (diff < 0) {
+            direction = 'down';
+        }
+
         return {
             percent: Math.abs(percent).toFixed(2),
-            direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral'
+            direction
         };
     };
 
@@ -41,18 +53,33 @@ const Billing: React.FC = () => {
 
 
     const { settings } = useSettings();
-    const { products, updateProduct, getProductById } = useInventory(); // Dynamic products
+    const { products } = useInventory(); // Dynamic products
     const { showToast } = useToast();
     const { cartItems, addToCart, removeFromCart, updateCartItem } = useCart();
 
     // Customer Search State
-    const [searchPhone, setSearchPhone] = useState('');
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(() => {
+        if (location.state?.newCustomerId) {
+            return getCustomerById(location.state.newCustomerId) || null;
+        }
+        return null;
+    });
+    const [searchPhone, setSearchPhone] = useState(() => {
+        if (location.state?.newCustomerId) {
+            return getCustomerById(location.state.newCustomerId)?.phone || '';
+        }
+        return '';
+    });
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
 
     // Edit State
     const [isEditingCustomer, setIsEditingCustomer] = useState(false);
     const [editForm, setEditForm] = useState<Customer | null>(null);
+
+    // Refs for auto-scrolling
+    const customerInputRef = useRef<HTMLInputElement>(null);
+    const exchangeNameRef = useRef<HTMLInputElement>(null);
+    const exchangeWeightRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -90,14 +117,10 @@ const Billing: React.FC = () => {
     // Auto-select new customer if redirected from Add Customer page
     useEffect(() => {
         if (location.state?.newCustomerId) {
-            const newCust = getCustomerById(location.state.newCustomerId);
-            if (newCust) {
-                selectCustomer(newCust);
-                // Clear the state to avoid re-selecting on re-renders
-                window.history.replaceState({}, document.title);
-            }
+            // Clear the state to avoid re-selecting on re-renders
+            window.history.replaceState({}, document.title);
         }
-    }, [location.state, getCustomerById, selectCustomer]);
+    }, [location.state]);
 
     const handleEditClick = () => {
         if (selectedCustomer) {
@@ -216,6 +239,14 @@ const Billing: React.FC = () => {
     const [exchangeWeight, setExchangeWeight] = useState<string>('');
     const [exchangePurity, setExchangePurity] = useState<string>('');
 
+    const addMaterial = (mat: string) => {
+        setSelectedMaterials(prev => [...prev, mat]);
+    };
+
+    const removeMaterial = (mat: string) => {
+        setSelectedMaterials(prev => prev.filter(m => m !== mat));
+    };
+
     // Dynamic Exchange Rates
     const buyingRates = useMemo(() => ({
         'Old Gold': rates.gold22k, // Base rate is 22k
@@ -223,7 +254,7 @@ const Billing: React.FC = () => {
     }), [rates]);
 
     const calculatedExchangeValue = useMemo(() => {
-        const weight = parseFloat(exchangeWeight) || 0;
+        const weight = Number.parseFloat(exchangeWeight) || 0;
         const rate = buyingRates[exchangeType as keyof typeof buyingRates] || 0;
 
         if (!weight) return 0;
@@ -231,7 +262,7 @@ const Billing: React.FC = () => {
         // For Gold, calculations are based on 22k rate (91.6 purity)
         if (exchangeType === 'Old Gold') {
             // Default to 91.6 (Standard 22k) if empty
-            const purity = exchangePurity ? parseFloat(exchangePurity) : 91.6;
+            const purity = exchangePurity ? Number.parseFloat(exchangePurity) : 91.6;
 
             // If purity is 24k (>= 99%), use the 24k rate directly
             if (purity >= 99) {
@@ -242,22 +273,31 @@ const Billing: React.FC = () => {
             return weight * rate * (purity / 91.6);
         } else {
             // For Silver/Other, assume standard percentage calculation (Base 100)
-            const purity = parseFloat(exchangePurity) || 100;
+            const purity = Number.parseFloat(exchangePurity) || 100;
             return weight * rate * (purity / 100);
         }
-    }, [exchangeWeight, exchangeType, exchangePurity, buyingRates]);
+    }, [exchangeWeight, exchangeType, exchangePurity, buyingRates, rates.gold24k]);
 
     const addExchangeItem = () => {
-        if (!exchangeName || !exchangeWeight || parseFloat(exchangeWeight) <= 0) {
-            showToast('Please enter Item Name and Weight', 'error');
+        if (!exchangeName) {
+            showToast('Please enter an Item Name', 'error');
+            exchangeNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => exchangeNameRef.current?.focus(), 500);
+            return;
+        }
+        
+        if (!exchangeWeight || Number.parseFloat(exchangeWeight) <= 0) {
+            showToast('Please enter a valid Weight', 'error');
+            exchangeWeightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => exchangeWeightRef.current?.focus(), 500);
             return;
         }
 
         const newItem: ExchangeItem = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             description: `${exchangeName} (${exchangeType})`,
-            weight: parseFloat(exchangeWeight),
-            purity: parseFloat(exchangePurity) || (exchangeType === 'Old Gold' ? 91.6 : 100),
+            weight: Number.parseFloat(exchangeWeight),
+            purity: Number.parseFloat(exchangePurity) || (exchangeType === 'Old Gold' ? 91.6 : 100),
             value: calculatedExchangeValue
         };
 
@@ -293,7 +333,7 @@ const Billing: React.FC = () => {
         const exchangeTotal = exchangeItems.reduce((sum, item) => sum + item.value, 0);
 
         // Tax (GST) calculation based on selected rate
-        const gstPercent = parseFloat(gstRate) || 0;
+        const gstPercent = Number.parseFloat(gstRate) || 0;
         const gst = itemWiseTotals.netAmount * (gstPercent / 100);
 
         const grandTotal = itemWiseTotals.netAmount + gst - exchangeTotal;
@@ -311,7 +351,9 @@ const Billing: React.FC = () => {
         };
     }, [cartItems, exchangeItems, gstRate]);
 
-    const handleProcessInvoice = () => {
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleProcessInvoice = async () => {
         if (cartItems.length === 0) {
             showToast('Cart is empty! Add items to process invoice.', 'warning');
             return;
@@ -319,11 +361,36 @@ const Billing: React.FC = () => {
 
         if (!selectedCustomer) {
             showToast('Please select a customer to process the invoice.', 'error');
+            customerInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => customerInputRef.current?.focus(), 500);
             return;
         }
 
-        const invoiceNo = `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`;
-        const date = new Date().toISOString();
+        setIsProcessing(true);
+        try {
+            // STEP 1: Formulate strictly mapped payload for Backend
+            const backendPayload = {
+                customerId: selectedCustomer?.id,
+                customerName: selectedCustomer?.name || 'Guest',
+                items: cartItems.map(item => ({
+                    productId: item.productId || item.id,
+                    weight: item.weight,
+                    quantity: 1
+                })),
+                gst: totals.gst,
+                discount: totals.discount,
+                exchangeAmount: totals.exchangeTotal,
+                status: 'Completed',
+                paymentStatus: 'Paid'
+            };
+
+
+            const res = await api.post('/billing/invoice', backendPayload);
+
+            const savedTxn = res.data.data;
+            
+            const invoiceNo = savedTxn.invoiceNo;
+            const date = savedTxn.createdAt;
 
         const invoiceData: InvoiceData = {
             invoiceNo: invoiceNo,
@@ -338,65 +405,77 @@ const Billing: React.FC = () => {
             exchangeItems: exchangeItems,
             subtotal: totals.subtotal,
             gst: totals.gst,
-            gstRate: parseFloat(gstRate) || 0,
+            gstRate: Number.parseFloat(gstRate) || 0,
             discount: totals.discount,
             grandTotal: totals.grandTotal,
             goldRate: rates.gold22k,
             paymentMethod: selectedPayment
         };
 
-        // Create transaction record
-        const newTransaction: Transaction = {
-            id: Math.random().toString(36).substr(2, 9),
-            invoiceNo: invoiceNo,
-            date: date,
-            customerName: selectedCustomer?.name || 'Guest',
-            customerId: selectedCustomer?.id,
-            items: cartItems.map(item => ({
-                id: item.id,
-                name: item.name,
-                code: item.code,
-                weight: item.weight,
-                purity: item.purity,
-                rate: item.rate,
-                makingCharges: item.makingCharges,
-                wastage: item.wastage,
-                total: item.total
-            })),
-            subtotal: totals.subtotal,
-            gst: totals.gst,
-            gstRate: parseFloat(gstRate) || 0,
-            discount: totals.discount,
-            exchangeTotal: totals.exchangeTotal,
-            exchangeItems: exchangeItems,
-            grandTotal: totals.grandTotal,
-            paymentMethod: selectedPayment,
-            status: 'Completed',
-            goldRate: rates.gold22k
-        };
+            // Create proxy transaction record for Context
+            const newTransaction: Transaction = {
+                id: savedTxn._id,
+                invoiceNo: invoiceNo,
+                date: date,
+                customerName: selectedCustomer?.name || 'Guest',
+                customerId: selectedCustomer?.id,
+                items: cartItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    code: item.code,
+                    weight: item.weight,
+                    purity: item.purity,
+                    rate: item.rate,
+                    makingCharges: item.makingCharges,
+                    wastage: item.wastage,
+                    total: item.total
+                })),
+                subtotal: totals.subtotal,
+                gst: totals.gst,
+                gstRate: Number.parseFloat(gstRate) || 0,
+                discount: totals.discount,
+                exchangeTotal: totals.exchangeTotal,
+                exchangeItems: exchangeItems,
+                grandTotal: savedTxn.totalAmount, // Use backend's source of truth for Final Bill Math
+                paymentMethod: selectedPayment,
+                status: 'Completed',
+                goldRate: rates.gold22k
+            };
 
-        // Update Inventory Stock
-        cartItems.forEach(item => {
-            const product = getProductById(item.productId || item.id); // Fallback for legacy items
-            if (product) {
-                const currentQty = product.quantity || 1;
-                const newQuantity = Math.max(0, currentQty - 1);
+            // Inventory stock is dynamically deducted by the Backend Atomic Operation. 
+            // We just need to trigger a contextual reset for frontend cache clearing (optional since it refetches on reload)
 
-                let newStatus: any = 'In Stock';
-                if (newQuantity === 0) newStatus = 'Out of Stock';
-                else if (newQuantity <= 2) newStatus = 'Low Stock';
+            addTransaction(newTransaction);
+            // Clear cart
+            cartItems.forEach(item => removeFromCart(item.id));
+            
+            showToast('Invoice processed successfully', 'success', 'Billed');
+            navigate(`/dashboard/invoice/view/${newTransaction.id}`, { state: { data: invoiceData } });
+        } catch (error: unknown) {
+            console.error('Failed to process invoice:', error);
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Transaction Failed';
+            showToast(message, 'error', 'Error');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
-                updateProduct(product.id, {
-                    quantity: newQuantity,
-                    status: newStatus,
-                    lastModified: new Date().toISOString()
-                });
-            }
-        });
+    const getTrendIcon = (direction: TrendDirection) => {
+        if (direction === 'up') return 'trending_up';
+        if (direction === 'down') return 'trending_down';
+        return 'trending_flat';
+    };
 
-        addTransaction(newTransaction);
-        showToast('Invoice processed successfully', 'success', 'Billed');
-        navigate(`/dashboard/invoice/view/${newTransaction.id}`, { state: { data: invoiceData } });
+    const getTrendStyle = (direction: TrendDirection) => {
+        if (direction === 'up') return styles.positive;
+        if (direction === 'down') return styles.negative;
+        return styles.stable;
+    };
+
+    const getTrendPrefix = (direction: TrendDirection) => {
+        if (direction === 'up') return '+';
+        if (direction === 'down') return '-';
+        return '';
     };
 
     return (
@@ -405,7 +484,7 @@ const Billing: React.FC = () => {
             <header className={styles.header}>
                 <div className={styles.brand}>
                     <div className={styles.logo}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>diamond</span>
+                        <span className={`material-symbols-outlined ${styles.logoIcon}`}>diamond</span>
                     </div>
                     <div>
                         <h2>{settings.name}</h2>
@@ -417,40 +496,32 @@ const Billing: React.FC = () => {
                     <div className={styles.ratesContainer}>
                         <div className={styles.rateItem}>
                             <span
-                                className="material-symbols-outlined"
-                                style={{
-                                    color: goldTrend.direction === 'up' ? '#22c55e' : goldTrend.direction === 'down' ? '#ef4444' : '#e29d12',
-                                    fontSize: '18px'
-                                }}
+                                className={`material-symbols-outlined ${styles.trendIcon} ${styles[goldTrend.direction]}`}
                             >
-                                {goldTrend.direction === 'up' ? 'trending_up' : goldTrend.direction === 'down' ? 'trending_down' : 'trending_flat'}
+                                {getTrendIcon(goldTrend.direction)}
                             </span>
                             <div>
                                 <p className={styles.label}>Gold (22k)</p>
                                 <p className={styles.value}>
                                     ₹{rates.gold22k}
-                                    <span className={`${styles.change} ${goldTrend.direction === 'up' ? styles.positive : goldTrend.direction === 'down' ? styles.negative : styles.neutral}`}>
-                                        {goldTrend.direction === 'up' ? '+' : goldTrend.direction === 'down' ? '-' : ''}{goldTrend.percent}%
+                                    <span className={`${styles.change} ${getTrendStyle(goldTrend.direction)}`}>
+                                        {getTrendPrefix(goldTrend.direction)}{goldTrend.percent}%
                                     </span>
                                 </p>
                             </div>
                         </div>
                         <div className={styles.rateItem}>
                             <span
-                                className="material-symbols-outlined"
-                                style={{
-                                    color: silverTrend.direction === 'up' ? '#22c55e' : silverTrend.direction === 'down' ? '#ef4444' : '#94a3b8',
-                                    fontSize: '18px'
-                                }}
+                                className={`material-symbols-outlined ${styles.trendIcon} ${silverTrend.direction === 'stable' ? styles.stableSilver : styles[silverTrend.direction]}`}
                             >
-                                {silverTrend.direction === 'up' ? 'trending_up' : silverTrend.direction === 'down' ? 'trending_down' : 'trending_flat'}
+                                {getTrendIcon(silverTrend.direction)}
                             </span>
                             <div>
                                 <p className={styles.label}>Silver</p>
                                 <p className={styles.value}>
                                     ₹{rates.silver}
-                                    <span className={`${styles.change} ${silverTrend.direction === 'up' ? styles.positive : silverTrend.direction === 'down' ? styles.negative : styles.neutral}`}>
-                                        {silverTrend.direction === 'up' ? '+' : silverTrend.direction === 'down' ? '-' : ''}{silverTrend.percent}%
+                                    <span className={`${styles.change} ${getTrendStyle(silverTrend.direction)}`}>
+                                        {getTrendPrefix(silverTrend.direction)}{silverTrend.percent}%
                                     </span>
                                 </p>
                             </div>
@@ -465,7 +536,7 @@ const Billing: React.FC = () => {
                     </div>
                     <div
                         className={styles.avatar}
-                        style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCzREsVNl3mmOSBEngBgcFd9N3X75RvbX0kA0gVEI-G6n2KQHjmsJUiQf-U0_wEVMtycuf0gXjRHfmUCYzI3gs5ACdNZ8xeDwrKLjxC7irpyF0c6BTHdTs1X_EJqFVEj2Nbc9_0YgUMH4WpYY7UFzdqDddlyLrRaVqPvDJ_yAJwEcsWWutNgzEMxqWNXr1_1N91Y8FLmSYzB-V9D-IryXk3kedyFxxM34s-ok7YECOjZtqmDVhpFvWFZjtLoFPjx4pgpUx2GkyEewOV")' }}
+                        style={{ backgroundImage: `url("${avatarImg}")` }}
                     ></div>
                 </div>
             </header>
@@ -494,33 +565,29 @@ const Billing: React.FC = () => {
                                     <div className={styles.searchResults}>
                                         {filteredProducts.length > 0 ? (
                                             filteredProducts.map((product) => (
-                                                <div
+                                                <button
+                                                    type="button"
                                                     key={product.id}
-                                                    onClick={() => (product.quantity === undefined || product.quantity > 0) && handleAddToCart(product)}
+                                                    onClick={() => (product.quantity ?? 1) > 0 && handleAddToCart(product)}
                                                     className={`${styles.searchResultItem} ${(product.quantity === 0) ? styles.disabled : ''}`}
-                                                    style={{ cursor: (product.quantity === 0) ? 'not-allowed' : 'pointer', opacity: (product.quantity === 0) ? 0.6 : 1 }}
                                                 >
                                                     <img
-                                                        src={(product.images && product.images[0]) || (product as any).image || 'https://via.placeholder.com/50'}
+                                                        src={product.images?.[0] || (product as Product & { image?: string }).image || 'https://via.placeholder.com/50'}
                                                         alt={product.name}
                                                     />
                                                     <div className={styles.info}>
                                                         <div className={styles.name}>{product.name}</div>
                                                         <div className={styles.details}>
                                                             {product.sku} • {product.weight}g • {product.material} •
-                                                            <span style={{
-                                                                color: (product.quantity || 1) > 0 ? '#22c55e' : '#ef4444',
-                                                                fontWeight: 600,
-                                                                marginLeft: '4px'
-                                                            }}>
-                                                                Qty: {product.quantity !== undefined ? product.quantity : 1}
-                                                            </span>
+                                                             <span className={`${styles.textBold} ${(product.quantity ?? 1) > 0 ? styles.inStock : styles.outStock}`}>
+                                                                 Qty: {product.quantity ?? 1}
+                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div className={styles.action} style={{ opacity: (product.quantity === 0) ? 0.5 : 1 }}>
+                                                     <div className={styles.action}>
                                                         {(product.quantity === 0) ? 'Out' : 'Add'}
                                                     </div>
-                                                </div>
+                                                </button>
                                             ))
                                         ) : (
                                             <div className={styles.noResults}>
@@ -530,7 +597,7 @@ const Billing: React.FC = () => {
                                     </div>
                                 )}
                                 <div className={styles.scanIcon}>
-                                    <button style={{ color: '#b9b09d', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                     <button className={styles.scanBtn}>
                                         <span className="material-symbols-outlined">qr_code_scanner</span>
                                     </button>
                                 </div>
@@ -539,18 +606,9 @@ const Billing: React.FC = () => {
                                 className={styles.filterBtn}
                                 onClick={() => setShowFilterModal(true)}
                             >
-                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>filter_list</span>
-                                <span className={styles.textSm}>Filter</span>
+                                 <span className={`material-symbols-outlined ${styles.filterIcon}`}>filter_list</span> <span className={styles.textSm}>Filter</span>
                                 {(selectedMaterials.length > 0 || priceRange.min > 0 || weightRange.min > 0) && (
-                                    <span style={{
-                                        width: '8px',
-                                        height: '8px',
-                                        backgroundColor: '#e29d12',
-                                        borderRadius: '50%',
-                                        position: 'absolute',
-                                        top: '4px',
-                                        right: '4px'
-                                    }}></span>
+                                     <span className={styles.filterBadge}></span>
                                 )}
                             </button>
                         </div>
@@ -563,8 +621,7 @@ const Billing: React.FC = () => {
                                     className={activeCategory === cat ? styles.active : styles.inactive}
                                     onClick={() => setActiveCategory(cat)}
                                 >
-                                    {cat === 'All Items' && <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>apps</span>}
-                                    {cat}
+                                     {cat === 'All Items' && <span className={`material-symbols-outlined ${styles.categoryIcon}`}>apps</span>} {cat}
                                 </button>
                             ))}
                         </div>
@@ -577,7 +634,7 @@ const Billing: React.FC = () => {
                             <table>
                                 <thead>
                                     <tr>
-                                        <th style={{ width: '3rem' }}>#</th>
+                                        <th className={styles.colSm}>#</th>
                                         <th>Item Details</th>
                                         <th className={styles.textRight}>Weight</th>
                                         <th className={styles.textCenter}>Purity</th>
@@ -586,7 +643,7 @@ const Billing: React.FC = () => {
                                         <th className={styles.textRight}>Making/g</th>
                                         <th className={styles.textRight}>Disc</th>
                                         <th className={styles.textRight}>Total</th>
-                                        <th style={{ width: '2.5rem' }}></th>
+                                        <th className={styles.colIcon}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -601,15 +658,7 @@ const Billing: React.FC = () => {
                                             </td>
                                             <td className={`${styles.textRight} ${styles.textMono}`}>{item.weight.toFixed(2)}g</td>
                                             <td className={styles.textCenter}>
-                                                <span style={{
-                                                    backgroundColor: item.purity === '22k' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(148, 163, 184, 0.2)',
-                                                    color: item.purity === '22k' ? '#ca8a04' : '#94a3b8',
-                                                    padding: '0.1rem 0.4rem',
-                                                    borderRadius: '0.25rem',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 600,
-                                                    border: `1px solid ${item.purity === '22k' ? 'rgba(234, 179, 8, 0.3)' : 'rgba(148, 163, 184, 0.3)'}`
-                                                }}>
+                                                <span className={`${styles.purityBadge} ${item.purity === '22k' ? styles.gold22k : styles.silver}`}>
                                                     {item.purity}
                                                 </span>
                                             </td>
@@ -619,7 +668,7 @@ const Billing: React.FC = () => {
                                                     type="number"
                                                     className={styles.tableInput}
                                                     value={item.wastage || 0}
-                                                    onChange={(e) => updateCartItem(item.id, { wastage: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { wastage: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={styles.textRight}>
@@ -627,25 +676,24 @@ const Billing: React.FC = () => {
                                                     type="number"
                                                     className={styles.tableInput}
                                                     value={item.makingCharges}
-                                                    onChange={(e) => updateCartItem(item.id, { makingCharges: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { makingCharges: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={styles.textRight}>
                                                 <input
                                                     type="number"
-                                                    className={styles.tableInput}
-                                                    style={{ color: '#ef4444' }}
+                                                    className={`${styles.tableInput} ${styles.discountInput}`}
                                                     value={item.discount}
-                                                    onChange={(e) => updateCartItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
+                                                    onChange={(e) => updateCartItem(item.id, { discount: Number.parseFloat(e.target.value) || 0 })}
                                                 />
                                             </td>
                                             <td className={`${styles.textRight} ${styles.textBold} ${styles.textMono}`}>₹{item.total.toFixed(2)}</td>
                                             <td className={styles.textCenter}>
                                                 <button
                                                     onClick={() => handleRemoveFromCart(item.id)}
-                                                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                                                    className={styles.deleteBtn}
                                                 >
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                                                    <span className="material-symbols-outlined">delete</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -658,8 +706,7 @@ const Billing: React.FC = () => {
                         <div className={styles.exchangeSection}>
                             <div className={styles.exchangeHeader}>
                                 <h3>
-                                    <span className="material-symbols-outlined">currency_exchange</span>
-                                    Old Jewellery Exchange Calculator
+                                    <span className="material-symbols-outlined">currency_exchange</span> Old Jewellery Exchange Calculator
                                 </h3>
                                 <span className={styles.rateInfo}>
                                     Buying Rate: Gold (22k Base) ₹{rates.gold22k.toFixed(2)}/g | Silver ₹{rates.silver.toFixed(2)}/g
@@ -667,18 +714,21 @@ const Billing: React.FC = () => {
                             </div>
 
                             <div className={styles.exchangeForm}>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 3' }}>
-                                    <label>Item Name</label>
+                                <div className={`${styles.fieldGroup} ${styles.large}`}>
+                                    <label htmlFor="exchangeItemName">Item Name</label>
                                     <input
+                                        id="exchangeItemName"
+                                        ref={exchangeNameRef}
                                         type="text"
                                         placeholder="e.g. Gold Chain"
                                         value={exchangeName}
                                         onChange={(e) => setExchangeName(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
-                                    <label>Metal Type</label>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="exchangeMetalType">Metal Type</label>
                                     <FormSelect
+                                        id="exchangeMetalType"
                                         value={exchangeType}
                                         onChange={(val) => setExchangeType(val)}
                                         options={[
@@ -688,34 +738,38 @@ const Billing: React.FC = () => {
                                         className={styles.metalTypeSelect}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
-                                    <label>Weight (g)</label>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="exchangeWeight">Weight (g)</label>
                                     <input
+                                        id="exchangeWeight"
+                                        ref={exchangeWeightRef}
                                         type="number"
                                         placeholder="0.00"
                                         value={exchangeWeight}
                                         onChange={(e) => setExchangeWeight(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
-                                    <label>Purity (%)</label>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="exchangePurity">Purity (%)</label>
                                     <input
+                                        id="exchangePurity"
                                         type="number"
                                         placeholder="e.g 91.6"
                                         value={exchangePurity}
                                         onChange={(e) => setExchangePurity(e.target.value)}
                                     />
                                 </div>
-                                <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
-                                    <label>Calculated Value</label>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="exchangeCalculatedValue">Calculated Value</label>
                                     <input
+                                        id="exchangeCalculatedValue"
                                         type="text"
                                         value={`₹${calculatedExchangeValue.toFixed(2)}`}
                                         readOnly
                                         className={styles.readOnly}
                                     />
                                 </div>
-                                <div style={{ gridColumn: 'span 1' }}>
+                                <div className={styles.addButtonContainer}>
                                     <button
                                         className={styles.addButton}
                                         onClick={addExchangeItem}
@@ -725,35 +779,34 @@ const Billing: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className={styles.tableContainer} style={{ marginBottom: 0 }}>
+                            <div className={`${styles.tableContainer} ${styles.noMargin}`}>
                                 <table>
-                                    <thead style={{ backgroundColor: 'rgba(44, 36, 23, 0.3)' }}>
+                                    <thead className={styles.exchangeTableHead}>
                                         <tr>
-                                            <th style={{ padding: '0.5rem' }}>Exchanged Item</th>
-                                            <th className={styles.textRight} style={{ padding: '0.5rem' }}>Net Wt.</th>
-                                            <th className={styles.textRight} style={{ padding: '0.5rem' }}>Purity</th>
-                                            <th className={styles.textRight} style={{ padding: '0.5rem' }}>Value</th>
-                                            <th style={{ width: '2rem', padding: '0.5rem' }}></th>
+                                            <th>Exchanged Item</th>
+                                            <th className={styles.textRight}>Net Wt.</th>
+                                            <th className={styles.textRight}>Purity</th>
+                                            <th className={styles.textRight}>Value</th>
+                                            <th className={styles.colIcon}></th>
                                         </tr>
                                     </thead>
-                                    <tbody style={{ backgroundColor: 'transparent' }}>
-                                        {exchangeItems.map((item) => (
-                                            <tr key={item.id}>
-                                                <td style={{ padding: '0.5rem', border: 'none' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#94a3b8' }}>recycling</span>
-                                                        {item.description}
+                                    <tbody className={styles.exchangeTableBody}>
+                                         {exchangeItems.map((item) => (
+                                            <tr key={item.id} className={styles.exchangeRow}>
+                                                <td>
+                                                     <div className={styles.exchangeItemInfo}>
+                                                        <span className="material-symbols-outlined">recycling</span> {item.description}
                                                     </div>
                                                 </td>
-                                                <td className={styles.textRight} style={{ padding: '0.5rem', border: 'none' }}>{item.weight.toFixed(2)}g</td>
-                                                <td className={styles.textRight} style={{ padding: '0.5rem', border: 'none' }}>{item.purity}%</td>
-                                                <td className={`${styles.textRight} ${styles.textBold}`} style={{ padding: '0.5rem', border: 'none', color: '#ef4444' }}>- ₹{item.value.toFixed(2)}</td>
-                                                <td className={styles.textCenter} style={{ padding: '0.5rem', border: 'none' }}>
+                                                <td className={styles.textRight}>{item.weight.toFixed(2)}g</td>
+                                                <td className={styles.textRight}>{item.purity}%</td>
+                                                <td className={`${styles.textRight} ${styles.exchangeValue}`}>- ₹{item.value.toFixed(2)}</td>
+                                                <td className={styles.textCenter}>
                                                     <button
                                                         onClick={() => removeExchangeItem(item.id)}
-                                                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                                                        className={styles.deleteBtn}
                                                     >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                                                        <span className={`material-symbols-outlined ${styles.closeIcon}`}>close</span>
                                                     </button>
                                                 </td>
                                             </tr>
@@ -771,12 +824,13 @@ const Billing: React.FC = () => {
                     <div className={styles.customerSection}>
                         <div className={styles.sectionHeader}>
                             <h3>Customer Details</h3>
-                            <button onClick={() => showToast('History feature coming soon!', 'info')} style={{ fontSize: '0.75rem', color: '#e29d12', background: 'none', border: 'none', cursor: 'pointer' }}>View History</button>
+                            <button onClick={() => showToast('History feature coming soon!', 'info')} className={styles.viewHistoryBtn}>View History</button>
                         </div>
 
                         <div className={styles.customerSearchWrapper}>
                             <span className={`material-symbols-outlined ${styles.searchIcon}`}>person_search</span>
                             <input
+                                ref={customerInputRef}
                                 type="text"
                                 value={searchPhone}
                                 onChange={(e) => {
@@ -795,7 +849,8 @@ const Billing: React.FC = () => {
                                     {filteredCustomers.length > 0 ? (
                                         <>
                                             {filteredCustomers.map(customer => (
-                                                <div
+                                                <button
+                                                    type="button"
                                                     key={customer.id}
                                                     className={styles.searchResultItem}
                                                     onClick={() => selectCustomer(customer)}
@@ -804,141 +859,132 @@ const Billing: React.FC = () => {
                                                         <div className={styles.name}>{customer.name}</div>
                                                         <div className={styles.details}>{customer.phone}</div>
                                                     </div>
-                                                </div>
+                                                </button>
                                             ))}
-                                            <div
+                                            <button
+                                                type="button"
                                                 className={styles.addNewCustomerItem}
                                                 onClick={() => navigate('/dashboard/customers/add', { state: { fromBilling: true } })}
                                             >
-                                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-                                                Add New Customer
-                                            </div>
+                                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span> Add New Customer
+                                            </button>
                                         </>
                                     ) : (
-                                        <div
+                                        <button
+                                            type="button"
                                             className={styles.noResults}
                                             onClick={() => navigate('/dashboard/customers/add', { state: { fromBilling: true } })}
                                         >
-                                            <span className="material-symbols-outlined">person_add</span>
-                                            No customers found. Click to add.
-                                        </div>
+                                             <span className="material-symbols-outlined">person_add</span> No customers found. Click to add.
+                                        </button>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {selectedCustomer ? (
-                            isEditingCustomer && editForm ? (
-                                <div className={`${styles.customerCard} ${styles.editing}`}>
-                                    <div className={styles.cardHeader}>
-                                        <span className={styles.textBold}>Edit Customer</span>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, name: e.target.value } : null)}
-                                        placeholder="Name"
-                                        className={styles.editInput}
-                                    />
-                                    <input
-                                        type="text"
-                                        value={editForm.phone}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                                        placeholder="Phone"
-                                        className={styles.editInput}
-                                    />
-                                    <input
-                                        type="email"
-                                        value={editForm.email}
-                                        onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
-                                        placeholder="Email"
-                                        className={styles.editInput}
-                                    />
-                                    <div className={styles.editActions}>
-                                        <button
-                                            onClick={handleSaveCustomer}
-                                            className={styles.saveBtn}
-                                        >
-                                            Save
-                                        </button>
-                                        <button
-                                            onClick={handleCancelEdit}
-                                            className={styles.cancelBtn}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
+                        {!selectedCustomer && (
+                             <div className={`${styles.customerCard} ${styles.empty}`}>
+                                <span className="material-symbols-outlined">person_off</span> <span>No customer selected</span>
+                            </div>
+                        )}
+
+                        {selectedCustomer && isEditingCustomer && editForm && (
+                            <div className={`${styles.customerCard} ${styles.editing}`}>
+                                <div className={styles.cardHeader}>
+                                    <span className={styles.textBold}>Edit Customer</span>
                                 </div>
-                            ) : (
-                                <div className={styles.customerCard}>
-                                    <div className={styles.avatarInitials}>
-                                        {selectedCustomer?.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <p className={styles.textBold} style={{ marginBottom: '0.25rem' }}>{selectedCustomer?.name}</p>
-                                        <p className={styles.textSm} style={{ color: '#94a3b8' }}>{selectedCustomer?.totalSpend ? `₹${selectedCustomer.totalSpend}` : '₹0'} spent</p>
-                                        <p className={styles.textSm} style={{ color: '#64748b', marginTop: '0.25rem' }}>{selectedCustomer?.email}</p>
-                                    </div>
+                                <input
+                                    type="text"
+                                    value={editForm.name}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                    placeholder="Name"
+                                    className={styles.editInput}
+                                />
+                                <input
+                                    type="text"
+                                    value={editForm.phone}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                                    placeholder="Phone"
+                                    className={styles.editInput}
+                                />
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
+                                    placeholder="Email"
+                                    className={styles.editInput}
+                                />
+                                <div className={styles.editActions}>
                                     <button
-                                        onClick={handleEditClick}
-                                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-                                        title="Edit Customer"
+                                        onClick={handleSaveCustomer}
+                                        className={styles.saveBtn}
                                     >
-                                        <span className="material-symbols-outlined">edit</span>
+                                        Save
+                                    </button>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className={styles.cancelBtn}
+                                    >
+                                        Cancel
                                     </button>
                                 </div>
-                            )
-                        ) : (
-                            <div className={`${styles.customerCard} ${styles.empty}`}>
-                                <span className="material-symbols-outlined">person_off</span>
-                                <span>No customer selected</span>
+                            </div>
+                        )}
+
+                        {selectedCustomer && (!isEditingCustomer || !editForm) && (
+                            <div className={styles.customerCard}>
+                                <div className={styles.avatarInitials}>
+                                    {selectedCustomer?.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                                </div>
+                                 <div className={styles.customerInfo}>
+                                     <p className={styles.textBold}>{selectedCustomer?.name}</p>
+                                     <p className={styles.textSm}>{selectedCustomer?.totalSpend ? `₹${selectedCustomer.totalSpend}` : '₹0'} spent</p>
+                                     <p className={styles.customerEmail}>{selectedCustomer?.email}</p>
+                                 </div>
+                                 <button
+                                     onClick={handleEditClick}
+                                     className={styles.editBtn}
+                                     title="Edit Customer"
+                                 >
+                                     <span className="material-symbols-outlined">edit</span>
+                                 </button>
                             </div>
                         )}
                     </div>
 
                     <div className={styles.billSummary}>
-                        <h3 style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: '#b9b09d', marginBottom: '1rem' }}>Bill Summary</h3>
+                         <h3 className={styles.summaryTitle}>Bill Summary</h3>
 
                         <div className={styles.row}>
-                            <span style={{ color: '#94a3b8' }}>Total Weight (Gross)</span>
+                             <span className={styles.textMuted}>Total Weight (Gross)</span>
                             <span className={styles.textBold}>{totals.grossWeight.toFixed(2)} g</span>
                         </div>
                         <div className={styles.row}>
-                            <span style={{ color: '#94a3b8' }}>Total Items</span>
+                             <span className={styles.textMuted}>Total Items</span>
                             <span className={styles.textBold}>{totals.totalItems}</span>
                         </div>
 
-                        <div style={{ height: '1px', backgroundColor: '#4a4030', margin: '1rem 0' }}></div>
+                         <div className={styles.separator}></div>
 
                         <div className={styles.row}>
-                            <span style={{ color: '#b9b09d' }}>Subtotal</span>
+                             <span className={styles.summaryLabel}>Subtotal</span>
                             <span className={styles.textBold}>₹{(totals.subtotal - totals.wastageAmount).toFixed(2)}</span>
                         </div>
                         <div className={styles.row}>
-                            <span style={{ color: '#b9b09d' }}>Wastage Value</span>
+                             <span className={styles.summaryLabel}>Wastage Value</span>
                             <span className={styles.textBold}>₹{totals.wastageAmount.toFixed(2)}</span>
                         </div>
                         <div className={styles.row}>
-                            <span style={{ color: '#b9b09d' }}>Making Charges</span>
+                             <span className={styles.summaryLabel}>Making Charges</span>
                             <span className={styles.textBold}>₹{totals.totalMaking.toFixed(2)}</span>
                         </div>
                         <div className={styles.row} style={{ alignItems: 'center' }}>
-                            <span style={{ color: '#b9b09d', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                Tax (GST)
+                            <span className={styles.summaryLabelWithIcon}>
+                                <span>Tax (GST) </span>
                                 <select
                                     className={styles.miniSelect}
                                     value={gstRate}
                                     onChange={(e) => setGstRate(e.target.value)}
-                                    style={{
-                                        padding: '0.1rem 0.25rem',
-                                        borderRadius: '0.25rem',
-                                        border: '1px solid #4a4030',
-                                        backgroundColor: '#2c2417',
-                                        color: '#e29d12',
-                                        fontSize: '0.75rem',
-                                        width: 'auto',
-                                        marginLeft: '0.25rem'
-                                    }}
                                 >
                                     <option value="3">3%</option>
                                     <option value="0">None</option>
@@ -946,72 +992,49 @@ const Billing: React.FC = () => {
                             </span>
                             <span className={styles.textBold}>₹{totals.gst.toFixed(2)}</span>
                         </div>
-                        <div className={styles.row}>
-                            <span style={{ color: '#b9b09d', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>Discount <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>info</span></span>
-                            <span style={{ color: '#ef4444' }}>- ₹{totals.discount.toFixed(2)}</span>
-                        </div>
-                        <div className={styles.row}>
-                            <span style={{ color: '#e29d12', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>Exchange Adj. <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>currency_exchange</span></span>
-                            <span style={{ color: '#ef4444', fontWeight: 'bold' }}>- ₹{totals.exchangeTotal.toFixed(2)}</span>
-                        </div>
+                         <div className={styles.row}>
+                             <span className={styles.summaryLabelWithIcon}>Discount <span className={`material-symbols-outlined ${styles.infoIcon}`}>info</span></span>
+                             <span className={styles.negativeValue}>- ₹{totals.discount.toFixed(2)}</span>
+                         </div>
+                         <div className={styles.row}>
+                             <span className={styles.exchangeAdjLabel}>Exchange Adj. <span className={`material-symbols-outlined ${styles.infoIcon}`}>currency_exchange</span></span>
+                             <span className={`${styles.negativeValue} ${styles.textBold}`}>- ₹{totals.exchangeTotal.toFixed(2)}</span>
+                         </div>
 
-                        <div className={`${styles.row} ${styles.total}`}>
-                            <span style={{ fontSize: '1rem', fontWeight: 700, color: '#b9b09d' }}>Grand Total</span>
-                            <span className={styles.grandTotal}>₹{totals.grandTotal.toFixed(2)}</span>
-                        </div>
-                        <div className={styles.textRight} style={{ fontSize: '0.75rem', color: '#64748b' }}>Rounding: -₹0.00</div>
+                         <div className={`${styles.row} ${styles.total}`}>
+                             <span className={styles.summaryLabel}>Grand Total</span>
+                             <span className={styles.grandTotal}>₹{totals.grandTotal.toFixed(2)}</span>
+                         </div>
+                         <div className={styles.roundingInfo}>Rounding: -₹0.00</div>
                     </div>
 
-                    <div className={styles.footer}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <button
-                                onClick={() => setSelectedPayment('Cash')}
-                                style={{
-                                    padding: '0.75rem',
-                                    borderRadius: '0.5rem',
-                                    border: selectedPayment === 'Cash' ? '2px solid #e29d12' : '1px solid #4a4030',
-                                    backgroundColor: selectedPayment === 'Cash' ? 'rgba(226, 157, 18, 0.1)' : '#2c2417',
-                                    color: selectedPayment === 'Cash' ? '#e29d12' : 'white',
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                            >
-                                <span className="material-symbols-outlined" style={{ marginBottom: '0.25rem' }}>payments</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Cash</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedPayment('Card')}
-                                style={{
-                                    padding: '0.75rem',
-                                    borderRadius: '0.5rem',
-                                    border: selectedPayment === 'Card' ? '2px solid #e29d12' : '1px solid #4a4030',
-                                    backgroundColor: selectedPayment === 'Card' ? 'rgba(226, 157, 18, 0.1)' : '#2c2417',
-                                    color: selectedPayment === 'Card' ? '#e29d12' : 'white',
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                            >
-                                <span className="material-symbols-outlined" style={{ marginBottom: '0.25rem' }}>credit_card</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Card</span>
-                            </button>
-                            <button
-                                onClick={() => setSelectedPayment('UPI')}
-                                style={{
-                                    padding: '0.75rem',
-                                    borderRadius: '0.5rem',
-                                    border: selectedPayment === 'UPI' ? '2px solid #e29d12' : '1px solid #4a4030',
-                                    backgroundColor: selectedPayment === 'UPI' ? 'rgba(226, 157, 18, 0.1)' : '#2c2417',
-                                    color: selectedPayment === 'UPI' ? '#e29d12' : 'white',
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                            >
-                                <span className="material-symbols-outlined" style={{ marginBottom: '0.25rem' }}>qr_code_2</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>UPI</span>
-                            </button>
+                     <div className={styles.footer}>
+                         <div className={styles.paymentGrid}>
+                             <button
+                                 onClick={() => setSelectedPayment('Cash')}
+                                 className={`${styles.paymentOption} ${selectedPayment === 'Cash' ? styles.active : ''}`}
+                             >
+                                 <span className="material-symbols-outlined">payments</span> <span className={styles.optionLabel}>Cash</span>
+                             </button>
+                             <button
+                                 onClick={() => setSelectedPayment('Card')}
+                                 className={`${styles.paymentOption} ${selectedPayment === 'Card' ? styles.active : ''}`}
+                             >
+                                 <span className="material-symbols-outlined">credit_card</span> <span className={styles.optionLabel}>Card</span>
+                             </button>
+                             <button
+                                 onClick={() => setSelectedPayment('UPI')}
+                                 className={`${styles.paymentOption} ${selectedPayment === 'UPI' ? styles.active : ''}`}
+                             >
+                                 <span className="material-symbols-outlined">qr_code_2</span> <span className={styles.optionLabel}>UPI</span>
+                             </button>
                         </div>
                         <button
-                            className={styles.processBtn}
+                            className={styles.checkoutBtn}
                             onClick={handleProcessInvoice}
+                            disabled={isProcessing}
                         >
-                            Process Invoice ({selectedPayment}) <span className="material-symbols-outlined">arrow_forward</span>
+                            {isProcessing ? 'Processing...' : `Process Invoice (${selectedPayment})`} <span className="material-symbols-outlined">arrow_forward</span>
                         </button>
                         {/* <p className={styles.textCenter} style={{ fontSize: '0.625rem', color: '#64748b', marginTop: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Shortcut: F10 to Checkout</p> */}
                     </div>
@@ -1031,20 +1054,14 @@ const Billing: React.FC = () => {
 
                             {/* Materials */}
                             <div className={styles.filterGroup}>
-                                <label>Material</label>
+                                <span className={styles.filterLabel}>Material</span>
                                 <div className={styles.optionsGrid}>
                                     {['22k Gold', '18k Gold', '925 Silver', 'Platinum'].map(mat => (
                                         <label key={mat} className={styles.checkboxLabel}>
                                             <input
                                                 type="checkbox"
                                                 checked={selectedMaterials.includes(mat)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedMaterials(prev => [...prev, mat]);
-                                                    } else {
-                                                        setSelectedMaterials(prev => prev.filter(m => m !== mat));
-                                                    }
-                                                }}
+                                                onChange={(e) => (e.target.checked ? addMaterial(mat) : removeMaterial(mat))}
                                             />
                                             {mat}
                                         </label>
@@ -1054,18 +1071,22 @@ const Billing: React.FC = () => {
 
                             {/* Price Range */}
                             <div className={styles.filterGroup}>
-                                <label>Price Range (₹)</label>
+                                <span className={styles.filterLabel}>Price Range (₹)</span>
                                 <div className={styles.rangeInputs}>
                                     <input
+                                        id="priceRangeMin"
                                         type="number"
                                         placeholder="Min"
+                                        aria-label="Minimum price"
                                         value={priceRange.min}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
                                     />
                                     <span>to</span>
                                     <input
+                                        id="priceRangeMax"
                                         type="number"
                                         placeholder="Max"
+                                        aria-label="Maximum price"
                                         value={priceRange.max}
                                         onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
                                     />
@@ -1074,18 +1095,22 @@ const Billing: React.FC = () => {
 
                             {/* Weight Range */}
                             <div className={styles.filterGroup}>
-                                <label>Weight Range (g)</label>
+                                <span className={styles.filterLabel}>Weight Range (g)</span>
                                 <div className={styles.rangeInputs}>
                                     <input
+                                        id="weightRangeMin"
                                         type="number"
                                         placeholder="Min"
+                                        aria-label="Minimum weight"
                                         value={weightRange.min}
                                         onChange={(e) => setWeightRange(prev => ({ ...prev, min: Number(e.target.value) }))}
                                     />
                                     <span>to</span>
                                     <input
+                                        id="weightRangeMax"
                                         type="number"
                                         placeholder="Max"
+                                        aria-label="Maximum weight"
                                         value={weightRange.max}
                                         onChange={(e) => setWeightRange(prev => ({ ...prev, max: Number(e.target.value) }))}
                                     />

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './CustomerDetail.module.scss';
 import { Button } from '../../components/common';
 import type { Customer } from '../../types/Customer';
-import { useTransactions } from '../../context/TransactionContext'; // Assuming context exists
-import { useCustomers } from '../../context/CustomerContext';
+import { useTransactions } from '../../context/useTransactions'; // Assuming context exists
+import { useCustomers } from '../../context/useCustomers';
 
 interface CustomerDetailProps {
     customer: Customer;

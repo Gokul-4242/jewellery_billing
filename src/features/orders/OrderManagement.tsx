@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './OrderManagement.module.scss';
 import { Button, CustomDropdown } from '../../components/common'; // Reusing common button if suitable, or just standard HTML buttons as styled
-import { useTransactions } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/useTransactions';
 import type { Transaction } from '../../types/Transaction';
 
 const ITEMS_PER_PAGE = 10;

@@ -1,16 +1,24 @@
+@use "sass:color";
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as mixins;
 
 .billingContainer {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 4rem); // Adjust height to fit within dashboard layout if needed
+    height: auto;
+    min-height: calc(100vh - 4rem);
     background-color: $background-dark;
     color: $text-white;
     font-family: 'Manrope', sans-serif;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-radius: $radius-lg;
     border: 1px solid $border-dark;
+
+    @media (min-width: 1024px) {
+        height: calc(100vh - 4rem);
+        overflow: hidden;
+    }
 }
 
 .header {
@@ -107,7 +115,7 @@
                     color: $success;
                 }
 
-                &.neutral {
+                &.stable {
                     color: $text-muted;
                 }
             }
@@ -155,17 +163,26 @@
 .mainLayout {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    flex-direction: column;
+    
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        overflow: hidden;
+    }
 }
 
 .leftPanel {
     display: flex;
     flex-direction: column;
-    flex: 2;
+    flex: 1;
     min-width: 0;
-    border-right: 1px solid $border-dark;
     position: relative;
     background-color: $background-dark;
+
+    @media (min-width: 1024px) {
+        flex: 2;
+        border-right: 1px solid $border-dark;
+    }
 }
 
 .topBar {
@@ -179,7 +196,12 @@
 
     .searchSection {
         display: flex;
+        flex-direction: column;
         gap: 0.75rem;
+
+        @media (min-width: 640px) {
+            flex-direction: row;
+        }
 
         .searchWrapper {
             flex: 1;
@@ -212,7 +234,7 @@
                 font-size: 0.875rem;
                 border-radius: 0.5rem;
                 padding: 0.75rem 2.5rem 0.75rem 2.5rem;
-                // text-align: center;
+            
 
                 &:focus {
                     outline: none;
@@ -226,7 +248,7 @@
                 top: 100%;
                 left: 0;
                 right: 0;
-                background-color: lighten($background-dark, 2%);
+                background-color: color.adjust($background-dark, $lightness: 2%);
                 border: 1px solid $border-dark;
                 border-radius: 0.5rem;
                 margin-top: 0.5rem;
@@ -246,7 +268,6 @@
                 .searchResultItem {
                     padding: 0.75rem 1rem;
                     cursor: pointer;
-                    border-bottom: 1px solid $border-dark;
                     display: flex;
 
                     &.disabled {
@@ -268,8 +289,15 @@
                     }
 
                     &:hover {
-                        background-color: lighten($background-dark, 5%);
+                        background-color: color.adjust($background-dark, $lightness: 5%);
                     }
+
+                    background: none;
+                    border: none;
+                    border-bottom: 1px solid $border-dark;
+                    text-align: left;
+                    font-family: inherit;
+                    width: 100%;
 
                     img {
                         width: 2.5rem;
@@ -314,12 +342,17 @@
                     font-weight: 700;
                     font-size: 0.875rem;
                     transition: all 0.2s;
-                    border-top: 1px solid $border-dark;
 
                     &:hover {
                         background-color: rgba($primary, 0.15);
-                        color: lighten($primary, 10%);
+                        color: color.adjust($primary, $lightness: 10%);
                     }
+
+                    border: none;
+                    border-top: 1px solid $border-dark;
+                    width: 100%;
+                    font-family: inherit;
+                    text-align: center;
                 }
             }
         }
@@ -337,7 +370,7 @@
             transition: background-color 0.2s;
 
             &:hover {
-                background-color: lighten($background-dark, 5%);
+                background-color: color.adjust($background-dark, $lightness: 5%);
             }
         }
     }
@@ -385,10 +418,13 @@
 
 .contentArea {
     flex: 1;
-    overflow: auto;
     padding: 1rem;
     background-color: $background-dark;
-    @include mixins.custom-scrollbar;
+
+    @media (min-width: 1024px) {
+        overflow: auto;
+        @include mixins.custom-scrollbar;
+    }
 }
 
 .tableContainer {
@@ -405,7 +441,7 @@
         text-align: left;
 
         thead {
-            background-color: darken($surface-dark, 3%);
+            background-color: color.adjust($surface-dark, $lightness: -3%);
             position: sticky;
             top: 0;
             z-index: 5;
@@ -426,7 +462,7 @@
 
             tr {
                 &:hover {
-                    background-color: lighten($surface-dark, 5%);
+                    background-color: color.adjust($surface-dark, $lightness: 5%);
                 }
 
                 td {
@@ -454,9 +490,16 @@
 
     .exchangeHeader {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
         margin-bottom: 1rem;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         h3 {
             display: flex;
@@ -478,8 +521,8 @@
     }
 
     .exchangeForm {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
+        display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
         align-items: flex-end;
         margin-bottom: 1rem;
@@ -487,12 +530,29 @@
         .fieldGroup {
             display: flex;
             flex-direction: column;
-            gap: 0.375rem; // Slightly more breathing room
+            gap: 0.375rem;
+            flex: 1;
+            min-width: 120px;
+
+            &.large {
+                flex: 2;
+                min-width: 160px;
+            }
 
             label {
                 font-size: 0.75rem;
                 color: $text-muted;
                 font-weight: 500;
+            }
+        }
+
+        .addButtonContainer {
+            flex: 1;
+            min-width: 100px;
+            
+            @media (min-width: 768px) {
+                flex: 0 0 auto;
+                width: 110px;
             }
         }
     }
@@ -504,7 +564,7 @@
         border-radius: 0.5rem;
         border: 1px solid rgba($border-dark, 0.5);
         font-size: 0.875rem;
-        background-color: lighten($background-dark, 2%);
+        background-color: color.adjust($background-dark, $lightness: 2%);
         color: $text-white;
         transition: all 0.2s ease;
         text-align: center;
@@ -550,7 +610,7 @@
         white-space: nowrap;
 
         &:hover {
-            background-color: darken($primary, 10%);
+            background-color: color.adjust($primary, $lightness: -10%);
             transform: translateY(-1px);
         }
 
@@ -563,13 +623,19 @@
 .sidebar {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-width: 320px;
-    max-width: 450px;
+    width: 100%;
     background-color: $surface-dark;
-    border-left: 1px solid $border-dark;
-    overflow-y: auto;
-    @include mixins.custom-scrollbar;
+    border-top: 1px solid $border-dark;
+
+    @media (min-width: 1024px) {
+        flex: 1;
+        min-width: 320px;
+        max-width: 450px;
+        border-top: none;
+        border-left: 1px solid $border-dark;
+        overflow-y: auto;
+        @include mixins.custom-scrollbar;
+    }
 
     .customerSection {
         padding: 1.25rem;
@@ -615,7 +681,7 @@
 
             .customerSearchInput {
                 width: 100%;
-                background-color: darken($background-dark, 2%);
+                background-color: color.adjust($background-dark, $lightness: -2%);
                 border: 1px solid $border-dark;
                 color: $text-white;
                 font-size: 0.875rem;
@@ -661,7 +727,7 @@
                     }
 
                     &:hover {
-                        background-color: lighten($surface-dark, 5%);
+                        background-color: color.adjust($surface-dark, $lightness: 5%);
 
                         .name {
                             color: $primary;
@@ -700,6 +766,12 @@
                     &:hover {
                         background-color: rgba($primary, 0.1);
                     }
+
+                    background: none;
+                    border: none;
+                    width: 100%;
+                    font-family: inherit;
+                    text-align: center;
                 }
 
                 .noResults {
@@ -742,7 +814,7 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 0.75rem;
-                background-color: lighten($background-dark, 1%);
+                background-color: color.adjust($background-dark, $lightness: 1%);
 
                 .cardHeader {
                     display: flex;
@@ -757,7 +829,7 @@
                     padding: 0.5rem 0.75rem;
                     border-radius: 0.375rem;
                     border: 1px solid $border-dark;
-                    background-color: darken($background-dark, 2%);
+                    background-color: color.adjust($background-dark, $lightness: -2%);
                     color: $text-white;
                     font-size: 0.875rem;
                     transition: all 0.2s;
@@ -791,7 +863,7 @@
                             color: $text-white;
 
                             &:hover {
-                                background-color: darken($success, 5%);
+                                background-color: color.adjust($success, $lightness: -5%);
                             }
                         }
 
@@ -801,7 +873,7 @@
                             border: 1px solid $border-dark;
 
                             &:hover {
-                                background-color: lighten($surface-dark, 5%);
+                                background-color: color.adjust($surface-dark, $lightness: 5%);
                                 color: $text-white;
                             }
                         }
@@ -839,6 +911,23 @@
             align-items: center;
             font-size: 0.875rem;
             margin-bottom: 0.5rem;
+
+            .miniSelect {
+                padding: 0.1rem 0.25rem;
+                border-radius: 0.25rem;
+                border: 1px solid $border-dark;
+                background-color: color.adjust($background-dark, $lightness: 2%);
+                color: $primary;
+                font-size: 0.75rem;
+                width: auto;
+                margin-left: 0.25rem;
+                cursor: pointer;
+
+                &:focus {
+                    outline: none;
+                    border-color: $primary;
+                }
+            }
 
             &.total {
                 margin-top: 1.5rem;
@@ -878,7 +967,7 @@
             border: none;
 
             &:hover {
-                background-color: darken($primary, 10%);
+                background-color: color.adjust($primary, $lightness: -10%);
             }
         }
     }
@@ -1108,7 +1197,7 @@
                 color: $background-dark;
 
                 &:hover {
-                    background-color: darken($primary, 10%);
+                    background-color: color.adjust($primary, $lightness: -10%);
                 }
             }
         }
@@ -1125,4 +1214,288 @@
         opacity: 1;
         transform: scale(1);
     }
+}
+
+// ---------------------------------------------------------
+// NEW CLASSES FROM INLINE STYLES
+// ---------------------------------------------------------
+
+.logoIcon {
+    font-size: 32px !important;
+}
+
+.trendIcon {
+    font-size: 18px !important;
+
+    &.up {
+        color: $success;
+    }
+
+    &.down {
+        color: $danger;
+    }
+
+    &.stable {
+        color: #e29d12;
+    }
+
+    &.stableSilver {
+        color: $text-muted;
+    }
+}
+
+.scanBtn {
+    color: #b9b09d;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.filterIcon {
+    font-size: 20px !important;
+}
+
+.filterBadge {
+    width: 8px;
+    height: 8px;
+    background-color: $primary;
+    border-radius: 50%;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+
+.categoryIcon {
+    font-size: 18px !important;
+}
+
+.purityBadge {
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+
+    &.gold22k {
+        background-color: rgba(234, 179, 8, 0.2);
+        color: #ca8a04;
+        border-color: rgba(234, 179, 8, 0.3);
+    }
+
+    &.silver {
+        background-color: rgba(148, 163, 184, 0.2);
+        color: #94a3b8;
+        border-color: rgba(148, 163, 184, 0.3);
+    }
+}
+
+.colSm {
+    width: 3rem;
+}
+
+.colIcon {
+    width: 2.5rem;
+}
+
+.discountInput {
+    color: $danger !important;
+}
+
+.deleteBtn {
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: $danger;
+    }
+
+    span {
+        font-size: 20px !important;
+    }
+}
+
+.exchangeTableHead {
+    background-color: rgba(44, 36, 23, 0.3) !important;
+
+    th {
+        padding: 0.5rem !important;
+    }
+}
+
+.exchangeRow {
+    background-color: transparent !important;
+
+    td {
+        padding: 0.5rem !important;
+        border: none !important;
+    }
+}
+
+.exchangeItemInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    span {
+        font-size: 18px !important;
+        color: $text-muted;
+    }
+}
+
+.exchangeValue {
+    font-weight: 700;
+    color: $danger;
+}
+
+.closeIcon {
+    font-size: 18px !important;
+}
+
+.viewHistoryBtn {
+    font-size: 0.75rem;
+    color: $primary;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.customerInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.customerEmail {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.editBtn {
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: $primary;
+    }
+}
+
+.summaryTitle {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #b9b09d;
+    margin-bottom: 1rem;
+}
+
+.separator {
+    height: 1px;
+    background-color: #4a4030;
+    margin: 1rem 0;
+}
+
+.summaryLabel {
+    color: #b9b09d;
+}
+
+.summaryLabelWithIcon {
+    color: #b9b09d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.taxSelect {
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #4a4030;
+    background-color: #2c2417;
+    color: $primary;
+    font-size: 0.75rem;
+    width: auto;
+    margin-left: 0.25rem;
+}
+
+.infoIcon {
+    font-size: 14px !important;
+}
+
+.exchangeAdjLabel {
+    color: $primary;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.negativeValue {
+    color: $danger;
+}
+
+.textMuted {
+    color: #94a3b8;
+}
+
+.roundingInfo {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+.paymentGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.paymentOption {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #4a4030;
+    background-color: #2c2417;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &.active {
+        border: 2px solid $primary;
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+    }
+
+    span.material-symbols-outlined {
+        margin-bottom: 0.25rem;
+    }
+
+    .optionLabel {
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+}
+
+.noMargin {
+    margin-bottom: 0 !important;
+}
+
+.inStock {
+    color: $success;
+}
+
+.outStock {
+    color: $danger;
 }

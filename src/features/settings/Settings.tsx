@@ -1,25 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import classNames from 'classnames';
 import styles from './Settings.module.scss';
 import { useToast } from '../../context/ToastContext';
 import { useSettings } from '../../context/SettingsContext';
+import PasswordChangeModal from './PasswordChangeModal';
 
 const Settings: React.FC = () => {
     const { showToast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [activeTab, setActiveTab] = useState('general');
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     
     // Form State
     const [formState, setFormState] = useState(settings);
 
-    const [notifications, setNotifications] = useState({
-        lowStock: true,
-        marketAlerts: true,
-        dailySummary: false
-    });
+    const shopNameRef = useRef<HTMLInputElement>(null);
+    const locationRef = useRef<HTMLInputElement>(null);
 
 
     const handleSave = () => {
+        if (!formState.name) {
+            showToast('Shop Name is required.', 'error');
+            setActiveTab('general');
+            setTimeout(() => {
+                shopNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                shopNameRef.current?.focus();
+            }, 100);
+            return;
+        }
+
+        if (!formState.location) {
+            showToast('Location is required.', 'error');
+            setActiveTab('general');
+            setTimeout(() => {
+                locationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                locationRef.current?.focus();
+            }, 100);
+            return;
+        }
+
         updateSettings(formState);
         showToast('Settings saved successfully', 'success');
     };
@@ -63,6 +82,7 @@ const Settings: React.FC = () => {
                             <div className={styles.fieldGroup}>
                                 <label>Shop Name</label>
                                 <input 
+                                    ref={shopNameRef}
                                     type="text" 
                                     value={formState.name}
                                     onChange={(e) => setFormState({ ...formState, name: e.target.value })}
@@ -71,6 +91,7 @@ const Settings: React.FC = () => {
                             <div className={styles.fieldGroup}>
                                 <label>Location</label>
                                 <input 
+                                    ref={locationRef}
                                     type="text" 
                                     value={formState.location}
                                     onChange={(e) => setFormState({ ...formState, location: e.target.value })}
@@ -122,7 +143,7 @@ const Settings: React.FC = () => {
                                     <p>Change Password</p>
                                     <p>Last changed 3 months ago</p>
                                 </div>
-                                <button className={styles.updateBtn} onClick={() => showToast('Password reset email sent', 'info')}>
+                                <button className={styles.updateBtn} onClick={() => setIsPasswordModalOpen(true)}>
                                     Update
                                 </button>
                             </div>
@@ -146,8 +167,11 @@ const Settings: React.FC = () => {
                                 <input 
                                     type="checkbox" 
                                     className={styles.checkbox}
-                                    checked={notifications.lowStock}
-                                    onChange={(e) => setNotifications({ ...notifications, lowStock: e.target.checked })}
+                                    checked={formState.notifications?.lowStock}
+                                    onChange={(e) => setFormState({
+                                        ...formState,
+                                        notifications: { ...formState.notifications, lowStock: e.target.checked }
+                                    })}
                                 />
                             </div>
                             <div className={styles.notificationItem} style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(84, 75, 59, 0.5)' }}>
@@ -161,8 +185,11 @@ const Settings: React.FC = () => {
                                 <input 
                                     type="checkbox" 
                                     className={styles.checkbox}
-                                    checked={notifications.marketAlerts}
-                                    onChange={(e) => setNotifications({ ...notifications, marketAlerts: e.target.checked })}
+                                    checked={formState.notifications?.marketAlerts}
+                                    onChange={(e) => setFormState({
+                                        ...formState,
+                                        notifications: { ...formState.notifications, marketAlerts: e.target.checked }
+                                    })}
                                 />
                             </div>
                             <div className={styles.notificationItem} style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(84, 75, 59, 0.5)' }}>
@@ -176,8 +203,11 @@ const Settings: React.FC = () => {
                                 <input 
                                     type="checkbox" 
                                     className={styles.checkbox}
-                                    checked={notifications.dailySummary}
-                                    onChange={(e) => setNotifications({ ...notifications, dailySummary: e.target.checked })}
+                                    checked={formState.notifications?.dailySummary}
+                                    onChange={(e) => setFormState({
+                                        ...formState,
+                                        notifications: { ...formState.notifications, dailySummary: e.target.checked }
+                                    })}
                                 />
                             </div>
                         </div>
@@ -195,6 +225,10 @@ const Settings: React.FC = () => {
                     </div>
                 </div>
             </footer>
+            <PasswordChangeModal 
+                isOpen={isPasswordModalOpen} 
+                onClose={() => setIsPasswordModalOpen(false)} 
+            />
         </div>
     );
 };

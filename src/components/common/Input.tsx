@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 // Input component
 import styles from './Common.module.scss';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> {
     label?: string;
     icon?: string;
     error?: string;
@@ -11,7 +11,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSe
     options?: { label: string; value: string | number }[];
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, InputProps>(({
     label,
     icon,
     error,
@@ -20,8 +20,8 @@ export const Input: React.FC<InputProps> = ({
     options,
     children,
     ...props
-}) => {
-    const Component = as as any;
+}, ref) => {
+    const Component = as as 'input' | 'select' | 'textarea';
 
     return (
         <div className={`${styles.inputField} ${className}`}>
@@ -29,9 +29,9 @@ export const Input: React.FC<InputProps> = ({
             <div className={`${styles.inputWrapper} ${icon ? styles.hasIcon : ''}`}>
                 {icon && <span className={`material-symbols-outlined ${styles.icon}`}>{icon}</span>}
                 {as === 'input' ? (
-                    <input {...props} />
+                    <input ref={ref as React.Ref<HTMLInputElement>} {...props} />
                 ) : (
-                    <Component {...props}>
+                    <Component ref={ref as React.Ref<any>} {...props}>
                         {as === 'select' && options?.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
@@ -39,7 +39,9 @@ export const Input: React.FC<InputProps> = ({
                     </Component>
                 )}
             </div>
-            {error && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{error}</p>}
+            {error && <p className={styles.errorText}>{error}</p>}
         </div>
     );
-};
+});
+
+Input.displayName = 'Input';

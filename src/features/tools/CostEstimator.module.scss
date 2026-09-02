@@ -1,5 +1,6 @@
-@import '../../styles/variables';
-@import '../../styles/mixins';
+@use "sass:color";
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .container {
     padding: 1rem;
@@ -82,7 +83,7 @@
     }
 
     &.secondary {
-        background-color: lighten($surface-dark, 5%);
+        background-color: color.adjust($surface-dark, $lightness: 5%);
         color: white;
         border: 1px solid $border-dark;
 
@@ -247,7 +248,7 @@
     input {
         width: 100%;
         height: 3rem;
-        background-color: lighten($surface-dark, 5%);
+        background-color: color.adjust($surface-dark, $lightness: 5%);
         border: 1px solid $border-dark;
         border-radius: 0.5rem;
         padding: 0 1rem;
@@ -302,7 +303,7 @@
 
 .toggleSwitch {
     display: flex;
-    background-color: lighten($surface-dark, 5%);
+    background-color: color.adjust($surface-dark, $lightness: 5%);
     border: 1px solid $border-dark;
     border-radius: 0.25rem;
     padding: 0.125rem;
@@ -346,7 +347,7 @@
         position: relative;
         width: 2.75rem;
         height: 1.5rem;
-        background-color: lighten($surface-dark, 5%);
+        background-color: color.adjust($surface-dark, $lightness: 5%);
         border: 1px solid $border-dark;
         border-radius: 9999px;
         transition: all 0.3s;
@@ -394,7 +395,7 @@
 }
 
 .summaryCard {
-    background-color: lighten($surface-dark, 5%);
+    background-color: color.adjust($surface-dark, $lightness: 5%);
     border-radius: 1rem;
     border: 1px solid $border-dark;
     overflow: hidden;

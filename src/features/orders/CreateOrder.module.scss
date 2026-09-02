@@ -1,4 +1,5 @@
-@import '../../styles/variables';
+@use "sass:color";
+@use '../../styles/variables' as *;
 
 .container {
     padding: 2rem;
@@ -18,6 +19,14 @@
     .link {
         color: $text-muted;
         text-decoration: none;
+        background: none;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+
         &:hover { color: $primary; }
     }
     
@@ -91,6 +100,11 @@
         font-size: 0.875rem;
         font-weight: 500;
         color: $text-muted;
+        
+        .required {
+            color: $danger;
+            margin-left: 0.25rem;
+        }
     }
 
     input, select, textarea {
@@ -133,6 +147,29 @@
         opacity: 0.7;
         cursor: not-allowed;
     }
+
+    &.fullHeight {
+        height: 100%;
+    }
+
+    &.marginTop {
+        margin-top: 1rem;
+    }
+
+    &.marginTopLg {
+        margin-top: 1.25rem;
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.imageContainer {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .imageUpload {
@@ -150,6 +187,9 @@
     background-color: rgba($text-white, 0.02);
     text-align: center;
     padding: 1rem;
+    background-size: cover;
+    background-position: center;
+    font: inherit;
 
     &:hover {
         border-color: $primary;
@@ -180,9 +220,16 @@
     color: white;
     cursor: pointer;
     transition: background 0.2s;
+    position: absolute;
+    top: 10px;
+    right: 10px;
 
     &:hover {
         background: rgba(220, 38, 38, 0.8); // red hover
+    }
+
+    .closeIcon {
+        font-size: 1.125rem;
     }
 }
 
@@ -192,6 +239,10 @@
     
     input {
         flex: 1;
+
+        &.large {
+            flex: 2;
+        }
     }
 }
 
@@ -304,7 +355,7 @@
         color: white;
 
         &:hover {
-            background-color: darken($primary, 5%);
+            background-color: color.adjust($primary, $lightness: -5%);
             transform: translateY(-1px);
         }
         
@@ -314,4 +365,86 @@
             transform: none;
         }
     }
+}
+
+.specsControls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.gridMargin {
+    margin-top: 1.5rem;
+}
+
+.hiddenLabel {
+    visibility: hidden;
+}
+
+.sectionDescription {
+    color: $text-muted;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.titleMain {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.titleAction {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+
+    label {
+        cursor: pointer;
+        color: $text-muted;
+        transition: color 0.2s;
+
+        &.active {
+            color: $primary;
+        }
+    }
+}
+
+.financialsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.calcSummary {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: $radius-md;
+    font-size: 0.85rem;
+    color: $text-muted;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.summaryTotal {
+    @extend .summaryRow;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    font-weight: 600;
+    color: $text-white;
+}
+
+.primaryLabel {
+    color: $primary;
 }

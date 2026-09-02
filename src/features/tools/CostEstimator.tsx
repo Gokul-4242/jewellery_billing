@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import styles from './CostEstimator.module.scss';
 import { Button } from '../../components/common';
 import { useRates } from '../../context/RateContext';
+import { useToast } from '../../context/ToastContext';
 
 interface CostEstimatorProps {
     exchangeValue: number;
@@ -17,56 +19,45 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 }) => {
     const navigate = useNavigate();
     const { rates } = useRates();
+    const { showToast } = useToast();
+
+    const grossWeightRef = useRef<HTMLInputElement>(null);
 
     // State
     const [metalType, setMetalType] = useState<'gold' | 'silver'>('gold');
-    const [grossWeight, setGrossWeight] = useState<number>(12.50);
-    const [marketRate, setMarketRate] = useState<number>(rates.gold22k);
+    const [grossWeight, setGrossWeight] = useState<number>(12.5);
     const [wastagePercent, setWastagePercent] = useState<number>(12);
     const [makingCharges, setMakingCharges] = useState<number>(450);
     const [makingChargesType, setMakingChargesType] = useState<'fixed' | 'percent'>('fixed');
     const [addStoneCharges, setAddStoneCharges] = useState<boolean>(false);
     const [exchangeEnabled, setExchangeEnabled] = useState<boolean>(true);
 
-    // Update market rate when metal type changes
-    useEffect(() => {
-        if (metalType === 'gold') {
-            setMarketRate(rates.gold22k);
-        } else {
-            setMarketRate(rates.silver);
-        }
-    }, [metalType, rates]);
+    const [marketRateOverride, setMarketRateOverride] = useState<number | null>(null);
 
-    // Derived State
-    const [materialCost, setMaterialCost] = useState<number>(0);
-    const [wastageAmount, setWastageAmount] = useState<number>(0);
-    const [makingChargesAmount, setMakingChargesAmount] = useState<number>(0);
-    const [subtotal, setSubtotal] = useState<number>(0);
-    const [grossEstimate, setGrossEstimate] = useState<number>(0);
-    const [netPayable, setNetPayable] = useState<number>(0);
+    // Market rate derived from metalType (no useEffect needed)
+    const marketRate = marketRateOverride ?? (metalType === 'gold' ? rates.gold22k : rates.silver);
 
-    // Update calculations
-    useEffect(() => {
+    // Cost breakdown - derived from inputs (no useEffect needed)
+    const { materialCost, wastageAmount, makingChargesAmount, subtotal, grossEstimate, netPayable } = useMemo(() => {
         const matCost = grossWeight * marketRate;
         const wastCost = matCost * (wastagePercent / 100);
-
         let makCost = 0;
         if (makingChargesType === 'fixed') {
             makCost = makingCharges * grossWeight;
         } else {
             makCost = matCost * (makingCharges / 100);
         }
-
         const sub = matCost + wastCost + makCost;
         const gross = sub;
         const net = gross - (exchangeEnabled ? exchangeValue : 0);
-
-        setMaterialCost(matCost);
-        setWastageAmount(wastCost);
-        setMakingChargesAmount(makCost);
-        setSubtotal(sub);
-        setGrossEstimate(gross);
-        setNetPayable(net);
+        return {
+            materialCost: matCost,
+            wastageAmount: wastCost,
+            makingChargesAmount: makCost,
+            subtotal: sub,
+            grossEstimate: gross,
+            netPayable: net
+        };
     }, [grossWeight, marketRate, wastagePercent, makingCharges, makingChargesType, exchangeEnabled, exchangeValue]);
 
     // Format currency
@@ -80,7 +71,6 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
     // Reset function
     const handleReset = () => {
         setGrossWeight(0);
-        setMarketRate(metalType === 'gold' ? rates.gold22k : rates.silver);
         setWastagePercent(0);
         setMakingCharges(0);
         setMakingChargesType('fixed');
@@ -150,12 +140,14 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                         <div className={styles.inputGrid}>
                             <div className={styles.formGroup}>
-                                <label>Gross Weight</label>
+                                <label htmlFor="gross_weight">Gross Weight</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="gross_weight"
+                                        ref={grossWeightRef}
                                         type="number"
                                         value={grossWeight}
-                                        onChange={(e) => setGrossWeight(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setGrossWeight(Number.parseFloat(e.target.value) || 0)}
                                         className={styles.hasSuffix}
                                         placeholder="0.00"
                                     />
@@ -164,12 +156,13 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Current Market Rate</label>
+                                <label htmlFor="market_rate">Current Market Rate</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="market_rate"
                                         type="number"
                                         value={marketRate}
-                                        onChange={(e) => setMarketRate(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setMarketRateOverride(Number.parseFloat(e.target.value) || 0)}
                                         className={`${styles.hasPrefix} ${styles.hasSuffix}`}
                                         placeholder="0"
                                     />
@@ -179,12 +172,13 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Wastage (VA)</label>
+                                <label htmlFor="wastage_percent">Wastage (VA)</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="wastage_percent"
                                         type="number"
                                         value={wastagePercent}
-                                        onChange={(e) => setWastagePercent(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setWastagePercent(Number.parseFloat(e.target.value) || 0)}
                                         className={styles.hasSuffix}
                                         placeholder="0"
                                     />
@@ -194,16 +188,18 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                             <div className={styles.formGroup}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <label style={{ marginBottom: 0 }}>Making Charges</label>
+                                    <label htmlFor="making_charges" style={{ marginBottom: 0 }}>Making Charges</label>
                                     <div className={styles.toggleSwitch}>
-                                        <button
-                                            className={makingChargesType === 'fixed' ? styles.active : ''}
+                                        <button 
+                                            type="button"
+                                            className={makingChargesType === 'fixed' ? styles.active : ''} 
                                             onClick={() => setMakingChargesType('fixed')}
                                         >
-                                            FIXED
+                                            ₹
                                         </button>
-                                        <button
-                                            className={makingChargesType === 'percent' ? styles.active : ''}
+                                        <button 
+                                            type="button"
+                                            className={makingChargesType === 'percent' ? styles.active : ''} 
                                             onClick={() => setMakingChargesType('percent')}
                                         >
                                             %
@@ -212,9 +208,10 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                 </div>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="making_charges"
                                         type="number"
                                         value={makingCharges}
-                                        onChange={(e) => setMakingCharges(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setMakingCharges(Number.parseFloat(e.target.value) || 0)}
                                         className={`${makingChargesType === 'fixed' ? styles.hasPrefix : ''} ${styles.hasSuffix}`}
                                         placeholder="0"
                                     />
@@ -258,12 +255,13 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
 
                         <div className={styles.inputGrid}>
                             <div className={styles.formGroup}>
-                                <label>Exchange Value</label>
+                                <label htmlFor="exchange_value">Exchange Value</label>
                                 <div className={styles.inputWrapper}>
                                     <input
+                                        id="exchange_value"
                                         type="number"
                                         value={exchangeValue}
-                                        onChange={(e) => onExchangeValueChange(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => onExchangeValueChange(Number.parseFloat(e.target.value) || 0)}
                                         disabled={!exchangeEnabled}
                                         className={styles.hasPrefix}
                                         style={{ opacity: exchangeEnabled ? 1 : 0.5 }}
@@ -350,7 +348,15 @@ const CostEstimator: React.FC<CostEstimatorProps> = ({
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restart_alt</span>
                                     Reset
                                 </button>
-                                <button className={`${styles.btn} ${styles.primary}`} style={{ justifyContent: 'center' }}>
+                                <button className={`${styles.btn} ${styles.primary}`} style={{ justifyContent: 'center' }} onClick={() => {
+                                    if (!grossWeight || grossWeight <= 0) {
+                                        showToast('Please enter gross weight', 'error');
+                                        grossWeightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        setTimeout(() => grossWeightRef.current?.focus(), 500);
+                                        return;
+                                    }
+                                    showToast('Estimate saved to history', 'success');
+                                }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>
                                     Save
                                 </button>
