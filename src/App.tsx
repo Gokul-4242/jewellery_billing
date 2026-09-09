@@ -25,31 +25,12 @@ import OrderDetail from './features/orders/OrderDetail';
 import OrderConfirmation from './features/orders/OrderConfirmation';
 import DailySummary from './features/reports/DailySummary';
 import Settings from './features/settings/Settings';
-import CustomerProvider from './context/CustomerContext';
 import { useCustomers } from './context/useCustomers';
-
-import TransactionProvider from './context/TransactionContext';
-import { InventoryProvider } from './context/InventoryContext';
-import { RateProvider } from './context/RateContext';
-import { SettingsProvider } from './context/SettingsContext';
-import { CartProvider } from './context/CartContext';
 
 function App() {
   return (
     <div className="App">
-        <RateProvider>
-            <CartProvider>
-                <SettingsProvider>
-                    <CustomerProvider>
-                        <TransactionProvider>
-                            <InventoryProvider>
-                                <AppContent />
-                            </InventoryProvider>
-                        </TransactionProvider>
-                    </CustomerProvider>
-                </SettingsProvider>
-            </CartProvider>
-        </RateProvider>
+      <AppContent />
     </div>
   );
 }

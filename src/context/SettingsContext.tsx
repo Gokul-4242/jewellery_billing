@@ -1,65 +1,37 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, type ReactNode } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  updateSettings as updateSettingsAction,
+  type ShopSettings,
+} from '../store/slices/settingsSlice';
 
-interface ShopSettings {
-    name: string;
-    location: string;
-    address: string;
-    gstNo: string;
-    email: string;
-    contact: string;
-    notifications: {
-        lowStock: boolean;
-        marketAlerts: boolean;
-        dailySummary: boolean;
-    };
+export type { ShopSettings };
+
+export interface SettingsContextType {
+  settings: ShopSettings;
+  updateSettings: (newSettings: ShopSettings) => void;
 }
 
-interface SettingsContextType {
-    settings: ShopSettings;
-    updateSettings: (newSettings: ShopSettings) => void;
-}
-
-const defaultSettings: ShopSettings = {
-    name: 'VGH JEWELLERS',
-    location: 'Meenakshipuram, Nagercoil-629001',
-    address: 'Ammasimadam Street, Meenakshipuram, Nagercoil-629001',
-    gstNo: '27AABCU9603R1ZM',
-    email: 'vghjewellers@gmail.com',
-    contact: '+91 9876543210',
-    notifications: {
-        lowStock: true,
-        marketAlerts: true,
-        dailySummary: false
-    }
+export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  return <>{children}</>;
 };
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+export const useSettings = (): SettingsContextType => {
+  const dispatch = useAppDispatch();
+  const settings = useAppSelector((state) => state.settings.settings);
 
-export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [settings, setSettings] = useState<ShopSettings>(() => {
-        const saved = localStorage.getItem('shop_settings');
-        return saved ? JSON.parse(saved) : defaultSettings;
-    });
+  const updateSettings = useCallback(
+    (newSettings: ShopSettings) => {
+      dispatch(updateSettingsAction(newSettings));
+    },
+    [dispatch]
+  );
 
-    useEffect(() => {
-        localStorage.setItem('shop_settings', JSON.stringify(settings));
-    }, [settings]);
-
-    const updateSettings = (newSettings: ShopSettings) => {
-        setSettings(newSettings);
-    };
-
-    return (
-        <SettingsContext.Provider value={{ settings, updateSettings }}>
-            {children}
-        </SettingsContext.Provider>
-    );
-};
-
-export const useSettings = () => {
-    const context = useContext(SettingsContext);
-    if (!context) {
-        throw new Error('useSettings must be used within a SettingsProvider');
-    }
-    return context;
+  return useMemo(
+    () => ({
+      settings,
+      updateSettings,
+    }),
+    [settings, updateSettings]
+  );
 };

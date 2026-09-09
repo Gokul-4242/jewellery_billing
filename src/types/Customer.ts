@@ -5,6 +5,10 @@ export interface Customer {
     joinedDate: string;
     phone: string;
     email: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
     totalSpend: number;
     transactionCount: number;
     lastVisit: string;

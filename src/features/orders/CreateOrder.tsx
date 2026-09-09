@@ -6,7 +6,6 @@ import { useTransactions } from '../../context/useTransactions';
 import { useToast } from '../../context/ToastContext';
 import { useRates } from '../../context/RateContext';
 import { FormSelect } from '../../components/common';
-import api from '../../api/axios';
 import type { Transaction } from '../../types/Transaction';
 
 
@@ -15,7 +14,7 @@ const CreateOrder: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const { customers } = useCustomers();
-    const { transactions, addLocalTransaction, updateTransaction } = useTransactions();
+    const { transactions, createCustomOrder, updateTransaction } = useTransactions();
     const { showToast } = useToast();
     const { rates } = useRates();
 
@@ -236,10 +235,8 @@ const CreateOrder: React.FC = () => {
                 showToast("Order updated successfully", "success", "Order Updated");
                 navigate(`/dashboard/orders/confirmation/${id}`);
             } else {
-                const res = await api.post('/orders/custom', orderData);
-                if (res.data?.success) {
-                    const savedOrder = { ...res.data.data, id: res.data.data._id };
-                    addLocalTransaction(savedOrder);
+                const savedOrder = await createCustomOrder(orderData);
+                if (savedOrder) {
                     showToast("Custom order created successfully", "success", "Order Created");
                     navigate(`/dashboard/orders/confirmation/${savedOrder.id}`);
                 }

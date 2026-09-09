@@ -93,7 +93,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onBack, onEdi
                                 </span>
                                 <span className={`${styles.tag} ${styles.location}`}>
                                     { /* Location is not in core type, removing or making purely optional if data existed */ }
-                                    {'New York, USA'} 
+                                    {[customer.city, customer.state].filter(Boolean).join(', ') || 'Tamil Nadu, India'} 
                                 </span>
                             </div>
                         </div>
@@ -177,7 +177,7 @@ const CustomerDetail: React.FC<CustomerDetailProps> = ({ customer, onBack, onEdi
                                 <span className="material-symbols-outlined icon">location_on</span>
                                 <div className={styles.info}>
                                     <p className={styles.label}>Shipping Address</p>
-                                    <p className={styles.text}>{/* Address not in base type currently, placeholder or remove */ 'Not provided'}</p>
+                                    <p className={styles.text}>{customer.address ? `${customer.address}${customer.city ? ', ' + customer.city : ''}${customer.state ? ', ' + customer.state : ''}${customer.zip ? ' - ' + customer.zip : ''}` : 'Not provided'}</p>
                                 </div>
                             </div>
                             {/* Removed Birthday/Anniversary details */}

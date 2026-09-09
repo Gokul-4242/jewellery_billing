@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './PasswordChangeModal.module.scss';
 import { Button } from '../../components/common';
-import api from '../../api/axios';
+import { useUpdatePasswordMutation } from '../../store/api/authApi';
 import { useToast } from '../../context/ToastContext';
 
 interface PasswordChangeModalProps {
@@ -11,7 +11,7 @@ interface PasswordChangeModalProps {
 
 const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClose }) => {
     const { showToast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -41,21 +41,18 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ isOpen, onClo
             return;
         }
 
-        setIsLoading(true);
         try {
-            await api.put('/auth/updatepassword', {
+            await updatePassword({
                 currentPassword: formData.currentPassword,
                 newPassword: formData.newPassword
-            });
+            }).unwrap();
             showToast('Password updated successfully', 'success');
             onClose();
             // Reset form
             setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to update password';
+            const message = err.data?.message || err.response?.data?.message || 'Failed to update password';
             showToast(message, 'error');
-        } finally {
-            setIsLoading(false);
         }
     };
 

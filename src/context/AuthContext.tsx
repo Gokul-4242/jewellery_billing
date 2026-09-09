@@ -1,70 +1,45 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout as logoutAction, type User } from '../store/slices/authSlice';
+import { useLoginMutation } from '../store/api/authApi';
 
-interface User {
-    id: string;
-    username: string;
-    role: 'admin' | 'staff';
-}
+export type { User };
 
-interface AuthContextType {
+export interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     login: (email: string, password?: string) => Promise<void>;
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(() => {
-        return localStorage.getItem('adminToken') 
-            ? { id: 'admin', username: 'Super Admin', role: 'admin' }
-            : null;
-    });
+    return <>{children}</>;
+};
 
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-        return !!localStorage.getItem('adminToken');
-    });
-
+export const useAuth = (): AuthContextType => {
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const [loginMutation] = useLoginMutation();
 
     const login = async (email: string, password?: string) => {
         try {
-            const res = await api.post('/auth/login', { email, password });
-            
-            if (res.data && res.data.token) {
-                localStorage.setItem('adminToken', res.data.token);
-                setUser({ id: 'admin', username: email, role: 'admin' });
-                setIsAuthenticated(true);
-            } else {
+            const res = await loginMutation({ email, password }).unwrap();
+            const token = res.token || res.data?.token;
+            if (!token) {
                 throw new Error('Invalid authentication payload returned');
             }
         } catch (error: any) {
             console.error("Login Error:", error);
-            throw new Error(error.response?.data?.message || 'Login failed due to server error');
+            throw new Error(error.data?.message || error.message || 'Login failed due to server error');
         }
     };
 
     const logout = () => {
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem('adminToken');
+        dispatch(logoutAction());
         navigate('/login');
     };
 
-    return (
-        <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
-
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+    return { user, isAuthenticated, login, logout };
 };

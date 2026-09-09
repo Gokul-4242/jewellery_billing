@@ -3,6 +3,7 @@ import styles from './AddCustomer.module.scss';
 import type { Customer } from '../../types/Customer';
 import { Button, Input, FormSelect } from '../../components/common';
 import { useToast } from '../../context/ToastContext';
+import { lookupPincode } from '../../api/pincode';
 
 interface AddCustomerProps {
     initialData?: Customer;
@@ -25,6 +26,9 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
             ? [{ number: initialData.phone, type: 'Mobile' }]
             : [{ number: '', type: 'Mobile' }]
     );
+    const [pincodeLoading, setPincodeLoading] = useState(false);
+    const [pincodeStatus, setPincodeStatus] = useState<{ verified: boolean; message: string } | null>(null);
+
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
         dob: '',
@@ -46,6 +50,35 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ initialData, onBack, onSave }
         const newPhones = [...phones];
         newPhones[index] = { ...newPhones[index], [field]: value };
         setPhones(newPhones);
+    };
+
+    const handleZipLookup = async (pin: string) => {
+        if (pin.length !== 6) {
+            setPincodeStatus(null);
+            return;
+        }
+
+        setPincodeLoading(true);
+        const res = await lookupPincode(pin);
+        setPincodeLoading(false);
+
+        if (res && res.valid && res.data) {
+            setFormData(prev => ({
+                ...prev,
+                city: res.data!.city || res.data!.district,
+                state: res.data!.state
+            }));
+            setPincodeStatus({
+                verified: true,
+                message: `Verified: ${res.data.city}, ${res.data.state}`
+            });
+            showToast(`PIN verified: ${res.data.city}, ${res.data.state}`, 'success');
+        } else {
+            setPincodeStatus({
+                verified: false,
+                message: res.message || 'Invalid Indian PIN code'
+            });
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

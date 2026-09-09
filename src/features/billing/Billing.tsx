@@ -14,7 +14,6 @@ import type { Transaction } from '../../types/Transaction';
 import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
 import avatarImg from '../../assets/billing page.png';
-import api from '../../api/axios';
 
 type TrendDirection = 'up' | 'down' | 'stable';
 
@@ -26,7 +25,7 @@ const Billing: React.FC = () => {
 
     // Contexts
     const { customers, updateCustomer, getCustomerById } = useCustomers();
-    const { addTransaction } = useTransactions();
+    const { addTransaction, createInvoice } = useTransactions();
     const { rates } = useRates();
 
     // Calculate trends
@@ -385,12 +384,11 @@ const Billing: React.FC = () => {
             };
 
 
-            const res = await api.post('/billing/invoice', backendPayload);
-
-            const savedTxn = res.data.data;
+            const res = await createInvoice(backendPayload);
+            const savedTxn = res?.data || res;
             
             const invoiceNo = savedTxn.invoiceNo;
-            const date = savedTxn.createdAt;
+            const date = savedTxn.createdAt || new Date().toISOString();
 
         const invoiceData: InvoiceData = {
             invoiceNo: invoiceNo,

@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './AddItem.module.scss';
-import api from '../../api/axios';
 import { useInventory } from '../../context/InventoryContext';
+import { useUploadImagesMutation } from '../../store/api/uploadApi';
 import { useToast } from '../../context/ToastContext';
 import { CustomDropdown } from '../../components/common';
-import type { StockStatus } from '../../types/Dashboard.types';
 
 const AddItem: React.FC = () => {
     const navigate = useNavigate();
     const { addProduct, categories, materials, addCategory, addMaterial } = useInventory();
+    const [uploadImages] = useUploadImagesMutation();
     const { showToast } = useToast();
     const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -117,16 +117,14 @@ const AddItem: React.FC = () => {
         setIsSubmitting(true);
         try {
             // STEP 1: Upload Images
-            const uploadParams = new FormData();
-            selectedFiles.forEach(file => {
-                uploadParams.append('images', file);
-            });
-
-            const uploadRes = await api.post('/upload', uploadParams, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            const uploadedImageUrls = uploadRes.data.data; // Array of {url, fileId}
+            let uploadedImageUrls: { url: string; fileId?: string }[] = [];
+            if (selectedFiles.length > 0) {
+                const uploadParams = new FormData();
+                selectedFiles.forEach(file => {
+                    uploadParams.append('images', file);
+                });
+                uploadedImageUrls = await uploadImages(uploadParams).unwrap();
+            }
 
             // STEP 2: Create Product Payload matching Backend Model
             const productPayload = {
@@ -138,46 +136,17 @@ const AddItem: React.FC = () => {
                 makingCharge: Number.parseFloat(formData.makingCharge),
                 wastagePercent: Number.parseFloat(formData.wastagePercent),
                 stoneCost: Number.parseFloat(formData.stoneCost) || 0,
-                initialStock: Number.parseInt(formData.quantity),
+                initialStock: Number.parseInt(formData.quantity) || 1,
                 images: uploadedImageUrls
             };
 
-            const productRes = await api.post('/products', productPayload);
-            const p = productRes.data.data;
-
-            const qty = Number.parseInt(formData.quantity) || 0;
-            const getStockStatus = (quantity: number): StockStatus => {
-                if (quantity > 10) return 'In Stock';
-                if (quantity > 0) return 'Low Stock';
-                return 'Out of Stock';
-            };
-
-            // Map backend model to frontend Product model
-            const newProduct = {
-                id: p._id,
-                name: p.name,
-                sku: p.sku,
-                category: p.category,
-                material: p.material,
-                weight: p.weight,
-                makingCharge: p.makingCharge,
-                wastagePercent: p.wastagePercent,
-                stoneCost: p.stoneCost || 0,
-                price: p.makingCharge,
-                quantity: qty,
-                status: getStockStatus(qty),
-                images: p.images ? p.images.map((img: { url: string }) => img.url) : [],
-                lastModified: p.updatedAt || p.createdAt || new Date().toISOString()
-            };
-
-            // Add to Context to avoid refetching
-            addProduct(newProduct);
+            // Adds to Backend + updates Redux Cache & triggers tag invalidation!
+            await addProduct(productPayload);
             showToast('Product added successfully!', 'success');
             navigate('/dashboard/inventory');
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error("Failed to add product:", error);
-            const err = error as { response?: { data?: { message?: string } } };
-            showToast(err.response?.data?.message || 'Failed to upload product', 'error');
+            showToast(error?.data?.message || error?.response?.data?.message || error?.message || 'Failed to upload product', 'error');
         } finally {
             setIsSubmitting(false);
         }
